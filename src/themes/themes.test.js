@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { defineTheme, resolveThemeStage, resolveThemeVisuals } from './base.js'
+import { defineTheme, resolveTensionVisuals, resolveThemeStage, resolveThemeVisuals } from './base.js'
 import { getTheme, listThemes } from './index.js'
 
 const stagedTheme = defineTheme({
@@ -57,13 +57,71 @@ describe('resolveThemeVisuals', () => {
 })
 
 describe('theme registry', () => {
-  it('registers the Italian theme alongside Russian', () => {
-    expect(listThemes().map((t) => t.id)).toEqual(expect.arrayContaining(['russian', 'italian']))
+  it('registers all four themes alongside Russian', () => {
+    expect(listThemes().map((t) => t.id)).toEqual(
+      expect.arrayContaining(['russian', 'italian', 'portuguese', 'french'])
+    )
   })
 
   it('gives the Italian theme four level-gated stages', () => {
     const italian = getTheme('italian')
     expect(italian.stages).toHaveLength(4)
     expect(italian.stages.map((s) => s.minLevel)).toEqual([1, 4, 8, 14])
+  })
+
+  it('keeps the Portuguese theme static (no stages, no tension levels)', () => {
+    const portuguese = getTheme('portuguese')
+    expect(portuguese.stages).toEqual([])
+    expect(portuguese.tensionLevels).toEqual([])
+  })
+
+  it('gives the French theme four tension tiers and no level-gated stages', () => {
+    const french = getTheme('french')
+    expect(french.tensionLevels).toHaveLength(4)
+    expect(french.stages).toEqual([])
+  })
+})
+
+describe('resolveTensionVisuals', () => {
+  const tensionTheme = defineTheme({
+    id: 'test-tension',
+    colors: { primary: '#111111' },
+    emblem: 'A',
+    fontHeading: 'Base Font',
+    tensionLevels: [
+      { name: 'Calm', colors: {}, emblem: 'A' },
+      { name: 'Building', colors: { primary: '#222222' } },
+      { name: 'Tense', colors: { primary: '#333333' }, emblem: 'B', fontHeading: 'Tense Font' },
+    ],
+  })
+
+  it('resolves tier 0 to the theme base visuals', () => {
+    const visuals = resolveTensionVisuals(tensionTheme, 0)
+    expect(visuals.colors.primary).toBe('#111111')
+    expect(visuals.emblem).toBe('A')
+    expect(visuals.fontHeading).toBe('Base Font')
+    expect(visuals.name).toBe('Calm')
+  })
+
+  it('merges color overrides at higher tiers and falls back to base emblem/font when unset', () => {
+    const visuals = resolveTensionVisuals(tensionTheme, 1)
+    expect(visuals.colors.primary).toBe('#222222')
+    expect(visuals.emblem).toBe('A')
+    expect(visuals.fontHeading).toBe('Base Font')
+  })
+
+  it('overrides emblem and font at the top tier', () => {
+    const visuals = resolveTensionVisuals(tensionTheme, 2)
+    expect(visuals.colors.primary).toBe('#333333')
+    expect(visuals.emblem).toBe('B')
+    expect(visuals.fontHeading).toBe('Tense Font')
+  })
+
+  it('falls back to base visuals for a theme with no tension levels', () => {
+    const plain = defineTheme({ id: 'plain2', colors: { primary: '#abcabc' }, emblem: 'Z' })
+    const visuals = resolveTensionVisuals(plain, 2)
+    expect(visuals.colors.primary).toBe('#abcabc')
+    expect(visuals.emblem).toBe('Z')
+    expect(visuals.name).toBeNull()
   })
 })

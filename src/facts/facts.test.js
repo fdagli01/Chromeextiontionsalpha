@@ -25,4 +25,12 @@ describe('getFact', () => {
   it('is case-insensitive for Italian terms', () => {
     expect(getFact('italian', '  Aquila  ')).toContain('kartal')
   })
+
+  it('returns a curated fact for a known Portuguese term', () => {
+    expect(getFact('portuguese', 'caravela')).toContain('karavela')
+  })
+
+  it('returns a curated fact for a known French term', () => {
+    expect(getFact('french', 'guillotine')).toContain('giyotin')
+  })
 })

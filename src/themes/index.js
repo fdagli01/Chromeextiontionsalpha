@@ -1,12 +1,16 @@
 import { russianTheme } from './russian.js'
 import { italianTheme } from './italian.js'
+import { portugueseTheme } from './portuguese.js'
+import { frenchTheme } from './french.js'
 
-export { resolveThemeStage, resolveThemeVisuals } from './base.js'
+export { resolveThemeStage, resolveThemeVisuals, resolveTensionVisuals } from './base.js'
 
 /** @type {Record<string, import('./base.js').ThemeConfig>} */
 export const THEMES = {
   [russianTheme.id]: russianTheme,
   [italianTheme.id]: italianTheme,
+  [portugueseTheme.id]: portugueseTheme,
+  [frenchTheme.id]: frenchTheme,
 }
 
 export const DEFAULT_THEME_ID = russianTheme.id

@@ -1,10 +1,14 @@
 import { getRussianFact } from './russian.js'
 import { getItalianFact } from './italian.js'
+import { getPortugueseFact } from './portuguese.js'
+import { getFrenchFact } from './french.js'
 
 /** @type {Record<string, (term: string) => string>} */
 const FACT_PROVIDERS = {
   russian: getRussianFact,
   italian: getItalianFact,
+  portuguese: getPortugueseFact,
+  french: getFrenchFact,
 }
 
 /**

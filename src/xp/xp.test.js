@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { computeStreak, levelForXp, levelProgress, rankForLevel, xpForQuality, xpRequiredForLevel } from './xp.js'
+import {
+  computeStreak,
+  levelForXp,
+  levelProgress,
+  rankForLevel,
+  streakTier,
+  xpForQuality,
+  xpRequiredForLevel,
+} from './xp.js'
 import { QUALITY } from '../sm2/sm2.js'
 
 describe('xpForQuality', () => {
@@ -72,5 +80,18 @@ describe('computeStreak', () => {
 
   it('resets the streak after a gap', () => {
     expect(computeStreak('2026-07-01', '2026-07-09', 5)).toBe(1)
+  })
+})
+
+describe('streakTier', () => {
+  it('grows through tiers as the streak lengthens', () => {
+    expect(streakTier(0)).toBe(0)
+    expect(streakTier(2)).toBe(0)
+    expect(streakTier(3)).toBe(1)
+    expect(streakTier(6)).toBe(1)
+    expect(streakTier(7)).toBe(2)
+    expect(streakTier(13)).toBe(2)
+    expect(streakTier(14)).toBe(3)
+    expect(streakTier(100)).toBe(3)
   })
 })

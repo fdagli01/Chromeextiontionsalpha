@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useThemeConfig } from '../components/ThemeProvider.jsx'
 import { useAnimatedNumber } from '../components/useAnimatedNumber.js'
 import { getDueWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
@@ -6,8 +6,9 @@ import { getProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
 import { awardReviewXp } from '../xp/xpService.js'
 import { resolveBadges } from '../badges/badges.js'
-import { playStamp, playSoftMiss } from '../audio/sfx.js'
-import { levelProgress, rankForLevel } from '../xp/xp.js'
+import { playMissSfx, playSuccessSfx } from '../audio/sfx.js'
+import { levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
+import { resolveTensionVisuals } from '../themes/index.js'
 import { QUALITY } from '../sm2/sm2.js'
 import './ReviewScreen.css'
 
@@ -29,6 +30,9 @@ export function ReviewScreen() {
   const [xpToast, setXpToast] = useState('')
   const [badgeToast, setBadgeToast] = useState(null)
   const [flickerKey, setFlickerKey] = useState(0)
+  const [tension, setTension] = useState(0)
+  const hasTension = theme.tensionLevels.length > 0
+  const tensionVisuals = useMemo(() => resolveTensionVisuals(theme, tension), [theme, tension])
 
   useEffect(() => {
     let cancelled = false
@@ -37,6 +41,7 @@ export function ReviewScreen() {
       setQueue(words)
       setProgress(prog)
     })
+    setTension(0)
     return () => {
       cancelled = true
     }
@@ -73,11 +78,18 @@ export function ReviewScreen() {
       quality
     )
 
+    const nextTension = hasTension
+      ? correct
+        ? Math.max(0, tension - 1)
+        : Math.min(3, tension + 1)
+      : 0
+
     if (await getSetting('sfxEnabled', true)) {
-      if (correct) playStamp()
-      else playSoftMiss()
+      if (correct) playSuccessSfx(theme.audio.sfxVariant)
+      else playMissSfx(theme.audio.sfxVariant, nextTension)
     }
     if (!correct) setFlickerKey((k) => k + 1)
+    if (hasTension) setTension(nextTension)
 
     setProgress(nextProgress)
     setXpToast(xpGained > 0 ? `+${xpGained} XP${leveledUp ? ` — SEVİYE ${nextProgress.level}!` : ''}` : '')
@@ -134,11 +146,31 @@ export function ReviewScreen() {
   const isCorrect = isAnswered && options[selected]?.isCorrect
   const earnedBadges = resolveBadges(progress.badges)
 
+  const tensionStyle = hasTension
+    ? {
+        '--color-background': tensionVisuals.colors.background,
+        '--color-surface': tensionVisuals.colors.surface,
+        '--color-surface-strong': tensionVisuals.colors.surfaceStrong,
+        '--color-primary': tensionVisuals.colors.primary,
+        '--color-accent': tensionVisuals.colors.accent,
+        '--color-text': tensionVisuals.colors.text,
+        '--color-text-muted': tensionVisuals.colors.textMuted,
+        '--color-border': tensionVisuals.colors.border,
+        '--color-danger': tensionVisuals.colors.danger,
+        '--color-success': tensionVisuals.colors.success,
+        '--font-heading': tensionVisuals.fontHeading,
+        transition: 'color 0.5s ease',
+      }
+    : undefined
+
   return (
-    <div className="review-wrap">
+    <div
+      className={`review-wrap ${hasTension ? `tension-${tension}` : ''}`}
+      style={tensionStyle}
+    >
       <div className="review-stats">
         <span className="stat-rank">⚑ {rank}</span>
-        <span className="stat-streak">🔥 {progress.streak}</span>
+        <span className={`stat-streak tier-${streakTier(progress.streak)}`}>🔥 {progress.streak}</span>
         <span className="stat-xp">{animatedXp} XP</span>
       </div>
       <div className="level-bar">

@@ -5,6 +5,7 @@
  * @property {string} [correctSound] - Played on a correct review answer
  * @property {string} [incorrectSound] - Played on an incorrect review answer
  * @property {string} [startupSound] - Played once when the theme is first activated
+ * @property {string} [sfxVariant] - which procedural SFX set audio/sfx.js should use, e.g. "nautical"
  */
 
 /**
@@ -41,6 +42,14 @@
  */
 
 /**
+ * @typedef {Object} ThemeTensionLevel
+ * @property {string} name - display name, e.g. "La Terreur"
+ * @property {Partial<ThemeColors>} [colors] - overrides merged onto the theme's base colors
+ * @property {string} [emblem] - overrides the theme's base watermark glyph
+ * @property {string} [fontHeading] - overrides the theme's base heading font at this tension tier
+ */
+
+/**
  * @typedef {Object} ThemeConfig
  * @property {string} id - unique slug, e.g. "russian"
  * @property {string} name - display name, e.g. "Rusça"
@@ -60,6 +69,9 @@
  * @property {string} [stampFailLabel] - text stamped on a missed review answer
  * @property {string} [strugglingLabel] - tag shown on words currently missed/re-drilled, e.g. "DESERTOR"
  * @property {ThemeStage[]} [stages] - level-gated visual evolution; highest matching minLevel wins
+ * @property {ThemeTensionLevel[]} [tensionLevels] - ephemeral, session-local visual escalation
+ *   indexed by tier (0 = calmest); unlike `stages`, this is driven by in-session performance
+ *   (e.g. consecutive misses), not player level, and is applied only within the review screen
  */
 
 /** @type {ThemeColors} */
@@ -105,6 +117,7 @@ export function defineTheme(partial) {
     stampFailLabel: 'MISSED',
     strugglingLabel: '',
     stages: [],
+    tensionLevels: [],
     ...partial,
     colors: { ...DEFAULT_COLORS, ...partial.colors },
     effects: { ...DEFAULT_EFFECTS, ...partial.effects },
@@ -137,5 +150,24 @@ export function resolveThemeVisuals(theme, level) {
     colors: { ...theme.colors, ...(stage?.colors ?? {}) },
     emblem: stage?.emblem ?? theme.emblem,
     stageName: stage?.name ?? null,
+  }
+}
+
+/**
+ * Resolves the effective colors/emblem/heading-font for a theme at a given
+ * session-local tension tier (0 = calmest), merging any tensionLevels
+ * override onto the theme's base visuals. Unlike resolveThemeVisuals, this
+ * has nothing to do with player level or persisted progress.
+ * @param {ThemeConfig} theme
+ * @param {number} tier
+ * @returns {{colors: ThemeColors, emblem: string | undefined, fontHeading: string, name: string | null}}
+ */
+export function resolveTensionVisuals(theme, tier) {
+  const level = (theme.tensionLevels ?? [])[tier]
+  return {
+    colors: { ...theme.colors, ...(level?.colors ?? {}) },
+    emblem: level?.emblem ?? theme.emblem,
+    fontHeading: level?.fontHeading ?? theme.fontHeading,
+    name: level?.name ?? null,
   }
 }

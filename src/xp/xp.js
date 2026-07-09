@@ -100,3 +100,16 @@ export function computeStreak(lastActiveDate, today, previousStreak) {
 
   return 1
 }
+
+/**
+ * Maps a streak count to a visual growth tier (0-3), used to scale the
+ * flame indicator so a long streak actually feels bigger, not just numeric.
+ * @param {number} streak
+ * @returns {0 | 1 | 2 | 3}
+ */
+export function streakTier(streak) {
+  if (streak >= 14) return 3
+  if (streak >= 7) return 2
+  if (streak >= 3) return 1
+  return 0
+}
