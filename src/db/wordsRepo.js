@@ -8,6 +8,7 @@ import { gradeReview } from '../sm2/sm2.js'
  * @property {string} term - the word in the source language
  * @property {string} translation - English translation (lingua franca layer)
  * @property {string} [fact] - short historical/thematic trivia, pre-authored
+ * @property {string} [transliteration] - Latin pronunciation hint, e.g. "radost'"
  * @property {string} createdAt - ISO timestamp
  * @property {number} repetition - SM-2: number of consecutive correct reviews
  * @property {number} interval - SM-2: days until next review
@@ -17,10 +18,10 @@ import { gradeReview } from '../sm2/sm2.js'
  */
 
 /**
- * @param {{themeId: string, term: string, translation: string, fact?: string}} input
+ * @param {{themeId: string, term: string, translation: string, fact?: string, transliteration?: string}} input
  * @returns {Promise<WordEntry>}
  */
-export async function addWord({ themeId, term, translation, fact = '' }) {
+export async function addWord({ themeId, term, translation, fact = '', transliteration = '' }) {
   const now = new Date().toISOString()
   /** @type {WordEntry} */
   const word = {
@@ -28,6 +29,7 @@ export async function addWord({ themeId, term, translation, fact = '' }) {
     term,
     translation,
     fact,
+    transliteration,
     createdAt: now,
     repetition: 0,
     interval: 0,

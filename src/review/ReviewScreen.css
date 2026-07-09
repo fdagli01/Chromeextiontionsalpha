@@ -105,6 +105,15 @@
   letter-spacing: 0.03em;
 }
 
+.term-translit {
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--color-accent);
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
 .options-list {
   display: flex;
   flex-direction: column;

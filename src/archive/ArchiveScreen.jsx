@@ -40,6 +40,7 @@ export function ArchiveScreen() {
             </button>
             <span className="archive-translation">{word.translation || '(çeviri yok)'}</span>
           </div>
+          {word.transliteration && <div className="archive-translit">[ {word.transliteration} ]</div>}
           {word.fact && <div className="archive-fact">{word.fact}</div>}
           <div className="archive-meta">
             <span>

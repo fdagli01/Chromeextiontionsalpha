@@ -154,6 +154,7 @@ export function ReviewScreen() {
       <div className={`term-card ${flickerKey > 0 ? 'fx-error-flicker' : ''}`} key={flickerKey}>
         <div className="term-eyebrow">TARGET ACQUIRED</div>
         <div className="term-word">{current.term}</div>
+        {current.transliteration && <div className="term-translit">[ {current.transliteration} ]</div>}
       </div>
 
       <div className="options-list">

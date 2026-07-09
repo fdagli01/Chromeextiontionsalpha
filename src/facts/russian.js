@@ -12,6 +12,14 @@ export const RUSSIAN_FACTS = {
   'гласность': 'Türkçe: "açıklık". Gorbaçov\'un 1980\'lerdeki şeffaflık politikasının adıydı, Sovyet basın sansürünü gevşetti.',
   'перестройка': 'Türkçe: "yeniden yapılanma". Gorbaçov\'un ekonomik ve siyasi reform programının adıydı, SSCB\'nin çöküşüne zemin hazırladı.',
   'кремль': 'Türkçe: "kale/hisar". Moskova Kremlin\'i, Rus hükümetinin simgesi haline geldi; kelimenin kendisi bir iç kale anlamına gelir.',
+  'шпион': 'Türkçe: "casus". Soğuk Savaş boyunca KGB ve CIA arasındaki casus takası operasyonları (Glienicke Köprüsü gibi) efsaneleşmiştir.',
+  'агент': 'Türkçe: "ajan". KGB\'nin kod adlı ajanları, Batı istihbarat servislerine sızmak için onlarca yıl derin örtü (deep cover) kimlikleriyle yaşadı.',
+  'секрет': 'Türkçe: "sır". "Совершенно секретно" ("Tamamen gizli") Sovyet belgelerinde en yüksek gizlilik derecesiydi.',
+  'свобода': 'Türkçe: "özgürlük". "Radio Svoboda" (Özgürlük Radyosu), Soğuk Savaş boyunca Demir Perde\'nin arkasına sansürsüz yayın yapan bir ABD destekli istasyondu.',
+  'граница': 'Türkçe: "sınır". Demir Perde boyunca uzanan sınırlar, dünyanın en ağır korunan ve mayınlı bölgeleriydi.',
+  'ракета': 'Türkçe: "roket". Sovyet roket programı 1957\'de dünyanın ilk kıtalararası balistik füzesini (R-7) geliştirdi.',
+  'революция': 'Türkçe: "devrim". 1917 Ekim Devrimi, Bolşevikleri iktidara taşıyarak SSCB\'nin kuruluşuna zemin hazırladı.',
+  'партия': 'Türkçe: "parti". Sovyetler Birliği Komünist Partisi (KPSS), ülkenin tek yasal siyasi partisiydi ve devletin tüm kademelerini kontrol ederdi.',
 }
 
 /**
