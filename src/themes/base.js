@@ -28,6 +28,7 @@
  * @property {boolean} scanlines
  * @property {boolean} flickerOnError
  * @property {boolean} stampOnAdd
+ * @property {boolean} watermark - faint emblem centered behind all content
  */
 
 /**
@@ -42,6 +43,7 @@
  * @property {ThemeAudio} audio
  * @property {ThemeEffects} effects
  * @property {string[]} [rankNames] - optional level-based rank names for this theme
+ * @property {string} [emblem] - single character/glyph rendered as the watermark
  */
 
 /** @type {ThemeColors} */
@@ -65,6 +67,7 @@ export const DEFAULT_EFFECTS = {
   scanlines: false,
   flickerOnError: false,
   stampOnAdd: false,
+  watermark: false,
 }
 
 /**

@@ -5,6 +5,7 @@ import { getDueWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
 import { awardReviewXp } from '../xp/xpService.js'
+import { resolveBadges } from '../badges/badges.js'
 import { playStamp, playSoftMiss } from '../audio/sfx.js'
 import { levelProgress, rankForLevel } from '../xp/xp.js'
 import { QUALITY } from '../sm2/sm2.js'
@@ -26,6 +27,8 @@ export function ReviewScreen() {
   const [selected, setSelected] = useState(null)
   const [progress, setProgress] = useState(null)
   const [xpToast, setXpToast] = useState('')
+  const [badgeToast, setBadgeToast] = useState(null)
+  const [flickerKey, setFlickerKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -45,6 +48,7 @@ export function ReviewScreen() {
     if (!current) return
     setSelected(null)
     setXpToast('')
+    setBadgeToast(null)
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
       const opts = shuffle([
         { label: current.translation || '(çeviri yok)', isCorrect: true },
@@ -55,6 +59,58 @@ export function ReviewScreen() {
   }, [current?.id, theme.id])
 
   const animatedXp = useAnimatedNumber(progress?.xp ?? 0)
+  const isAnswered = selected !== null
+
+  async function pick(index) {
+    if (isAnswered || !options[index]) return
+    setSelected(index)
+    const correct = options[index].isCorrect
+    const quality = correct ? QUALITY.GOOD : QUALITY.AGAIN
+
+    await reviewWord(current.id, quality)
+    const { progress: nextProgress, xpGained, leveledUp, newBadges } = await awardReviewXp(
+      theme.id,
+      quality
+    )
+
+    if (await getSetting('sfxEnabled', true)) {
+      if (correct) playStamp()
+      else playSoftMiss()
+    }
+    if (!correct) setFlickerKey((k) => k + 1)
+
+    setProgress(nextProgress)
+    setXpToast(xpGained > 0 ? `+${xpGained} XP${leveledUp ? ` — SEVİYE ${nextProgress.level}!` : ''}` : '')
+    setBadgeToast(newBadges.length > 0 ? newBadges[0] : null)
+  }
+
+  function nextWord() {
+    const wasCorrect = options[selected]?.isCorrect
+    const rest = queue.slice(1)
+    setQueue(!wasCorrect ? [...rest, { ...current, dueDate: new Date().toISOString() }] : rest)
+    setSelected(null)
+    setXpToast('')
+    setBadgeToast(null)
+  }
+
+  // Interrogation-room keyboard protocol: 1/2/3 pick an answer, Enter advances.
+  useEffect(() => {
+    if (!current) return
+    function onKeyDown(e) {
+      if (!isAnswered) {
+        const index = Number.parseInt(e.key, 10) - 1
+        if (index >= 0 && index < options.length) {
+          e.preventDefault()
+          pick(index)
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault()
+        nextWord()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  })
 
   if (queue === null || progress === null) {
     return <p className="empty-state">Yükleniyor...</p>
@@ -71,38 +127,8 @@ export function ReviewScreen() {
   const { level, xpIntoLevel, xpToNextLevel } = levelProgress(progress.xp)
   const rank = rankForLevel(theme.rankNames, level)
   const barPct = xpToNextLevel > 0 ? Math.round((xpIntoLevel / xpToNextLevel) * 100) : 100
-  const isAnswered = selected !== null
   const isCorrect = isAnswered && options[selected]?.isCorrect
-
-  async function pick(index) {
-    if (isAnswered) return
-    setSelected(index)
-    const correct = options[index].isCorrect
-    const quality = correct ? QUALITY.GOOD : QUALITY.AGAIN
-
-    await reviewWord(current.id, quality)
-    const { progress: nextProgress, xpGained, leveledUp } = await awardReviewXp(theme.id, quality)
-
-    if (await getSetting('sfxEnabled', true)) {
-      if (correct) playStamp()
-      else playSoftMiss()
-    }
-
-    setProgress(nextProgress)
-    setXpToast(
-      xpGained > 0
-        ? `+${xpGained} XP${leveledUp ? ` — SEVİYE ${nextProgress.level}!` : ''}`
-        : ''
-    )
-  }
-
-  function nextWord() {
-    const wasCorrect = options[selected]?.isCorrect
-    const rest = queue.slice(1)
-    setQueue(!wasCorrect ? [...rest, { ...current, dueDate: new Date().toISOString() }] : rest)
-    setSelected(null)
-    setXpToast('')
-  }
+  const earnedBadges = resolveBadges(progress.badges)
 
   return (
     <div className="review-wrap">
@@ -115,7 +141,17 @@ export function ReviewScreen() {
         <div className="level-bar-fill" style={{ width: `${barPct}%` }} />
       </div>
 
-      <div className="term-card">
+      {earnedBadges.length > 0 && (
+        <div className="badges-row">
+          {earnedBadges.map((b) => (
+            <span className="badge-chip" key={b.id} title={b.name}>
+              {b.icon}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className={`term-card ${flickerKey > 0 ? 'fx-error-flicker' : ''}`} key={flickerKey}>
         <div className="term-eyebrow">TARGET ACQUIRED</div>
         <div className="term-word">{current.term}</div>
       </div>
@@ -142,6 +178,12 @@ export function ReviewScreen() {
           {isCorrect
             ? `CLASSIFIED! Superb! The Politburo is watching.${xpToast ? ` (${xpToast})` : ''}`
             : `MISSION FAILED. Target re-enters priority queue.${xpToast ? ` (${xpToast})` : ''}`}
+        </div>
+      )}
+
+      {isAnswered && badgeToast && (
+        <div className="badge-toast">
+          {badgeToast.icon} YENİ ROZET: {badgeToast.name}
         </div>
       )}
 

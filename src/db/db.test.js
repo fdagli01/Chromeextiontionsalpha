@@ -61,13 +61,27 @@ describe('wordsRepo', () => {
 describe('progressRepo', () => {
   it('returns default progress for an unseen theme', async () => {
     const progress = await getProgress('russian')
-    expect(progress).toEqual({ themeId: 'russian', xp: 0, level: 1, streak: 0, lastActiveDate: null })
+    expect(progress).toEqual({
+      themeId: 'russian',
+      xp: 0,
+      level: 1,
+      streak: 0,
+      lastActiveDate: null,
+      badges: [],
+    })
   })
 
   it('saves and merges progress updates', async () => {
     await saveProgress('russian', { xp: 50, streak: 1 })
     const updated = await saveProgress('russian', { xp: 70 })
-    expect(updated).toEqual({ themeId: 'russian', xp: 70, level: 1, streak: 1, lastActiveDate: null })
+    expect(updated).toEqual({
+      themeId: 'russian',
+      xp: 70,
+      level: 1,
+      streak: 1,
+      lastActiveDate: null,
+      badges: [],
+    })
   })
 })
 

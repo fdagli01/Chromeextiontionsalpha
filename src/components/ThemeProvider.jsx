@@ -57,6 +57,7 @@ export function ThemeProvider({ themeId, children }) {
   return (
     <ThemeContext.Provider value={theme}>
       <div className={effectClasses} style={style}>
+        {theme.effects.watermark && <div className="theme-watermark">{theme.emblem ?? '☭'}</div>}
         {children}
       </div>
     </ThemeContext.Provider>

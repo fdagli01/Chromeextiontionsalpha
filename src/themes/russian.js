@@ -25,12 +25,14 @@ export const russianTheme = defineTheme({
     correctSound: 'src/assets/audio/russian/correct.mp3',
     incorrectSound: 'src/assets/audio/russian/incorrect.mp3',
   },
+  emblem: '☭',
   effects: {
     paperTexture: true,
     vignette: true,
     scanlines: true,
-    flickerOnError: false,
+    flickerOnError: true,
     stampOnAdd: true,
+    watermark: true,
   },
   rankNames: [
     'Köylü',
