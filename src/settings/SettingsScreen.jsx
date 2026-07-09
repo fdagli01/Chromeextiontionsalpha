@@ -1,37 +1,18 @@
 import { useEffect, useState } from 'react'
 import { getSetting, setSetting } from '../db/settingsRepo.js'
 import { listThemes } from '../themes/index.js'
-import { startRussianRadio, stopRadio } from '../audio/radioEngine.js'
+import { pauseRadio } from '../audio/radioPlayer.js'
 import './SettingsScreen.css'
 
-const RADIO_STARTERS = {
-  russian: startRussianRadio,
-}
-
 export function SettingsScreen({ activeThemeId, onThemeChange }) {
-  const [radioEnabled, setRadioEnabled] = useState(null)
   const [sfxEnabled, setSfxEnabled] = useState(null)
 
   useEffect(() => {
-    getSetting('radioEnabled', true).then(setRadioEnabled)
     getSetting('sfxEnabled', true).then(setSfxEnabled)
   }, [])
 
-  if (radioEnabled === null || sfxEnabled === null) {
+  if (sfxEnabled === null) {
     return <p className="empty-state">Yükleniyor...</p>
-  }
-
-  async function toggleRadio() {
-    const next = !radioEnabled
-    setRadioEnabled(next)
-    await setSetting('radioEnabled', next)
-
-    if (next) {
-      const starter = RADIO_STARTERS[activeThemeId]
-      if (starter) starter()
-    } else {
-      stopRadio()
-    }
   }
 
   async function toggleSfx() {
@@ -41,7 +22,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
   }
 
   async function changeTheme(themeId) {
-    stopRadio()
+    pauseRadio()
     await setSetting('activeThemeId', themeId)
     onThemeChange(themeId)
   }
@@ -50,18 +31,8 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     <div className="settings-list">
       <div className="settings-row">
         <div className="settings-row-label">
-          <span className="title">Radyo Atmosferi</span>
-          <span className="hint">Tema müziği ve statik ses</span>
-        </div>
-        <button className={`toggle-button ${radioEnabled ? 'on' : ''}`} onClick={toggleRadio}>
-          {radioEnabled ? 'Açık' : 'Kapalı'}
-        </button>
-      </div>
-
-      <div className="settings-row">
-        <div className="settings-row-label">
           <span className="title">Ses Efektleri</span>
-          <span className="hint">Doğru/yanlış cevap sesleri</span>
+          <span className="hint">Doğru/yanlış cevap sesleri (damga/statik)</span>
         </div>
         <button className={`toggle-button ${sfxEnabled ? 'on' : ''}`} onClick={toggleSfx}>
           {sfxEnabled ? 'Açık' : 'Kapalı'}
@@ -81,6 +52,8 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
           ))}
         </select>
       </div>
+
+      <p className="settings-hint-block">Radyoyu açmak/kapatmak ve frekans değiştirmek için üstteki 📻 çubuğunu kullan.</p>
     </div>
   )
 }

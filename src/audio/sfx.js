@@ -43,3 +43,29 @@ export function playSoftMiss() {
   osc.start(now)
   osc.stop(now + 0.25)
 }
+
+function createNoiseBuffer(context, seconds) {
+  const length = Math.floor(context.sampleRate * seconds)
+  const buffer = context.createBuffer(1, length, context.sampleRate)
+  const data = buffer.getChannelData(0)
+  for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1
+  return buffer
+}
+
+/**
+ * Short radio-static burst, played when tuning in or switching channels.
+ */
+export function playStaticBurst() {
+  const context = getAudioContext()
+  const now = context.currentTime
+
+  const source = context.createBufferSource()
+  source.buffer = createNoiseBuffer(context, 0.7)
+
+  const gain = context.createGain()
+  gain.gain.setValueAtTime(0.12, now)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7)
+
+  source.connect(gain).connect(context.destination)
+  source.start(now)
+}

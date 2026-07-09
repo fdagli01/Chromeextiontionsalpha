@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useThemeConfig } from '../components/ThemeProvider.jsx'
 import { useAnimatedNumber } from '../components/useAnimatedNumber.js'
+import { Typewriter } from '../components/Typewriter.jsx'
 import { getDueWords, reviewWord } from '../db/wordsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
@@ -23,7 +24,8 @@ export function ReviewScreen() {
   const [revealed, setRevealed] = useState(false)
   const [progress, setProgress] = useState(null)
   const [xpToast, setXpToast] = useState('')
-  const [stampKey, setStampKey] = useState(0)
+  const [stamp, setStamp] = useState(null)
+  const [flickerKey, setFlickerKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -55,12 +57,14 @@ export function ReviewScreen() {
   async function grade(quality) {
     await reviewWord(current.id, quality)
     const { progress: nextProgress, xpGained, leveledUp } = await awardReviewXp(theme.id, quality)
+    const success = quality >= 3
 
     if (await getSetting('sfxEnabled', true)) {
-      if (quality >= 3) playStamp()
+      if (success) playStamp()
       else playSoftMiss()
     }
-    if (quality >= 3) setStampKey((k) => k + 1)
+    setStamp({ type: success ? 'success' : 'miss', key: Date.now() })
+    if (!success) setFlickerKey((k) => k + 1)
 
     setProgress(nextProgress)
     setXpToast(
@@ -85,17 +89,21 @@ export function ReviewScreen() {
         <div className="level-bar-fill" style={{ width: `${barPct}%` }} />
       </div>
 
-      <div className="review-card">
-        {stampKey > 0 && (
-          <div className="stamp-mark" key={stampKey}>
-            Одобрено
+      <div className={`review-card ${flickerKey > 0 ? 'fx-flicker' : ''}`} key={flickerKey}>
+        {stamp && (
+          <div className={`stamp-mark ${stamp.type}`} key={stamp.key}>
+            {stamp.type === 'success' ? 'Одобрено' : 'Отказано'}
           </div>
         )}
         <div className="term">{current.term}</div>
         {revealed && (
           <>
             <div className="translation">{current.translation || '(çeviri yok)'}</div>
-            {current.fact && <div className="fact">{current.fact}</div>}
+            {current.fact && (
+              <div className="fact">
+                <Typewriter text={current.fact} />
+              </div>
+            )}
           </>
         )}
       </div>

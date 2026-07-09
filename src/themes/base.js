@@ -11,6 +11,7 @@
  * @typedef {Object} ThemeColors
  * @property {string} background
  * @property {string} surface
+ * @property {string} surfaceStrong - a darker/bolder surface for header/nav chrome
  * @property {string} primary
  * @property {string} accent
  * @property {string} text
@@ -47,6 +48,7 @@
 export const DEFAULT_COLORS = {
   background: '#1a1a1a',
   surface: '#242424',
+  surfaceStrong: '#141414',
   primary: '#8b0000',
   accent: '#c9a227',
   text: '#e8e2d0',

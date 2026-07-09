@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ThemeProvider, useThemeConfig } from '../components/ThemeProvider.jsx'
+import { RadioBar } from '../components/RadioBar.jsx'
 import { DEFAULT_THEME_ID } from '../themes/index.js'
 import { getSetting } from '../db/settingsRepo.js'
 import { ReviewScreen } from '../review/ReviewScreen.jsx'
@@ -28,6 +29,7 @@ function AppShell({ activeThemeId, onThemeChange }) {
         <h1>{theme.name}</h1>
         <p className="era">{theme.era}</p>
       </header>
+      <RadioBar />
       <nav className="app-tabs">
         {TABS.map((tab) => (
           <button

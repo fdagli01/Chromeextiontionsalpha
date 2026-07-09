@@ -3,30 +3,33 @@
   justify-content: space-between;
   align-items: baseline;
   margin-bottom: 12px;
-  font-size: 12px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  text-transform: uppercase;
   color: var(--color-text-muted);
 }
 
 .review-header .rank {
   color: var(--color-accent);
-  font-weight: bold;
+  font-weight: 700;
 }
 
 .review-header .streak {
-  color: var(--color-primary);
+  color: #ff8a3d;
+  font-weight: 700;
 }
 
 .level-bar {
-  height: 4px;
-  background: var(--color-border);
-  border-radius: 2px;
+  height: 6px;
+  background: var(--color-surface-strong);
+  border: 1px solid var(--color-border);
   overflow: hidden;
   margin-bottom: 20px;
 }
 
 .level-bar-fill {
   height: 100%;
-  background: var(--color-accent);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
   transition: width 0.4s ease;
 }
 
@@ -34,19 +37,18 @@
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.02) 0%, transparent 40%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.03) 0%, transparent 40%),
     var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-top: 3px solid var(--color-primary);
-  border-radius: 2px;
-  padding: 24px 16px;
+  border: 2px solid var(--color-border);
+  border-top: 4px solid var(--color-primary);
+  padding: 26px 16px;
   text-align: center;
-  min-height: 140px;
+  min-height: 150px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.65);
 }
 
 .review-card::before {
@@ -54,6 +56,7 @@
   position: absolute;
   top: 6px;
   left: 10px;
+  font-family: var(--font-heading);
   font-size: 9px;
   letter-spacing: 0.15em;
   color: var(--color-text-muted);
@@ -62,34 +65,53 @@
 
 .review-card .term {
   font-family: var(--font-heading);
-  font-size: 26px;
+  font-weight: 700;
+  font-size: 30px;
   letter-spacing: 0.03em;
   color: var(--color-text);
-  text-shadow: 0 0 12px rgba(201, 162, 39, 0.25);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
 }
 
 .review-card .translation {
+  font-family: var(--font-heading);
   font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--color-accent);
 }
 
 .review-card .fact {
   font-size: 12px;
-  color: var(--color-text-muted);
+  font-family: 'Courier New', monospace;
+  color: #9de89d;
+  background: rgba(0, 0, 0, 0.35);
+  border-left: 3px solid var(--color-accent);
+  padding: 8px 10px;
+  text-align: left;
   line-height: 1.5;
-  margin-top: 8px;
+  margin-top: 10px;
+  min-height: 2.4em;
 }
 
 .reveal-button {
   width: 100%;
   margin-top: 16px;
-  padding: 10px;
+  padding: 11px;
   background: var(--color-primary);
-  color: var(--color-text);
-  border: none;
-  border-radius: 4px;
-  font-family: var(--font-body);
+  color: #fff;
+  border: 2px solid var(--color-accent);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
   cursor: pointer;
+}
+
+.reveal-button:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6);
 }
 
 .grade-buttons {
@@ -101,21 +123,33 @@
 
 .grade-buttons button {
   padding: 10px 4px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface-strong);
   color: var(--color-text);
-  font-family: var(--font-body);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
   font-size: 11px;
-  border-radius: 4px;
+  letter-spacing: 0.03em;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
   cursor: pointer;
 }
 
+.grade-buttons button:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
+}
+
 .grade-buttons button.again { border-color: var(--color-danger); color: var(--color-danger); }
+.grade-buttons button.hard { border-color: #ff8a3d; color: #ff8a3d; }
+.grade-buttons button.good { border-color: var(--color-accent); color: var(--color-accent); }
 .grade-buttons button.easy { border-color: var(--color-success); color: var(--color-success); }
 
 .xp-toast {
   text-align: center;
+  font-family: var(--font-heading);
   font-size: 12px;
+  font-weight: 700;
   color: var(--color-accent);
   margin-top: 10px;
   min-height: 16px;

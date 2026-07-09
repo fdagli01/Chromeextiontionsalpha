@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { getTheme } from '../themes/index.js'
+import '../styles/fonts.css'
 import '../styles/effects.css'
 
 const ThemeContext = createContext(null)
@@ -29,6 +30,7 @@ export function ThemeProvider({ themeId, children }) {
     () => ({
       '--color-background': theme.colors.background,
       '--color-surface': theme.colors.surface,
+      '--color-surface-strong': theme.colors.surfaceStrong,
       '--color-primary': theme.colors.primary,
       '--color-accent': theme.colors.accent,
       '--color-text': theme.colors.text,
