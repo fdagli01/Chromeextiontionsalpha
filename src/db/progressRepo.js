@@ -8,6 +8,9 @@ import { STORE_PROGRESS, withStore } from './connection.js'
  * @property {number} streak - consecutive days with at least one review
  * @property {string|null} lastActiveDate - ISO date (YYYY-MM-DD) of last activity
  * @property {string[]} badges - ids of earned badges, see badges/badges.js
+ * @property {string|null} dailyQuestDate - ISO date (YYYY-MM-DD) dailyReviewCount is counting for
+ * @property {number} dailyReviewCount - reviews graded on dailyQuestDate
+ * @property {boolean} dailyQuestClaimed - whether today's quest bonus XP has been awarded
  */
 
 /**
@@ -15,7 +18,17 @@ import { STORE_PROGRESS, withStore } from './connection.js'
  * @returns {ThemeProgress}
  */
 function emptyProgress(themeId) {
-  return { themeId, xp: 0, level: 1, streak: 0, lastActiveDate: null, badges: [] }
+  return {
+    themeId,
+    xp: 0,
+    level: 1,
+    streak: 0,
+    lastActiveDate: null,
+    badges: [],
+    dailyQuestDate: null,
+    dailyReviewCount: 0,
+    dailyQuestClaimed: false,
+  }
 }
 
 /**
@@ -25,7 +38,13 @@ function emptyProgress(themeId) {
 export async function getProgress(themeId) {
   const existing = await withStore(STORE_PROGRESS, 'readonly', (store) => store.get(themeId))
   if (!existing) return emptyProgress(themeId)
-  return { badges: [], ...existing }
+  return {
+    badges: [],
+    dailyQuestDate: null,
+    dailyReviewCount: 0,
+    dailyQuestClaimed: false,
+    ...existing,
+  }
 }
 
 /**

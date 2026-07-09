@@ -80,6 +80,9 @@ describe('progressRepo', () => {
       streak: 0,
       lastActiveDate: null,
       badges: [],
+      dailyQuestDate: null,
+      dailyReviewCount: 0,
+      dailyQuestClaimed: false,
     })
   })
 
@@ -93,6 +96,9 @@ describe('progressRepo', () => {
       streak: 1,
       lastActiveDate: null,
       badges: [],
+      dailyQuestDate: null,
+      dailyReviewCount: 0,
+      dailyQuestClaimed: false,
     })
   })
 })

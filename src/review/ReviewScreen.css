@@ -84,6 +84,19 @@
   transition: width 0.4s ease;
 }
 
+.daily-quest-row {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.daily-quest-row.done {
+  color: var(--color-success);
+}
+
 .badges-row {
   display: flex;
   gap: 5px;

@@ -4,7 +4,7 @@ import { useAnimatedNumber } from '../components/useAnimatedNumber.js'
 import { getDueWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
-import { awardReviewXp } from '../xp/xpService.js'
+import { awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
 import { resolveBadges } from '../badges/badges.js'
 import { playMissSfx, playSuccessSfx } from '../audio/sfx.js'
 import { levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
@@ -29,6 +29,7 @@ export function ReviewScreen() {
   const [progress, setProgress] = useState(null)
   const [xpToast, setXpToast] = useState('')
   const [badgeToast, setBadgeToast] = useState(null)
+  const [questToast, setQuestToast] = useState(false)
   const [flickerKey, setFlickerKey] = useState(0)
   const [tension, setTension] = useState(0)
   const hasTension = theme.tensionLevels.length > 0
@@ -54,6 +55,7 @@ export function ReviewScreen() {
     setSelected(null)
     setXpToast('')
     setBadgeToast(null)
+    setQuestToast(false)
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
       const opts = shuffle([
         { label: current.translation || '(çeviri yok)', isCorrect: true },
@@ -73,7 +75,7 @@ export function ReviewScreen() {
     const quality = correct ? QUALITY.GOOD : QUALITY.AGAIN
 
     await reviewWord(current.id, quality)
-    const { progress: nextProgress, xpGained, leveledUp, newBadges } = await awardReviewXp(
+    const { progress: nextProgress, xpGained, leveledUp, newBadges, dailyQuest } = await awardReviewXp(
       theme.id,
       quality
     )
@@ -94,6 +96,7 @@ export function ReviewScreen() {
     setProgress(nextProgress)
     setXpToast(xpGained > 0 ? `+${xpGained} XP${leveledUp ? ` — SEVİYE ${nextProgress.level}!` : ''}` : '')
     setBadgeToast(newBadges.length > 0 ? newBadges[0] : null)
+    setQuestToast(dailyQuest.justCompleted)
   }
 
   function nextWord() {
@@ -107,6 +110,7 @@ export function ReviewScreen() {
     setSelected(null)
     setXpToast('')
     setBadgeToast(null)
+    setQuestToast(false)
   }
 
   // Interrogation-room keyboard protocol: 1/2/3 pick an answer, Enter advances.
@@ -145,6 +149,9 @@ export function ReviewScreen() {
   const barPct = xpToNextLevel > 0 ? Math.round((xpIntoLevel / xpToNextLevel) * 100) : 100
   const isCorrect = isAnswered && options[selected]?.isCorrect
   const earnedBadges = resolveBadges(progress.badges)
+  const today = new Date().toISOString().slice(0, 10)
+  const dailyQuestDone = progress.dailyQuestDate === today && progress.dailyQuestClaimed
+  const dailyQuestCount = progress.dailyQuestDate === today ? progress.dailyReviewCount : 0
 
   const tensionStyle = hasTension
     ? {
@@ -175,6 +182,11 @@ export function ReviewScreen() {
       </div>
       <div className="level-bar">
         <div className="level-bar-fill" style={{ width: `${barPct}%` }} />
+      </div>
+
+      <div className={`daily-quest-row ${dailyQuestDone ? 'done' : ''}`}>
+        🎯 Günlük görev: {Math.min(dailyQuestCount, DAILY_QUEST_TARGET)}/{DAILY_QUEST_TARGET}
+        {dailyQuestDone ? ' ✓' : ''}
       </div>
 
       {earnedBadges.length > 0 && (
@@ -227,6 +239,10 @@ export function ReviewScreen() {
         <div className="badge-toast">
           {badgeToast.icon} YENİ ROZET: {badgeToast.name}
         </div>
+      )}
+
+      {isAnswered && questToast && (
+        <div className="badge-toast">🎯 GÜNLÜK GÖREV TAMAMLANDI! +{DAILY_QUEST_BONUS_XP} XP</div>
       )}
 
       {isAnswered && current.fact && (
