@@ -1,0 +1,102 @@
+import { QUALITY } from '../sm2/sm2.js'
+
+/**
+ * XP awarded per review outcome. A failed recall (AGAIN) earns no XP —
+ * capturing/reviewing is free, but XP rewards actual retention.
+ * @type {Record<number, number>}
+ */
+export const XP_BY_QUALITY = {
+  [QUALITY.AGAIN]: 0,
+  [QUALITY.HARD]: 5,
+  [QUALITY.GOOD]: 10,
+  [QUALITY.EASY]: 15,
+}
+
+/**
+ * @param {number} quality
+ * @returns {number}
+ */
+export function xpForQuality(quality) {
+  return XP_BY_QUALITY[quality] ?? 0
+}
+
+/**
+ * Triangular XP curve: level L requires 100*(L-1) more XP than level L-1,
+ * so cumulative XP needed to reach level L is 100 * L*(L-1)/2. Leveling
+ * gets progressively harder without needing a lookup table.
+ * @param {number} xp
+ * @returns {number}
+ */
+export function levelForXp(xp) {
+  let level = 1
+  let cumulative = 0
+  let increment = 100
+  while (xp >= cumulative + increment) {
+    cumulative += increment
+    level += 1
+    increment += 100
+  }
+  return level
+}
+
+/**
+ * @param {number} level
+ * @returns {number} cumulative XP required to reach this level
+ */
+export function xpRequiredForLevel(level) {
+  let cumulative = 0
+  let increment = 100
+  for (let l = 1; l < level; l++) {
+    cumulative += increment
+    increment += 100
+  }
+  return cumulative
+}
+
+/**
+ * @param {number} xp
+ * @returns {{level: number, xpIntoLevel: number, xpToNextLevel: number}}
+ */
+export function levelProgress(xp) {
+  const level = levelForXp(xp)
+  const currentLevelFloor = xpRequiredForLevel(level)
+  const nextLevelFloor = xpRequiredForLevel(level + 1)
+  return {
+    level,
+    xpIntoLevel: xp - currentLevelFloor,
+    xpToNextLevel: nextLevelFloor - currentLevelFloor,
+  }
+}
+
+/**
+ * @param {string[]} rankNames - theme-specific rank names, ordered by level
+ * @param {number} level
+ * @returns {string} the rank name for this level, clamped to the last known rank
+ */
+export function rankForLevel(rankNames, level) {
+  if (!rankNames || rankNames.length === 0) return `Seviye ${level}`
+  const index = Math.min(level - 1, rankNames.length - 1)
+  return rankNames[index]
+}
+
+/**
+ * Computes the updated streak count given the last active date and today's
+ * date (both as YYYY-MM-DD strings). Consecutive days increment the streak,
+ * a gap resets it to 1, and re-triggering on the same day is a no-op.
+ * @param {string|null} lastActiveDate
+ * @param {string} today - YYYY-MM-DD
+ * @param {number} previousStreak
+ * @returns {number}
+ */
+export function computeStreak(lastActiveDate, today, previousStreak) {
+  if (lastActiveDate === today) return previousStreak
+
+  if (lastActiveDate) {
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayStr = yesterday.toISOString().slice(0, 10)
+    if (lastActiveDate === yesterdayStr) return previousStreak + 1
+  }
+
+  return 1
+}

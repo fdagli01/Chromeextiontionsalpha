@@ -1,0 +1,46 @@
+import { defineTheme } from './base.js'
+
+export const russianTheme = defineTheme({
+  id: 'russian',
+  name: 'Rusça',
+  sourceLanguageCode: 'ru',
+  era: 'Soğuk Savaş / KGB Arşivi',
+  fontHeading: '"Courier New", monospace',
+  fontBody: '"Courier New", monospace',
+  colors: {
+    background: '#1c1a16',
+    surface: '#26231d',
+    primary: '#8b0000',
+    accent: '#c9a227',
+    text: '#e8e2d0',
+    textMuted: '#9a9282',
+    border: '#4a4335',
+    danger: '#b22222',
+    success: '#5c7a3f',
+  },
+  audio: {
+    radioTrack: 'src/assets/audio/russian/radio-loop.mp3',
+    stampSound: 'src/assets/audio/russian/stamp.mp3',
+    correctSound: 'src/assets/audio/russian/correct.mp3',
+    incorrectSound: 'src/assets/audio/russian/incorrect.mp3',
+  },
+  effects: {
+    paperTexture: true,
+    vignette: true,
+    scanlines: true,
+    flickerOnError: false,
+    stampOnAdd: true,
+  },
+  rankNames: [
+    'Acemi Ajan',
+    'Gözlemci',
+    'Şifreci',
+    'Saha Ajanı',
+    'Kıdemli Ajan',
+    'Yüzbaşı',
+    'Binbaşı',
+    'Albay',
+    'General',
+    'Halk Komiseri',
+  ],
+})
