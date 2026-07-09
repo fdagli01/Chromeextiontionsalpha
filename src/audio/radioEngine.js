@@ -2,17 +2,29 @@ import { getAudioContext } from './context.js'
 
 /**
  * Procedurally generated radio atmosphere — no audio files to ship or load.
- * Layers a filtered noise "static" bed under a slow minor-key march motif,
- * built entirely from Web Audio oscillators/buffers.
+ * A driving minor-key march (melody + bass + percussion) plays under a
+ * filtered noise bed, with occasional static crackle bursts for realism.
+ * Everything is synthesized with Web Audio oscillators/buffers.
  */
 
-// A minor-key march motif (A natural minor), looped with a fixed cadence.
-const MARCH_NOTES_HZ = [220, 220, 261.63, 220, 196, 220, 246.94, 220]
-const NOTE_INTERVAL_MS = 420
+const TEMPO_BPM = 100
+const BEAT_MS = (60 / TEMPO_BPM) * 1000 // eighth-note grid
+
+// A 16-step march phrase in A natural minor. 0 = rest.
+const MELODY_HZ = [
+  220, 0, 261.63, 220, 196, 0, 220, 246.94,
+  261.63, 0, 293.66, 261.63, 220, 0, 246.94, 196,
+]
+// Bass drum on the strong beats of the phrase (every 4th eighth-note step).
+const KICK_STEPS = new Set([0, 4, 8, 12])
+// Snare-like noise hit on the backbeat.
+const SNARE_STEPS = new Set([2, 6, 10, 14])
 
 let noiseSource = null
 let masterGain = null
-let marchIntervalId = null
+let stepIntervalId = null
+let crackleTimeoutId = null
+let stepIndex = 0
 
 function createNoiseBuffer(context, seconds = 2) {
   const length = Math.floor(context.sampleRate * seconds)
@@ -22,20 +34,83 @@ function createNoiseBuffer(context, seconds = 2) {
   return buffer
 }
 
-function playMarchNote(context, destination, index) {
+function playMelodyNote(context, destination, freq, accent) {
+  if (!freq) return
   const osc = context.createOscillator()
   osc.type = 'triangle'
-  osc.frequency.value = MARCH_NOTES_HZ[index % MARCH_NOTES_HZ.length]
+  osc.frequency.value = freq
 
-  const noteGain = context.createGain()
   const now = context.currentTime
-  noteGain.gain.setValueAtTime(0.0001, now)
-  noteGain.gain.linearRampToValueAtTime(0.35, now + 0.02)
-  noteGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35)
+  const peak = accent ? 0.4 : 0.28
+  const gain = context.createGain()
+  gain.gain.setValueAtTime(0.0001, now)
+  gain.gain.linearRampToValueAtTime(peak, now + 0.015)
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3)
 
-  osc.connect(noteGain).connect(destination)
+  osc.connect(gain).connect(destination)
   osc.start(now)
-  osc.stop(now + 0.4)
+  osc.stop(now + 0.32)
+}
+
+function playKick(context, destination) {
+  const osc = context.createOscillator()
+  osc.type = 'sine'
+  const now = context.currentTime
+  osc.frequency.setValueAtTime(110, now)
+  osc.frequency.exponentialRampToValueAtTime(45, now + 0.12)
+
+  const gain = context.createGain()
+  gain.gain.setValueAtTime(0.5, now)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16)
+
+  osc.connect(gain).connect(destination)
+  osc.start(now)
+  osc.stop(now + 0.18)
+}
+
+function playSnare(context, destination) {
+  const now = context.currentTime
+  const source = context.createBufferSource()
+  source.buffer = createNoiseBuffer(context, 0.2)
+
+  const filter = context.createBiquadFilter()
+  filter.type = 'highpass'
+  filter.frequency.value = 1500
+
+  const gain = context.createGain()
+  gain.gain.setValueAtTime(0.25, now)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1)
+
+  source.connect(filter).connect(gain).connect(destination)
+  source.start(now)
+  source.stop(now + 0.1)
+}
+
+function playCrackle(context, destination) {
+  const now = context.currentTime
+  const source = context.createBufferSource()
+  source.buffer = createNoiseBuffer(context, 0.15)
+
+  const filter = context.createBiquadFilter()
+  filter.type = 'bandpass'
+  filter.frequency.value = 3000 + Math.random() * 2000
+
+  const gain = context.createGain()
+  gain.gain.setValueAtTime(0.0001, now)
+  gain.gain.linearRampToValueAtTime(0.35, now + 0.01)
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1 + Math.random() * 0.08)
+
+  source.connect(filter).connect(gain).connect(destination)
+  source.start(now)
+  source.stop(now + 0.2)
+}
+
+function scheduleCrackle(context, destination) {
+  const delay = 2500 + Math.random() * 5000
+  crackleTimeoutId = setTimeout(() => {
+    playCrackle(context, destination)
+    scheduleCrackle(context, destination)
+  }, delay)
 }
 
 /**
@@ -43,7 +118,7 @@ function playMarchNote(context, destination, index) {
  * a second call while already running is a no-op.
  * @param {number} volume - 0 to 1
  */
-export function startRussianRadio(volume = 0.12) {
+export function startRussianRadio(volume = 0.16) {
   if (noiseSource) return
 
   const context = getAudioContext()
@@ -58,7 +133,7 @@ export function startRussianRadio(volume = 0.12) {
   staticFilter.Q.value = 0.7
 
   const staticGain = context.createGain()
-  staticGain.gain.value = 0.5
+  staticGain.gain.value = 0.35
 
   noiseSource = context.createBufferSource()
   noiseSource.buffer = createNoiseBuffer(context)
@@ -66,18 +141,28 @@ export function startRussianRadio(volume = 0.12) {
   noiseSource.connect(staticFilter).connect(staticGain).connect(masterGain)
   noiseSource.start()
 
-  let noteIndex = 0
-  marchIntervalId = setInterval(() => {
-    playMarchNote(context, masterGain, noteIndex)
-    noteIndex += 1
-  }, NOTE_INTERVAL_MS)
+  stepIndex = 0
+  stepIntervalId = setInterval(() => {
+    const i = stepIndex % MELODY_HZ.length
+    const accent = i % 4 === 0
+    playMelodyNote(context, masterGain, MELODY_HZ[i], accent)
+    if (KICK_STEPS.has(i)) playKick(context, masterGain)
+    if (SNARE_STEPS.has(i)) playSnare(context, masterGain)
+    stepIndex += 1
+  }, BEAT_MS)
+
+  scheduleCrackle(context, masterGain)
 }
 
 /** Stops and tears down the radio atmosphere. Safe to call when not running. */
 export function stopRadio() {
-  if (marchIntervalId) {
-    clearInterval(marchIntervalId)
-    marchIntervalId = null
+  if (stepIntervalId) {
+    clearInterval(stepIntervalId)
+    stepIntervalId = null
+  }
+  if (crackleTimeoutId) {
+    clearTimeout(crackleTimeoutId)
+    crackleTimeoutId = null
   }
   if (noiseSource) {
     noiseSource.stop()

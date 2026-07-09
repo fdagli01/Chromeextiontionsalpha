@@ -15,10 +15,11 @@
 .app-header h1 {
   font-family: var(--font-heading);
   font-size: 18px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   margin: 0 0 4px;
   color: var(--color-accent);
+  text-shadow: 0 0 10px rgba(201, 162, 39, 0.35);
 }
 
 .app-header .era {

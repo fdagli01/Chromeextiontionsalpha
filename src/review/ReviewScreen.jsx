@@ -23,6 +23,7 @@ export function ReviewScreen() {
   const [revealed, setRevealed] = useState(false)
   const [progress, setProgress] = useState(null)
   const [xpToast, setXpToast] = useState('')
+  const [stampKey, setStampKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -59,6 +60,7 @@ export function ReviewScreen() {
       if (quality >= 3) playStamp()
       else playSoftMiss()
     }
+    if (quality >= 3) setStampKey((k) => k + 1)
 
     setProgress(nextProgress)
     setXpToast(
@@ -84,6 +86,11 @@ export function ReviewScreen() {
       </div>
 
       <div className="review-card">
+        {stampKey > 0 && (
+          <div className="stamp-mark" key={stampKey}>
+            Одобрено
+          </div>
+        )}
         <div className="term">{current.term}</div>
         {revealed && (
           <>
