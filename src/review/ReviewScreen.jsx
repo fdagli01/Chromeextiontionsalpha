@@ -5,7 +5,6 @@ import { getDueWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
 import { awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
-import { resolveBadges } from '../badges/badges.js'
 import { playMissSfx, playSuccessSfx } from '../audio/sfx.js'
 import { levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
 import { resolveTensionVisuals } from '../themes/index.js'
@@ -148,10 +147,11 @@ export function ReviewScreen() {
   const rank = rankForLevel(theme.rankNames, level)
   const barPct = xpToNextLevel > 0 ? Math.round((xpIntoLevel / xpToNextLevel) * 100) : 100
   const isCorrect = isAnswered && options[selected]?.isCorrect
-  const earnedBadges = resolveBadges(progress.badges)
   const today = new Date().toISOString().slice(0, 10)
-  const dailyQuestDone = progress.dailyQuestDate === today && progress.dailyQuestClaimed
-  const dailyQuestCount = progress.dailyQuestDate === today ? progress.dailyReviewCount : 0
+  const dailyQuestCount = Math.min(
+    progress.dailyQuestDate === today ? progress.dailyReviewCount : 0,
+    DAILY_QUEST_TARGET
+  )
 
   const tensionStyle = hasTension
     ? {
@@ -180,28 +180,21 @@ export function ReviewScreen() {
         <span className={`stat-streak tier-${streakTier(progress.streak)}`}>🔥 {progress.streak}</span>
         <span className="stat-xp">{animatedXp} XP</span>
       </div>
-      <div className="level-bar">
-        <div className="level-bar-fill" style={{ width: `${barPct}%` }} />
-      </div>
 
-      <div className={`daily-quest-row ${dailyQuestDone ? 'done' : ''}`}>
-        🎯 Günlük görev: {Math.min(dailyQuestCount, DAILY_QUEST_TARGET)}/{DAILY_QUEST_TARGET}
-        {dailyQuestDone ? ' ✓' : ''}
-      </div>
-
-      {earnedBadges.length > 0 && (
-        <div className="badges-row">
-          {earnedBadges.map((b) => (
-            <span className="badge-chip" key={b.id} title={b.name}>
-              {b.icon}
-            </span>
+      <div className="level-row">
+        <div className="level-bar">
+          <div className="level-bar-fill" style={{ width: `${barPct}%` }} />
+        </div>
+        <div className="quest-pips" title={`Günlük görev: ${dailyQuestCount}/${DAILY_QUEST_TARGET}`}>
+          {Array.from({ length: DAILY_QUEST_TARGET }).map((_, i) => (
+            <span key={i} className={`pip ${i < dailyQuestCount ? 'filled' : ''}`} />
           ))}
         </div>
-      )}
+      </div>
 
       <div className={`term-card ${flickerKey > 0 ? 'fx-error-flicker' : ''}`} key={flickerKey}>
         <div className="term-eyebrow">
-          TARGET ACQUIRED
+          {theme.eyebrowLabel}
           {current.struggling && theme.strugglingLabel && (
             <span className="struggling-tag">{theme.strugglingLabel}</span>
           )}
@@ -212,49 +205,48 @@ export function ReviewScreen() {
 
       <div className="options-list">
         {options.map((opt, i) => {
-          let cls = 'option-btn'
-          if (isAnswered) {
-            if (opt.isCorrect) cls += ' correct'
-            else if (i === selected) cls += ' wrong'
-            else cls += ' dimmed'
-          }
+          if (isAnswered && !opt.isCorrect && i !== selected) return null
+          const cls = `option-btn${isAnswered ? (opt.isCorrect ? ' correct' : ' wrong') : ''}`
           return (
             <button key={i} className={cls} onClick={() => pick(i)}>
               <span className="option-num">[{i + 1}]</span>
-              <span className="option-label">{opt.label.toUpperCase()}</span>
+              <span className="option-label">{opt.label}</span>
             </button>
           )
         })}
       </div>
 
       {isAnswered && (
-        <div className={`feedback-box ${isCorrect ? 'correct' : 'wrong'}`}>
-          {isCorrect
-            ? `${theme.stampSuccessLabel}${xpToast ? ` (${xpToast})` : ''}`
-            : `${theme.stampFailLabel}${xpToast ? ` (${xpToast})` : ''}`}
-        </div>
-      )}
+        <div className={`result-panel ${isCorrect ? 'correct' : 'wrong'}`}>
+          <div className="result-stamp">{isCorrect ? theme.stampSuccessWord : theme.stampFailWord}</div>
+          <div className="result-flavor">
+            {isCorrect ? theme.stampSuccessFlavor : theme.stampFailFlavor}
+            {xpToast && <span className="result-xp"> {xpToast}</span>}
+          </div>
 
-      {isAnswered && badgeToast && (
-        <div className="badge-toast">
-          {badgeToast.icon} YENİ ROZET: {badgeToast.name}
-        </div>
-      )}
+          {(badgeToast || questToast) && (
+            <div className="result-extras">
+              {badgeToast && (
+                <span className="result-chip">
+                  {badgeToast.icon} {badgeToast.name}
+                </span>
+              )}
+              {questToast && <span className="result-chip">🎯 +{DAILY_QUEST_BONUS_XP} XP</span>}
+            </div>
+          )}
 
-      {isAnswered && questToast && (
-        <div className="badge-toast">🎯 GÜNLÜK GÖREV TAMAMLANDI! +{DAILY_QUEST_BONUS_XP} XP</div>
-      )}
-
-      {isAnswered && current.fact && (
-        <div className="intel-box">
-          <div className="intel-label">◈ INTEL</div>
-          <div className="intel-text">{current.fact}</div>
+          {current.fact && (
+            <div className="result-intel">
+              <div className="result-intel-label">{theme.intelLabel}</div>
+              <div className="result-intel-text">{current.fact}</div>
+            </div>
+          )}
         </div>
       )}
 
       {isAnswered && (
         <button className="next-btn" onClick={nextWord}>
-          NEXT TARGET [ENTER] →
+          {theme.nextButtonLabel}
         </button>
       )}
     </div>

@@ -65,9 +65,15 @@
  * @property {string} [terminalName] - big header title, e.g. "K.G.B. TERMINAL"
  * @property {string} [terminalVersion] - small version tag next to the header title
  * @property {string} [tagline] - header subtitle line; "{level}" is replaced with the player's level
- * @property {string} [stampSuccessLabel] - text stamped on a correct review answer
- * @property {string} [stampFailLabel] - text stamped on a missed review answer
+ * @property {string} [stampSuccessWord] - short (<=12 char) foreign-language stamp word for a correct answer
+ * @property {string} [stampSuccessFlavor] - one-line Turkish flavor text shown under the success stamp
+ * @property {string} [stampFailWord] - short (<=12 char) foreign-language stamp word for a missed answer
+ * @property {string} [stampFailFlavor] - one-line Turkish flavor text shown under the fail stamp
  * @property {string} [strugglingLabel] - tag shown on words currently missed/re-drilled, e.g. "DESERTOR"
+ * @property {string} [eyebrowLabel] - small label above the term on the review card, e.g. "★ ЦЕЛЬ"
+ * @property {string} [nextButtonLabel] - label for the "next word" button
+ * @property {string} [intelLabel] - heading above the word's historical trivia box
+ * @property {string} [archiveStampLabel] - short stamp text on each archive dossier card, e.g. "TOP SECRET"
  * @property {ThemeStage[]} [stages] - level-gated visual evolution; highest matching minLevel wins
  * @property {ThemeTensionLevel[]} [tensionLevels] - ephemeral, session-local visual escalation
  *   indexed by tier (0 = calmest); unlike `stages`, this is driven by in-session performance
@@ -113,9 +119,15 @@ export function defineTheme(partial) {
     terminalName: 'TERMINAL',
     terminalVersion: '',
     tagline: '',
-    stampSuccessLabel: 'CORRECT',
-    stampFailLabel: 'MISSED',
+    stampSuccessWord: 'CORRECT',
+    stampSuccessFlavor: '',
+    stampFailWord: 'MISSED',
+    stampFailFlavor: '',
     strugglingLabel: '',
+    eyebrowLabel: 'TARGET',
+    nextButtonLabel: 'NEXT →',
+    intelLabel: 'INTEL',
+    archiveStampLabel: 'FILED',
     stages: [],
     tensionLevels: [],
     ...partial,

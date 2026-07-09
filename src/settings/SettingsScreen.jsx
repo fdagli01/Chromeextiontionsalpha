@@ -1,17 +1,30 @@
 import { useEffect, useState } from 'react'
 import { getSetting, setSetting } from '../db/settingsRepo.js'
+import { getProgress } from '../db/progressRepo.js'
 import { listThemes } from '../themes/index.js'
 import { pauseRadio } from '../audio/radioPlayer.js'
+import { BADGE_DEFS, resolveBadges } from '../badges/badges.js'
 import './SettingsScreen.css'
 
 export function SettingsScreen({ activeThemeId, onThemeChange }) {
   const [sfxEnabled, setSfxEnabled] = useState(null)
+  const [earnedBadges, setEarnedBadges] = useState(null)
 
   useEffect(() => {
     getSetting('sfxEnabled', true).then(setSfxEnabled)
   }, [])
 
-  if (sfxEnabled === null) {
+  useEffect(() => {
+    let cancelled = false
+    getProgress(activeThemeId).then((progress) => {
+      if (!cancelled) setEarnedBadges(resolveBadges(progress.badges))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [activeThemeId])
+
+  if (sfxEnabled === null || earnedBadges === null) {
     return <p className="empty-state">Yükleniyor...</p>
   }
 
@@ -51,6 +64,21 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="settings-badges">
+        <span className="title">Rozetler ({earnedBadges.length}/{BADGE_DEFS.length})</span>
+        {earnedBadges.length === 0 ? (
+          <p className="hint">Henüz rozet kazanmadın — tekrar yaparak kazan.</p>
+        ) : (
+          <div className="badges-grid">
+            {earnedBadges.map((b) => (
+              <span className="badge-chip" key={b.id} title={b.name}>
+                {b.icon} {b.name}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <p className="settings-hint-block">Radyoyu açmak/kapatmak ve frekans değiştirmek için üstteki 📻 çubuğunu kullan.</p>

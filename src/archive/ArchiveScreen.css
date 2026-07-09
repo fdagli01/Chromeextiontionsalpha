@@ -15,9 +15,9 @@
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
 }
 
-/* "TOP SECRET" stamp */
+/* Theme-specific dossier stamp (e.g. "TOP SECRET" for Russian) */
 .archive-item::before {
-  content: 'TOP SECRET';
+  content: var(--archive-stamp-text);
   position: absolute;
   top: 8px;
   right: 10px;
@@ -60,11 +60,9 @@
 }
 
 .archive-translation {
-  font-family: var(--font-heading);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
   color: var(--color-text-muted);
 }
 
@@ -88,9 +86,9 @@
 }
 
 .archive-fact {
-  font-size: 11px;
-  font-family: 'Courier New', monospace;
-  color: #9de89d;
+  font-size: 12px;
+  font-family: var(--font-body);
+  color: var(--color-success);
   background: rgba(0, 0, 0, 0.4);
   border-left: 3px solid var(--color-accent);
   padding: 5px 8px;

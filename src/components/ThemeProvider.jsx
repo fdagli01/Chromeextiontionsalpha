@@ -60,6 +60,7 @@ export function ThemeProvider({ themeId, children }) {
       '--color-success': visuals.colors.success,
       '--font-heading': theme.fontHeading,
       '--font-body': theme.fontBody,
+      '--archive-stamp-text': JSON.stringify(theme.archiveStampLabel),
     }),
     [visuals, theme]
   )
