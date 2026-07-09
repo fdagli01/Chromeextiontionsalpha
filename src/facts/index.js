@@ -1,8 +1,10 @@
 import { getRussianFact } from './russian.js'
+import { getItalianFact } from './italian.js'
 
 /** @type {Record<string, (term: string) => string>} */
 const FACT_PROVIDERS = {
   russian: getRussianFact,
+  italian: getItalianFact,
 }
 
 /**

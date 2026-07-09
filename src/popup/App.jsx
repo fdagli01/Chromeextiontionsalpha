@@ -55,12 +55,12 @@ function AppShell({ activeThemeId, onThemeChange }) {
   return (
     <div className="app">
       <header className="app-header">
-        <div className="app-header-emblem">☭</div>
+        <div className="app-header-emblem">{theme.emblem}</div>
         <div className="app-header-text">
           <h1>
-            K.G.B. TERMINAL <span className="header-ver">v14.0</span>
+            {theme.terminalName} <span className="header-ver">{theme.terminalVersion}</span>
           </h1>
-          <p className="era">Department of Intelligence &amp; Linguistics</p>
+          <p className="era">{theme.tagline.replace('{level}', theme.level)}</p>
         </div>
       </header>
 

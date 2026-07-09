@@ -1,5 +1,6 @@
 import { getProgress, saveProgress } from '../db/progressRepo.js'
 import { evaluateBadges } from '../badges/badges.js'
+import { emitProgressChanged } from './progressEvents.js'
 import { computeStreak, levelForXp, xpForQuality } from './xp.js'
 
 /**
@@ -34,6 +35,8 @@ export async function awardReviewXp(themeId, quality, now = new Date()) {
     lastActiveDate: today,
     badges,
   })
+
+  emitProgressChanged(themeId, progress)
 
   return { progress, xpGained, leveledUp: nextLevel > current.level, newBadges: newlyEarned }
 }

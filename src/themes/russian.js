@@ -26,6 +26,11 @@ export const russianTheme = defineTheme({
     incorrectSound: 'src/assets/audio/russian/incorrect.mp3',
   },
   emblem: '☭',
+  terminalName: 'K.G.B. TERMINAL',
+  terminalVersion: 'v14.0',
+  tagline: 'Department of Intelligence & Linguistics',
+  stampSuccessLabel: 'CLASSIFIED! Superb! The Politburo is watching.',
+  stampFailLabel: 'MISSION FAILED. Target re-enters priority queue.',
   effects: {
     paperTexture: true,
     vignette: true,

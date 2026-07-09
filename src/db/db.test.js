@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { _resetConnectionForTests } from './connection.js'
-import { addWord, deleteWord, getDueWords, getWord, getWordsByTheme, updateWord } from './wordsRepo.js'
+import { addWord, deleteWord, getDueWords, getWord, getWordsByTheme, reviewWord, updateWord } from './wordsRepo.js'
+import { QUALITY } from '../sm2/sm2.js'
 import { getProgress, saveProgress } from './progressRepo.js'
 import { getSetting, setSetting } from './settingsRepo.js'
 
@@ -55,6 +56,17 @@ describe('wordsRepo', () => {
 
     const due = await getDueWords('russian')
     expect(due.map((w) => w.term)).toEqual(['вчера'])
+  })
+
+  it('marks a word struggling on a missed recall and clears it on a correct one', async () => {
+    const word = await addWord({ themeId: 'russian', term: 'легион', translation: 'legion' })
+    expect(word.struggling).toBe(false)
+
+    const missed = await reviewWord(word.id, QUALITY.AGAIN)
+    expect(missed.struggling).toBe(true)
+
+    const recalled = await reviewWord(word.id, QUALITY.GOOD)
+    expect(recalled.struggling).toBe(false)
   })
 })
 

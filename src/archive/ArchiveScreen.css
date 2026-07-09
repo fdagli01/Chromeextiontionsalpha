@@ -68,6 +68,16 @@
   color: var(--color-text-muted);
 }
 
+.archive-struggling {
+  font-family: var(--font-heading);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 1px 6px;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
 .archive-translit {
   font-family: 'Courier New', monospace;
   font-style: italic;

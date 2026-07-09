@@ -17,4 +17,12 @@ describe('getFact', () => {
   it('returns an empty string for an unregistered theme', () => {
     expect(getFact('roman', 'senatus')).toBe('')
   })
+
+  it('returns a curated fact for a known Italian term', () => {
+    expect(getFact('italian', 'legione')).toContain('lejyon')
+  })
+
+  it('is case-insensitive for Italian terms', () => {
+    expect(getFact('italian', '  Aquila  ')).toContain('kartal')
+  })
 })

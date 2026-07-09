@@ -15,6 +15,7 @@ import { gradeReview } from '../sm2/sm2.js'
  * @property {number} easeFactor - SM-2: ease factor, starts at 2.5
  * @property {string} dueDate - ISO timestamp of next scheduled review
  * @property {string|null} lastReviewedAt - ISO timestamp of last review, or null
+ * @property {boolean} struggling - true after a missed recall, cleared on the next correct one
  */
 
 /**
@@ -36,6 +37,7 @@ export async function addWord({ themeId, term, translation, fact = '', translite
     easeFactor: 2.5,
     dueDate: now,
     lastReviewedAt: null,
+    struggling: false,
   }
 
   const id = await withStore(STORE_WORDS, 'readwrite', (store) => store.add(word))
@@ -122,7 +124,8 @@ export async function getRandomWords(themeId, excludeId, count) {
 /**
  * Grades a review for a word using SM-2 and persists the resulting
  * scheduling state. A failed recall (quality < 3) makes the word
- * immediately due again, prioritizing it in the current session.
+ * immediately due again, prioritizing it in the current session, and marks
+ * it `struggling` until the next correct recall clears the flag.
  * @param {number} id
  * @param {number} quality - 0-5, see sm2.QUALITY for named presets
  * @returns {Promise<WordEntry>}
@@ -136,5 +139,12 @@ export async function reviewWord(id, quality) {
     quality
   )
 
-  return updateWord(id, { repetition, interval, easeFactor, dueDate, lastReviewedAt })
+  return updateWord(id, {
+    repetition,
+    interval,
+    easeFactor,
+    dueDate,
+    lastReviewedAt,
+    struggling: quality < 3,
+  })
 }

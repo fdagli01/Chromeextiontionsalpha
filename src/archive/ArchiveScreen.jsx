@@ -39,6 +39,9 @@ export function ArchiveScreen() {
               🔊 {word.term}
             </button>
             <span className="archive-translation">{word.translation || '(çeviri yok)'}</span>
+            {word.struggling && theme.strugglingLabel && (
+              <span className="archive-struggling">{theme.strugglingLabel}</span>
+            )}
           </div>
           {word.transliteration && <div className="archive-translit">[ {word.transliteration} ]</div>}
           {word.fact && <div className="archive-fact">{word.fact}</div>}

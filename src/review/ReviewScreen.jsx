@@ -87,7 +87,11 @@ export function ReviewScreen() {
   function nextWord() {
     const wasCorrect = options[selected]?.isCorrect
     const rest = queue.slice(1)
-    setQueue(!wasCorrect ? [...rest, { ...current, dueDate: new Date().toISOString() }] : rest)
+    setQueue(
+      !wasCorrect
+        ? [...rest, { ...current, dueDate: new Date().toISOString(), struggling: true }]
+        : rest
+    )
     setSelected(null)
     setXpToast('')
     setBadgeToast(null)
@@ -152,7 +156,12 @@ export function ReviewScreen() {
       )}
 
       <div className={`term-card ${flickerKey > 0 ? 'fx-error-flicker' : ''}`} key={flickerKey}>
-        <div className="term-eyebrow">TARGET ACQUIRED</div>
+        <div className="term-eyebrow">
+          TARGET ACQUIRED
+          {current.struggling && theme.strugglingLabel && (
+            <span className="struggling-tag">{theme.strugglingLabel}</span>
+          )}
+        </div>
         <div className="term-word">{current.term}</div>
         {current.transliteration && <div className="term-translit">[ {current.transliteration} ]</div>}
       </div>
@@ -177,8 +186,8 @@ export function ReviewScreen() {
       {isAnswered && (
         <div className={`feedback-box ${isCorrect ? 'correct' : 'wrong'}`}>
           {isCorrect
-            ? `CLASSIFIED! Superb! The Politburo is watching.${xpToast ? ` (${xpToast})` : ''}`
-            : `MISSION FAILED. Target re-enters priority queue.${xpToast ? ` (${xpToast})` : ''}`}
+            ? `${theme.stampSuccessLabel}${xpToast ? ` (${xpToast})` : ''}`
+            : `${theme.stampFailLabel}${xpToast ? ` (${xpToast})` : ''}`}
         </div>
       )}
 
