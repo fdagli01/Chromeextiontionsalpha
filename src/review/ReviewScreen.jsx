@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useThemeConfig } from '../components/ThemeProvider.jsx'
 import { useAnimatedNumber } from '../components/useAnimatedNumber.js'
-import { Typewriter } from '../components/Typewriter.jsx'
-import { getDueWords, reviewWord } from '../db/wordsRepo.js'
+import { getDueWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
 import { awardReviewXp } from '../xp/xpService.js'
@@ -11,21 +10,22 @@ import { levelProgress, rankForLevel } from '../xp/xp.js'
 import { QUALITY } from '../sm2/sm2.js'
 import './ReviewScreen.css'
 
-const GRADE_BUTTONS = [
-  { quality: QUALITY.AGAIN, label: 'Tekrar', className: 'again' },
-  { quality: QUALITY.HARD, label: 'Zor', className: 'hard' },
-  { quality: QUALITY.GOOD, label: 'İyi', className: 'good' },
-  { quality: QUALITY.EASY, label: 'Kolay', className: 'easy' },
-]
+function shuffle(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 export function ReviewScreen() {
   const theme = useThemeConfig()
   const [queue, setQueue] = useState(null)
-  const [revealed, setRevealed] = useState(false)
+  const [options, setOptions] = useState([])
+  const [selected, setSelected] = useState(null)
   const [progress, setProgress] = useState(null)
   const [xpToast, setXpToast] = useState('')
-  const [stamp, setStamp] = useState(null)
-  const [flickerKey, setFlickerKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -39,6 +39,21 @@ export function ReviewScreen() {
     }
   }, [theme.id])
 
+  const current = queue?.[0]
+
+  useEffect(() => {
+    if (!current) return
+    setSelected(null)
+    setXpToast('')
+    getRandomWords(theme.id, current.id, 2).then((distractors) => {
+      const opts = shuffle([
+        { label: current.translation || '(çeviri yok)', isCorrect: true },
+        ...distractors.map((d) => ({ label: d.translation || '—', isCorrect: false })),
+      ])
+      setOptions(opts)
+    })
+  }, [current?.id, theme.id])
+
   const animatedXp = useAnimatedNumber(progress?.xp ?? 0)
 
   if (queue === null || progress === null) {
@@ -46,83 +61,102 @@ export function ReviewScreen() {
   }
 
   if (queue.length === 0) {
-    return <p className="empty-state">Tekrar edilecek kelime yok. Bir sayfada kelime seçip sağ tıklayarak arşivine ekle.</p>
+    return (
+      <p className="empty-state">
+        Tekrar edilecek kelime yok. Bir sayfada kelime seçip sağ tıklayarak arşivine ekle.
+      </p>
+    )
   }
 
-  const current = queue[0]
   const { level, xpIntoLevel, xpToNextLevel } = levelProgress(progress.xp)
   const rank = rankForLevel(theme.rankNames, level)
   const barPct = xpToNextLevel > 0 ? Math.round((xpIntoLevel / xpToNextLevel) * 100) : 100
+  const isAnswered = selected !== null
+  const isCorrect = isAnswered && options[selected]?.isCorrect
 
-  async function grade(quality) {
+  async function pick(index) {
+    if (isAnswered) return
+    setSelected(index)
+    const correct = options[index].isCorrect
+    const quality = correct ? QUALITY.GOOD : QUALITY.AGAIN
+
     await reviewWord(current.id, quality)
     const { progress: nextProgress, xpGained, leveledUp } = await awardReviewXp(theme.id, quality)
-    const success = quality >= 3
 
     if (await getSetting('sfxEnabled', true)) {
-      if (success) playStamp()
+      if (correct) playStamp()
       else playSoftMiss()
     }
-    setStamp({ type: success ? 'success' : 'miss', key: Date.now() })
-    if (!success) setFlickerKey((k) => k + 1)
 
     setProgress(nextProgress)
     setXpToast(
       xpGained > 0
-        ? `+${xpGained} XP${leveledUp ? ` — Seviye ${nextProgress.level}!` : ''}`
-        : 'Tekrar öncelikli listeye alındı'
+        ? `+${xpGained} XP${leveledUp ? ` — SEVİYE ${nextProgress.level}!` : ''}`
+        : ''
     )
+  }
 
+  function nextWord() {
+    const wasCorrect = options[selected]?.isCorrect
     const rest = queue.slice(1)
-    setQueue(quality < 3 ? [...rest, { ...current, dueDate: new Date().toISOString() }] : rest)
-    setRevealed(false)
+    setQueue(!wasCorrect ? [...rest, { ...current, dueDate: new Date().toISOString() }] : rest)
+    setSelected(null)
+    setXpToast('')
   }
 
   return (
-    <div>
-      <div className="review-header">
-        <span className="rank">{rank}</span>
-        <span>{animatedXp} XP</span>
-        <span className="streak">🔥 {progress.streak}</span>
+    <div className="review-wrap">
+      <div className="review-stats">
+        <span className="stat-rank">⚑ {rank}</span>
+        <span className="stat-streak">🔥 {progress.streak}</span>
+        <span className="stat-xp">{animatedXp} XP</span>
       </div>
       <div className="level-bar">
         <div className="level-bar-fill" style={{ width: `${barPct}%` }} />
       </div>
 
-      <div className={`review-card ${flickerKey > 0 ? 'fx-flicker' : ''}`} key={flickerKey}>
-        {stamp && (
-          <div className={`stamp-mark ${stamp.type}`} key={stamp.key}>
-            {stamp.type === 'success' ? 'Одобрено' : 'Отказано'}
-          </div>
-        )}
-        <div className="term">{current.term}</div>
-        {revealed && (
-          <>
-            <div className="translation">{current.translation || '(çeviri yok)'}</div>
-            {current.fact && (
-              <div className="fact">
-                <Typewriter text={current.fact} />
-              </div>
-            )}
-          </>
-        )}
+      <div className="term-card">
+        <div className="term-eyebrow">TARGET ACQUIRED</div>
+        <div className="term-word">{current.term}</div>
       </div>
 
-      {!revealed ? (
-        <button className="reveal-button" onClick={() => setRevealed(true)}>
-          Göster
-        </button>
-      ) : (
-        <div className="grade-buttons">
-          {GRADE_BUTTONS.map((btn) => (
-            <button key={btn.quality} className={btn.className} onClick={() => grade(btn.quality)}>
-              {btn.label}
+      <div className="options-list">
+        {options.map((opt, i) => {
+          let cls = 'option-btn'
+          if (isAnswered) {
+            if (opt.isCorrect) cls += ' correct'
+            else if (i === selected) cls += ' wrong'
+            else cls += ' dimmed'
+          }
+          return (
+            <button key={i} className={cls} onClick={() => pick(i)}>
+              <span className="option-num">[{i + 1}]</span>
+              <span className="option-label">{opt.label.toUpperCase()}</span>
             </button>
-          ))}
+          )
+        })}
+      </div>
+
+      {isAnswered && (
+        <div className={`feedback-box ${isCorrect ? 'correct' : 'wrong'}`}>
+          {isCorrect
+            ? `CLASSIFIED! Superb! The Politburo is watching.${xpToast ? ` (${xpToast})` : ''}`
+            : `MISSION FAILED. Target re-enters priority queue.${xpToast ? ` (${xpToast})` : ''}`}
         </div>
       )}
 
-      <div className="xp-toast">{xpToast}</div>
+      {isAnswered && current.fact && (
+        <div className="intel-box">
+          <div className="intel-label">◈ INTEL</div>
+          <div className="intel-text">{current.fact}</div>
+        </div>
+      )}
+
+      {isAnswered && (
+        <button className="next-btn" onClick={nextWord}>
+          NEXT TARGET [ENTER] →
+        </button>
+      )}
     </div>
   )
 }

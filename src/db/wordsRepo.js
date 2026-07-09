@@ -100,6 +100,24 @@ export function getAllWords() {
 }
 
 /**
+ * Returns up to `count` random words from a theme, excluding one word.
+ * Used to build multiple-choice distractors.
+ * @param {string} themeId
+ * @param {number} excludeId
+ * @param {number} count
+ * @returns {Promise<WordEntry[]>}
+ */
+export async function getRandomWords(themeId, excludeId, count) {
+  const all = await getWordsByTheme(themeId)
+  const pool = all.filter((w) => w.id !== excludeId)
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[pool[i], pool[j]] = [pool[j], pool[i]]
+  }
+  return pool.slice(0, count)
+}
+
+/**
  * Grades a review for a word using SM-2 and persists the resulting
  * scheduling state. A failed recall (quality < 3) makes the word
  * immediately due again, prioritizing it in the current session.

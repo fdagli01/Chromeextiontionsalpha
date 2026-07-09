@@ -19,7 +19,12 @@ export function ArchiveScreen() {
   }, [theme.id])
 
   if (words === null) return <p className="empty-state">Yükleniyor...</p>
-  if (words.length === 0) return <p className="empty-state">Arşivin henüz boş. Bir sayfada kelime seçip sağ tıklayarak ekle.</p>
+  if (words.length === 0)
+    return (
+      <p className="empty-state">
+        Arşivin henüz boş. Bir sayfada kelime seçip sağ tıklayarak ekle.
+      </p>
+    )
 
   return (
     <div className="archive-list">
@@ -37,7 +42,15 @@ export function ArchiveScreen() {
           </div>
           {word.fact && <div className="archive-fact">{word.fact}</div>}
           <div className="archive-meta">
-            Tekrar: {word.repetition} · Kolaylık: {word.easeFactor.toFixed(2)}
+            <span>
+              <span className="meta-label">REP:</span> {word.repetition}
+            </span>
+            <span>
+              <span className="meta-label">EF:</span> {word.easeFactor.toFixed(2)}
+            </span>
+            <span>
+              <span className="meta-label">INT:</span> {word.interval}d
+            </span>
           </div>
         </div>
       ))}
