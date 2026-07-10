@@ -1,3 +1,5 @@
+import { requestGemini } from './geminiClient.js'
+
 const CHRONICLE_SYSTEM_PROMPT = `You are the "Polyglot Chronicle" AI Engine—an elite historical archiver, etymologist, and philosopher. Your task is to contextualize foreign vocabulary words based on specific historical and philosophical epochs ("Mainframes").
 
 For each word and mainframe provided, generate an immersive historical sentence, its English translation, and a fascinating philosophical or historical insight.
@@ -47,22 +49,17 @@ export async function generateChronicleEntry(themeId, term, apiKey, model = DEFA
 
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
 
+  const data = await requestGemini(endpoint, JSON.stringify({
+    systemInstruction: { parts: [{ text: CHRONICLE_SYSTEM_PROMPT }] },
+    contents: [{ role: 'user', parts: [{ text: `Word: "${term}"\nMainframe: ${mainframe}` }] }],
+    generationConfig: { responseMimeType: 'application/json' },
+  }))
+  if (!data) return null
+
+  const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text
+  if (!raw) return null
+
   try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: CHRONICLE_SYSTEM_PROMPT }] },
-        contents: [{ role: 'user', parts: [{ text: `Word: "${term}"\nMainframe: ${mainframe}` }] }],
-        generationConfig: { responseMimeType: 'application/json' },
-      }),
-    })
-    if (!response.ok) return null
-
-    const data = await response.json()
-    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text
-    if (!raw) return null
-
     return parseChronicleJson(raw)
   } catch (error) {
     console.warn('Polyglot Chronicle: AI chronicle generation failed', error)
