@@ -6,6 +6,7 @@ import { getProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
 import { awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
 import { playMissSfx, playSuccessSfx } from '../audio/sfx.js'
+import { speakTerm } from '../audio/speak.js'
 import { levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
 import { resolveTensionVisuals } from '../themes/index.js'
 import { QUALITY } from '../sm2/sm2.js'
@@ -31,6 +32,7 @@ export function ReviewScreen() {
   const [questToast, setQuestToast] = useState(false)
   const [flickerKey, setFlickerKey] = useState(0)
   const [tension, setTension] = useState(0)
+  const [combo, setCombo] = useState(0)
   const hasTension = theme.tensionLevels.length > 0
   const tensionVisuals = useMemo(() => resolveTensionVisuals(theme, tension), [theme, tension])
 
@@ -42,6 +44,7 @@ export function ReviewScreen() {
       setProgress(prog)
     })
     setTension(0)
+    setCombo(0)
     return () => {
       cancelled = true
     }
@@ -61,6 +64,9 @@ export function ReviewScreen() {
         ...distractors.map((d) => ({ label: d.translation || '—', isCorrect: false })),
       ])
       setOptions(opts)
+    })
+    getSetting('autoSpeakEnabled', true).then((enabled) => {
+      if (enabled) speakTerm(current.term, theme.sourceLanguageCode)
     })
   }, [current?.id, theme.id])
 
@@ -84,13 +90,15 @@ export function ReviewScreen() {
         ? Math.max(0, tension - 1)
         : Math.min(3, tension + 1)
       : 0
+    const nextCombo = correct ? combo + 1 : 0
 
     if (await getSetting('sfxEnabled', true)) {
-      if (correct) playSuccessSfx(theme.audio.sfxVariant)
+      if (correct) playSuccessSfx(theme.audio.sfxVariant, nextCombo)
       else playMissSfx(theme.audio.sfxVariant, nextTension)
     }
     if (!correct) setFlickerKey((k) => k + 1)
     if (hasTension) setTension(nextTension)
+    setCombo(nextCombo)
 
     setProgress(nextProgress)
     setXpToast(xpGained > 0 ? `+${xpGained} XP${leveledUp ? ` — SEVİYE ${nextProgress.level}!` : ''}` : '')
@@ -199,7 +207,16 @@ export function ReviewScreen() {
             <span className="struggling-tag">{theme.strugglingLabel}</span>
           )}
         </div>
-        <div className="term-word">{current.term}</div>
+        <div className="term-word">
+          {current.term}
+          <button
+            className="term-speak-btn"
+            onClick={() => speakTerm(current.term, theme.sourceLanguageCode)}
+            title="Telaffuzu tekrar dinle"
+          >
+            🔊
+          </button>
+        </div>
         {current.transliteration && <div className="term-translit">[ {current.transliteration} ]</div>}
       </div>
 
@@ -218,14 +235,17 @@ export function ReviewScreen() {
 
       {isAnswered && (
         <div className={`result-panel ${isCorrect ? 'correct' : 'wrong'}`}>
-          <div className="result-stamp">{isCorrect ? theme.stampSuccessWord : theme.stampFailWord}</div>
+          <div className={`result-stamp ${isCorrect && combo >= 3 ? 'combo' : ''}`}>
+            {isCorrect ? theme.stampSuccessWord : theme.stampFailWord}
+          </div>
           <div className="result-flavor">
             {isCorrect ? theme.stampSuccessFlavor : theme.stampFailFlavor}
             {xpToast && <span className="result-xp"> {xpToast}</span>}
           </div>
 
-          {(badgeToast || questToast) && (
+          {(badgeToast || questToast || (isCorrect && combo >= 3)) && (
             <div className="result-extras">
+              {isCorrect && combo >= 3 && <span className="result-chip combo-chip">🔥 Combo x{combo}</span>}
               {badgeToast && (
                 <span className="result-chip">
                   {badgeToast.icon} {badgeToast.name}

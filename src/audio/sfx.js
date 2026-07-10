@@ -1,17 +1,30 @@
 import { getAudioContext } from './context.js'
 
 /**
- * Short percussive "thunk", evoking a rubber stamp filing a confirmed word
- * away — played on a successful review.
+ * Converts a consecutive-correct combo count into a pitch multiplier
+ * (equal-tempered semitone steps, capped so it never gets shrill).
+ * @param {number} comboLevel
+ * @returns {number}
  */
-export function playStamp() {
+function comboPitchMultiplier(comboLevel) {
+  return Math.pow(2, Math.min(comboLevel, 6) / 12)
+}
+
+/**
+ * Short percussive "thunk", evoking a rubber stamp filing a confirmed word
+ * away — played on a successful review. Pitches up slightly with a
+ * consecutive-correct combo, so a streak audibly climbs.
+ * @param {number} [comboLevel]
+ */
+export function playStamp(comboLevel = 0) {
   const context = getAudioContext()
   const now = context.currentTime
+  const pitch = comboPitchMultiplier(comboLevel)
 
   const thump = context.createOscillator()
   thump.type = 'sine'
-  thump.frequency.setValueAtTime(120, now)
-  thump.frequency.exponentialRampToValueAtTime(40, now + 0.15)
+  thump.frequency.setValueAtTime(120 * pitch, now)
+  thump.frequency.exponentialRampToValueAtTime(40 * pitch, now + 0.15)
 
   const gain = context.createGain()
   gain.gain.setValueAtTime(0.5, now)
@@ -46,11 +59,14 @@ export function playSoftMiss() {
 
 /**
  * Two detuned tones ringing out like a ship's bell — the Portuguese theme's
- * gentler stand-in for the KGB stamp thunk.
+ * gentler stand-in for the KGB stamp thunk. Pitches up slightly with a
+ * consecutive-correct combo, so a streak audibly climbs.
+ * @param {number} [comboLevel]
  */
-export function playShipBell() {
+export function playShipBell(comboLevel = 0) {
   const context = getAudioContext()
   const now = context.currentTime
+  const pitch = comboPitchMultiplier(comboLevel)
 
   const gain = context.createGain()
   gain.gain.setValueAtTime(0.22, now)
@@ -59,14 +75,14 @@ export function playShipBell() {
 
   const fundamental = context.createOscillator()
   fundamental.type = 'triangle'
-  fundamental.frequency.setValueAtTime(660, now)
+  fundamental.frequency.setValueAtTime(660 * pitch, now)
   fundamental.connect(gain)
   fundamental.start(now)
   fundamental.stop(now + 1.2)
 
   const overtone = context.createOscillator()
   overtone.type = 'sine'
-  overtone.frequency.setValueAtTime(1316, now) // ~1320Hz, -8 cent detune
+  overtone.frequency.setValueAtTime(1316 * pitch, now) // ~1320Hz, -8 cent detune
   const overtoneGain = context.createGain()
   overtoneGain.gain.setValueAtTime(0.12, now)
   overtoneGain.gain.exponentialRampToValueAtTime(0.001, now + 1.0)
@@ -175,12 +191,14 @@ export function playGuillotineSweep() {
 
 /**
  * Dispatches to a theme's success SFX by variant, so callers don't need to
- * branch on theme.id directly.
+ * branch on theme.id directly. `comboLevel` (consecutive correct answers)
+ * pitches the sound up, giving an audible sense of a streak building.
  * @param {string} [variant]
+ * @param {number} [comboLevel]
  */
-export function playSuccessSfx(variant) {
-  if (variant === 'nautical') return playShipBell()
-  return playStamp()
+export function playSuccessSfx(variant, comboLevel = 0) {
+  if (variant === 'nautical') return playShipBell(comboLevel)
+  return playStamp(comboLevel)
 }
 
 /**

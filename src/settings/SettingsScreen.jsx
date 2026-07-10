@@ -2,16 +2,18 @@ import { useEffect, useState } from 'react'
 import { getSetting, setSetting } from '../db/settingsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { listThemes } from '../themes/index.js'
-import { pauseRadio } from '../audio/radioPlayer.js'
+import { pauseThemeAudio } from '../audio/themeAudioControl.js'
 import { BADGE_DEFS, resolveBadges } from '../badges/badges.js'
 import './SettingsScreen.css'
 
 export function SettingsScreen({ activeThemeId, onThemeChange }) {
   const [sfxEnabled, setSfxEnabled] = useState(null)
+  const [autoSpeakEnabled, setAutoSpeakEnabled] = useState(null)
   const [earnedBadges, setEarnedBadges] = useState(null)
 
   useEffect(() => {
     getSetting('sfxEnabled', true).then(setSfxEnabled)
+    getSetting('autoSpeakEnabled', true).then(setAutoSpeakEnabled)
   }, [])
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     }
   }, [activeThemeId])
 
-  if (sfxEnabled === null || earnedBadges === null) {
+  if (sfxEnabled === null || autoSpeakEnabled === null || earnedBadges === null) {
     return <p className="empty-state">Yükleniyor...</p>
   }
 
@@ -34,8 +36,14 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     await setSetting('sfxEnabled', next)
   }
 
+  async function toggleAutoSpeak() {
+    const next = !autoSpeakEnabled
+    setAutoSpeakEnabled(next)
+    await setSetting('autoSpeakEnabled', next)
+  }
+
   async function changeTheme(themeId) {
-    pauseRadio()
+    pauseThemeAudio(activeThemeId)
     await setSetting('activeThemeId', themeId)
     onThemeChange(themeId)
   }
@@ -49,6 +57,16 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
         </div>
         <button className={`toggle-button ${sfxEnabled ? 'on' : ''}`} onClick={toggleSfx}>
           {sfxEnabled ? 'Açık' : 'Kapalı'}
+        </button>
+      </div>
+
+      <div className="settings-row">
+        <div className="settings-row-label">
+          <span className="title">Otomatik Telaffuz</span>
+          <span className="hint">Kelime ekrana gelince otomatik seslendirilsin</span>
+        </div>
+        <button className={`toggle-button ${autoSpeakEnabled ? 'on' : ''}`} onClick={toggleAutoSpeak}>
+          {autoSpeakEnabled ? 'Açık' : 'Kapalı'}
         </button>
       </div>
 
@@ -81,7 +99,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
         )}
       </div>
 
-      <p className="settings-hint-block">Radyoyu açmak/kapatmak ve frekans değiştirmek için üstteki 📻 çubuğunu kullan.</p>
+      <p className="settings-hint-block">Atmosfer sesini açmak/kapatmak ve kanal değiştirmek için üstteki 📻 çubuğunu kullan.</p>
     </div>
   )
 }

@@ -158,6 +158,22 @@
   letter-spacing: 0.03em;
 }
 
+.term-speak-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  vertical-align: middle;
+  margin-left: 8px;
+  opacity: 0.7;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.term-speak-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
 .term-translit {
   font-family: 'Courier New', monospace;
   font-style: italic;
@@ -249,6 +265,20 @@
   letter-spacing: 0.08em;
   color: var(--color-success);
   transform: rotate(-3deg);
+  animation: stamp-pop 0.3s ease-out;
+}
+
+/* Audio-visual sync: the SFX pitches up with the combo, so the stamp
+   itself grows/glows to match what the ear is hearing. */
+.result-stamp.combo {
+  font-size: 23px;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--color-success) 60%, transparent);
+}
+
+@keyframes stamp-pop {
+  0% { transform: rotate(-3deg) scale(1.6); opacity: 0; }
+  60% { transform: rotate(-3deg) scale(0.95); opacity: 1; }
+  100% { transform: rotate(-3deg) scale(1); opacity: 1; }
 }
 
 .result-panel.wrong .result-stamp {
@@ -274,6 +304,11 @@
   gap: 6px;
   flex-wrap: wrap;
   margin-top: 8px;
+}
+
+.combo-chip {
+  color: #ff8a3d !important;
+  border-color: #ff8a3d !important;
 }
 
 .result-chip {

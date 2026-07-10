@@ -6,38 +6,37 @@ import { ReviewScreen } from '../review/ReviewScreen.jsx'
 import { ArchiveScreen } from '../archive/ArchiveScreen.jsx'
 import { SettingsScreen } from '../settings/SettingsScreen.jsx'
 import {
-  getCurrentChannel,
-  isRadioPlaying,
-  nextChannel,
-  pauseRadio,
-  playRadio,
-} from '../audio/radioPlayer.js'
+  getThemeAudioChannelLabel,
+  hasThemeAudio,
+  isThemeAudioPlaying,
+  nextThemeAudioChannel,
+  pauseThemeAudio,
+  playThemeAudio,
+} from '../audio/themeAudioControl.js'
 import './App.css'
-
-const RADIO_THEMES = new Set(['russian'])
 
 function AppShell({ activeThemeId, onThemeChange }) {
   const theme = useThemeConfig()
   const [activeTab, setActiveTab] = useState('review')
-  const [radioPlaying, setRadioPlaying] = useState(isRadioPlaying())
-  const [radioChannel, setRadioChannel] = useState(getCurrentChannel())
+  const [audioPlaying, setAudioPlaying] = useState(isThemeAudioPlaying(theme.id))
+  const [audioLabel, setAudioLabel] = useState(getThemeAudioChannelLabel(theme.id))
 
-  const hasRadio = RADIO_THEMES.has(theme.id)
+  const hasAudio = hasThemeAudio(theme.id)
 
-  function toggleRadio() {
-    if (radioPlaying) {
-      pauseRadio()
+  function toggleAudio() {
+    if (audioPlaying) {
+      pauseThemeAudio(theme.id)
     } else {
-      playRadio()
+      playThemeAudio(theme.id)
     }
-    setRadioPlaying(!radioPlaying)
-    setRadioChannel(getCurrentChannel())
+    setAudioPlaying(!audioPlaying)
+    setAudioLabel(getThemeAudioChannelLabel(theme.id))
   }
 
   function advanceChannel() {
-    nextChannel()
-    setRadioChannel(getCurrentChannel())
-    setRadioPlaying(true)
+    nextThemeAudioChannel(theme.id)
+    setAudioLabel(getThemeAudioChannelLabel(theme.id))
+    setAudioPlaying(true)
   }
 
   const TABS = [
@@ -77,15 +76,15 @@ function AppShell({ activeThemeId, onThemeChange }) {
             <span className="tab-label">{tab.label}</span>
           </button>
         ))}
-        {hasRadio && (
+        {hasAudio && (
           <>
             <button
-              className={`tab-radio ${radioPlaying ? 'on' : ''}`}
-              onClick={toggleRadio}
-              title="Radyo aç/kapat"
+              className={`tab-radio ${audioPlaying ? 'on' : ''}`}
+              onClick={toggleAudio}
+              title="Atmosfer sesi aç/kapat"
             >
               <span className="tab-icon">📻</span>
-              <span className="tab-label">{radioPlaying ? `CH-${radioChannel}` : 'RADYO'}</span>
+              <span className="tab-label">{audioPlaying ? audioLabel : 'SES'}</span>
             </button>
             <button className="tab-next" onClick={advanceChannel} title="Sonraki kanal">
               <span className="tab-icon">⏭</span>

@@ -1,0 +1,41 @@
+import * as radio from './radioPlayer.js'
+import * as ambient from './ambient.js'
+
+/**
+ * Unifies Russian's real-MP3 radio and the other themes' generative ambient
+ * engine behind one interface, so the UI (a single "tune in / next channel"
+ * control in the tab bar) doesn't need to branch on theme.id.
+ * @param {string} themeId
+ * @returns {boolean}
+ */
+export function hasThemeAudio(themeId) {
+  return themeId === 'russian' || ambient.hasAmbient(themeId)
+}
+
+/** @param {string} themeId */
+export function isThemeAudioPlaying(themeId) {
+  return themeId === 'russian' ? radio.isRadioPlaying() : ambient.isAmbientPlaying()
+}
+
+/** @param {string} themeId */
+export function getThemeAudioChannelLabel(themeId) {
+  return themeId === 'russian' ? `CH-${radio.getCurrentChannel()}` : ambient.getAmbientChannelName(themeId)
+}
+
+/** @param {string} themeId */
+export function playThemeAudio(themeId) {
+  if (themeId === 'russian') radio.playRadio()
+  else ambient.playAmbient(themeId)
+}
+
+/** @param {string} themeId */
+export function pauseThemeAudio(themeId) {
+  if (themeId === 'russian') radio.pauseRadio()
+  else ambient.pauseAmbient()
+}
+
+/** @param {string} themeId */
+export function nextThemeAudioChannel(themeId) {
+  if (themeId === 'russian') radio.nextChannel()
+  else ambient.nextAmbientChannel(themeId)
+}

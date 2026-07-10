@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useThemeConfig } from '../components/ThemeProvider.jsx'
 import { getWordsByTheme } from '../db/wordsRepo.js'
-import { speakTerm } from './speak.js'
+import { speakTerm } from '../audio/speak.js'
 import './ArchiveScreen.css'
 
 export function ArchiveScreen() {
