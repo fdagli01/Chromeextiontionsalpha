@@ -465,6 +465,32 @@ export function playFactionPromotion() {
 }
 
 /**
+ * A short three-note descending-then-resolving cadence — played once when
+ * a review session's due queue empties out. Deliberately calmer and more
+ * "closing" than the level-up fanfare, since finishing a session is a
+ * satisfying wind-down rather than a sudden reward spike.
+ */
+export function playSessionComplete() {
+  const context = getAudioContext()
+  const now = context.currentTime
+  const notes = [659.25, 587.33, 783.99] // E5, D5, G5 — dip then resolve up
+
+  notes.forEach((freq, i) => {
+    const t = now + i * 0.16
+    const osc = context.createOscillator()
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(freq, t)
+    const gain = context.createGain()
+    gain.gain.setValueAtTime(0.001, t)
+    gain.gain.linearRampToValueAtTime(0.15, t + 0.03)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55)
+    osc.connect(gain).connect(context.destination)
+    osc.start(t)
+    osc.stop(t + 0.58)
+  })
+}
+
+/**
  * Short radio-static burst, played when tuning in or switching channels.
  */
 export function playStaticBurst() {

@@ -13,6 +13,7 @@ import {
   playLevelUpFanfare,
   playMissSfx,
   playQuestComplete,
+  playSessionComplete,
   playStreakTierUp,
   playSuccessSfx,
 } from '../audio/sfx.js'
@@ -64,6 +65,15 @@ export function ReviewScreen() {
   const [legionScatter, setLegionScatter] = useState(false)
   const [scatterCount, setScatterCount] = useState(0)
   const [eraWipe, setEraWipe] = useState(false)
+  const [sessionStats, setSessionStats] = useState({
+    reviewed: 0,
+    correct: 0,
+    xpGained: 0,
+    bestCombo: 0,
+    badgesEarned: 0,
+    questCompleted: false,
+  })
+  const sessionCompleteAnnouncedRef = useRef(false)
   const shownAtRef = useRef(performance.now())
   const hasTension = theme.tensionLevels.length > 0
   const tensionVisuals = useMemo(() => resolveTensionVisuals(theme, tension), [theme, tension])
@@ -77,6 +87,8 @@ export function ReviewScreen() {
     })
     setTension(0)
     setCombo(0)
+    setSessionStats({ reviewed: 0, correct: 0, xpGained: 0, bestCombo: 0, badgesEarned: 0, questCompleted: false })
+    sessionCompleteAnnouncedRef.current = false
     return () => {
       cancelled = true
     }
@@ -191,6 +203,14 @@ export function ReviewScreen() {
       }
     }
     setCombo(nextCombo)
+    setSessionStats((prev) => ({
+      reviewed: prev.reviewed + 1,
+      correct: prev.correct + (correct ? 1 : 0),
+      xpGained: prev.xpGained + xpGained,
+      bestCombo: Math.max(prev.bestCombo, nextCombo),
+      badgesEarned: prev.badgesEarned + newBadges.length,
+      questCompleted: prev.questCompleted || dailyQuest.justCompleted,
+    }))
 
     setProgress(finalProgress)
     setXpToast(xpGained > 0 ? `+${xpGained} XP` : '')
@@ -254,15 +274,60 @@ export function ReviewScreen() {
     return () => window.removeEventListener('keydown', onKeyDown)
   })
 
+  // Announces the session-complete cadence exactly once, the moment the due
+  // queue drains after at least one graded review this session.
+  useEffect(() => {
+    if (!queue || queue.length !== 0 || sessionStats.reviewed === 0 || sessionCompleteAnnouncedRef.current) return
+    sessionCompleteAnnouncedRef.current = true
+    getSetting('sfxEnabled', true).then((sfxOn) => {
+      if (sfxOn) playSessionComplete()
+    })
+  }, [queue, sessionStats.reviewed])
+
   if (queue === null || progress === null) {
     return <p className="empty-state">Loading...</p>
   }
 
   if (queue.length === 0) {
+    if (sessionStats.reviewed === 0) {
+      return (
+        <p className="empty-state">
+          No words due for review. Select a word on any page and right-click to archive it.
+        </p>
+      )
+    }
+    const accuracyPct = Math.round((sessionStats.correct / sessionStats.reviewed) * 100)
     return (
-      <p className="empty-state">
-        No words due for review. Select a word on any page and right-click to archive it.
-      </p>
+      <div className="session-complete">
+        <p className="session-complete-title">Session Complete</p>
+        <div className="session-complete-stats">
+          <div className="session-stat">
+            <span className="session-stat-value">{sessionStats.reviewed}</span>
+            <span className="session-stat-label">reviewed</span>
+          </div>
+          <div className="session-stat">
+            <span className="session-stat-value">{accuracyPct}%</span>
+            <span className="session-stat-label">accuracy</span>
+          </div>
+          <div className="session-stat">
+            <span className="session-stat-value">+{sessionStats.xpGained}</span>
+            <span className="session-stat-label">XP</span>
+          </div>
+          <div className="session-stat">
+            <span className="session-stat-value">{sessionStats.bestCombo}</span>
+            <span className="session-stat-label">best combo</span>
+          </div>
+        </div>
+        {(sessionStats.badgesEarned > 0 || sessionStats.questCompleted) && (
+          <p className="session-complete-extra">
+            {sessionStats.badgesEarned > 0 &&
+              `${sessionStats.badgesEarned} badge${sessionStats.badgesEarned > 1 ? 's' : ''} earned`}
+            {sessionStats.badgesEarned > 0 && sessionStats.questCompleted && ' · '}
+            {sessionStats.questCompleted && 'Daily quest complete'}
+          </p>
+        )}
+        <p className="empty-state">No more words due. Come back later, or archive new ones from any page.</p>
+      </div>
     )
   }
 

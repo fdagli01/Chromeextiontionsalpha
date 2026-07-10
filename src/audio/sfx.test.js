@@ -46,6 +46,7 @@ import {
   playStreakTierUp,
   playComboMilestone,
   playFactionPromotion,
+  playSessionComplete,
 } from './sfx.js'
 
 afterEach(() => {
@@ -110,6 +111,12 @@ describe('progress-system SFX (theme-agnostic)', () => {
   it('playFactionPromotion starts a thud and a delayed ring', () => {
     playFactionPromotion()
     expect(oscillators).toHaveLength(2)
+    oscillators.forEach((osc) => expect(osc.start).toHaveBeenCalled())
+  })
+
+  it('playSessionComplete starts a three-note cadence', () => {
+    playSessionComplete()
+    expect(oscillators).toHaveLength(3)
     oscillators.forEach((osc) => expect(osc.start).toHaveBeenCalled())
   })
 })

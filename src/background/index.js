@@ -6,6 +6,7 @@ import { generateChronicleEntry } from '../facts/aiEngine.js'
 import { generateEtymologyEntry } from '../facts/etymologyEngine.js'
 import { translateToEnglish } from './translate.js'
 import { checkForCrisis, CRISIS_ALARM_NAME, scheduleCrisisChecks } from './crisisScheduler.js'
+import { checkStreakGuard, STREAK_GUARD_ALARM_NAME, scheduleStreakGuardChecks } from './streakGuardScheduler.js'
 
 const MENU_ROOT_ID = 'polyglot-chronicle-root'
 
@@ -46,8 +47,12 @@ chrome.runtime.onStartup.addListener(createContextMenu)
 chrome.runtime.onInstalled.addListener(scheduleCrisisChecks)
 chrome.runtime.onStartup.addListener(scheduleCrisisChecks)
 
+chrome.runtime.onInstalled.addListener(scheduleStreakGuardChecks)
+chrome.runtime.onStartup.addListener(scheduleStreakGuardChecks)
+
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === CRISIS_ALARM_NAME) checkForCrisis()
+  if (alarm.name === STREAK_GUARD_ALARM_NAME) checkStreakGuard()
 })
 
 chrome.contextMenus.onClicked.addListener((info) => {

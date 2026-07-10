@@ -617,6 +617,62 @@
   font-weight: 700;
 }
 
+/* Session-complete summary: shown once the due queue drains, in place of
+   the per-word review card. Theme-neutral like the level-up banner, since
+   this is a progress-system wind-down rather than an in-world moment. */
+.session-complete {
+  text-align: center;
+  padding: 22px 14px 10px;
+  animation: level-up-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.session-complete-title {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+  margin: 0 0 16px;
+}
+
+.session-complete-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.session-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.session-stat-value {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.session-stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.session-complete-extra {
+  font-size: 12px;
+  color: var(--color-accent);
+  margin: 0 0 8px;
+}
+
 /* Level-up celebration: a distinct beat from the per-word result panel —
    this is a progress-system event, so it stays theme-neutral (gold/white)
    rather than pulling theme colors. */
