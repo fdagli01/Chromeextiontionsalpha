@@ -45,6 +45,9 @@ export function ReviewScreen() {
   const [combo, setCombo] = useState(0)
   const [factionToast, setFactionToast] = useState(null)
   const [secretReveal, setSecretReveal] = useState(null)
+  const [legionScatter, setLegionScatter] = useState(false)
+  const [scatterCount, setScatterCount] = useState(0)
+  const [eraWipe, setEraWipe] = useState(false)
   const hasTension = theme.tensionLevels.length > 0
   const tensionVisuals = useMemo(() => resolveTensionVisuals(theme, tension), [theme, tension])
 
@@ -140,6 +143,16 @@ export function ReviewScreen() {
       setTimeout(() => setShake(false), 1000)
     }
     if (hasTension) setTension(nextTension)
+
+    if (theme.id === 'italian') {
+      if (!correct && combo > 0) {
+        setScatterCount(combo)
+        setLegionScatter(true)
+        setTimeout(() => setLegionScatter(false), 650)
+      } else {
+        setLegionScatter(false)
+      }
+    }
     setCombo(nextCombo)
 
     setProgress(finalProgress)
@@ -150,6 +163,10 @@ export function ReviewScreen() {
     if (leveledUp) {
       setLevelUpInfo({ level: nextProgress.level, rank: rankForLevel(theme.rankNames, nextProgress.level) })
       if (sfxOn) playLevelUpFanfare()
+      if (theme.id === 'italian' && theme.stages?.some((s) => s.minLevel === nextProgress.level)) {
+        setEraWipe(true)
+        setTimeout(() => setEraWipe(false), 1500)
+      }
     }
   }
 
@@ -224,6 +241,8 @@ export function ReviewScreen() {
         '--color-danger': tensionVisuals.colors.danger,
         '--color-success': tensionVisuals.colors.success,
         '--font-heading': tensionVisuals.fontHeading,
+        '--tension-drop': `${tension * 3}px`,
+        '--torch-duration': `${Math.max(1.6, 6 - tension * 1.3)}s`,
         transition: 'color 0.5s ease',
       }
     : undefined
@@ -235,10 +254,13 @@ export function ReviewScreen() {
       style={tensionStyle}
     >
       {secretReveal && <SecretRevealOverlay secret={secretReveal} onDismiss={() => setSecretReveal(null)} />}
+      {eraWipe && <div className="era-wipe" aria-hidden="true" />}
 
       <div className="review-stats">
         <span className="stat-rank">⚑ {rank}</span>
-        <span className={`stat-streak tier-${streakTier(progress.streak)}`}>🔥 {progress.streak}</span>
+        <span className={`stat-streak tier-${streakTier(progress.streak)}`}>
+          🔥 <span key={progress.streak} className="streak-number">{progress.streak}</span>
+        </span>
         <span className="stat-xp">{animatedXp} XP</span>
       </div>
 
@@ -253,7 +275,30 @@ export function ReviewScreen() {
         </div>
       </div>
 
-      <div className={`term-card ${flickerKey > 0 ? 'fx-error-flicker' : ''}`} key={flickerKey}>
+      <div
+        className={`term-card ${flickerKey > 0 ? 'fx-error-flicker' : ''} ${isAnswered ? 'is-answered' : ''} ${
+          isAnswered && !isCorrect && theme.id === 'russian' ? 'redact' : ''
+        } ${isAnswered && !isCorrect && theme.id === 'french' && tension >= 3 ? 'tribunal-sweep' : ''}`}
+        key={`${current.id}-${flickerKey}`}
+      >
+        {theme.id === 'portuguese' && (
+          <div
+            className={`candle-glow ${isAnswered && !isCorrect ? 'gutter' : ''}`}
+            style={{
+              opacity: Math.min(0.15 + combo * 0.05, 0.5),
+              transform: `scale(${1 + Math.min(combo, 6) * 0.06})`,
+            }}
+            aria-hidden="true"
+          />
+        )}
+        {theme.id === 'portuguese' && (
+          <div
+            className={`compass-needle ${isAnswered ? (isCorrect ? 'true-north' : 'astray') : ''}`}
+            aria-hidden="true"
+          >
+            🧭
+          </div>
+        )}
         <div className="term-eyebrow">
           {theme.eyebrowLabel}
           {current.struggling && theme.strugglingLabel && (
@@ -276,6 +321,22 @@ export function ReviewScreen() {
           </button>
         </div>
         {current.transliteration && <div className="term-translit">[ {current.transliteration} ]</div>}
+        {theme.id === 'italian' && (combo > 0 || legionScatter) && (
+          <div className={`legion-column ${legionScatter ? 'scatter' : ''}`} aria-hidden="true">
+            {Array.from({ length: Math.min(legionScatter ? scatterCount : combo, 10) }).map((_, i) => (
+              <span
+                key={i}
+                className="legion-glyph"
+                style={{
+                  animationDelay: `${i * 55}ms`,
+                  '--scatter-x': `${(i % 2 === 0 ? 1 : -1) * (18 + i * 5)}px`,
+                }}
+              >
+                🛡
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="options-list">

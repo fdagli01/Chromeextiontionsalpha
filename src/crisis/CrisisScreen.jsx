@@ -139,13 +139,17 @@ export function CrisisScreen({ crisis, onResolve }) {
     return <p className="empty-state">Assembling the response team...</p>
   }
 
+  const isFinalCountdown = remaining <= 5
+
   return (
-    <div className="crisis-wrap">
+    <div className={`crisis-wrap ${isFinalCountdown ? 'crisis-final-countdown' : ''}`}>
       <div className="crisis-headline">⚠ {template.headline}</div>
       <div className="crisis-directive">{template.directive}</div>
 
       <div className="crisis-hud">
-        <span className="crisis-timer">{remaining}s</span>
+        <span key={remaining} className={`crisis-timer ${isFinalCountdown ? 'urgent' : ''}`}>
+          {remaining}s
+        </span>
         <span className="crisis-score">
           {score}/{template.wordCount}
         </span>
