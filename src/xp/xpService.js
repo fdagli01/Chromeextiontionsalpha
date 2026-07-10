@@ -73,3 +73,29 @@ export async function awardReviewXp(themeId, quality, now = new Date()) {
     },
   }
 }
+
+/**
+ * Awards a flat XP bonus outside the normal per-review flow (e.g. a won
+ * Historical Crisis), recomputing level and re-evaluating badges the same
+ * way a graded review would.
+ * @param {string} themeId
+ * @param {number} amount
+ * @returns {Promise<{progress: import('../db/progressRepo.js').ThemeProgress, leveledUp: boolean, newBadges: import('../badges/badges.js').BadgeDef[]}>}
+ */
+export async function awardBonusXp(themeId, amount) {
+  const current = await getProgress(themeId)
+  const nextXp = current.xp + amount
+  const nextLevel = levelForXp(nextXp)
+
+  const { badges, newlyEarned } = evaluateBadges({
+    streak: current.streak,
+    level: nextLevel,
+    xp: nextXp,
+    badges: current.badges,
+  })
+
+  const progress = await saveProgress(themeId, { xp: nextXp, level: nextLevel, badges })
+  emitProgressChanged(themeId, progress)
+
+  return { progress, leveledUp: nextLevel > current.level, newBadges: newlyEarned }
+}

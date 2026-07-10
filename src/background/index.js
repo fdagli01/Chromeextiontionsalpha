@@ -3,15 +3,39 @@ import { getTheme, DEFAULT_THEME_ID } from '../themes/index.js'
 import { getExample, getFact, getPhilosophy } from '../facts/index.js'
 import { getTransliteration } from '../transliteration/index.js'
 import { translateToEnglish } from './translate.js'
+import { checkForCrisis, CRISIS_ALARM_NAME, scheduleCrisisChecks } from './crisisScheduler.js'
 
 const ADD_WORD_MENU_ID = 'polyglot-chronicle-add-word'
 
-chrome.runtime.onInstalled.addListener(() => {
+/**
+ * (Re)creates the right-click "add word" menu item using the active theme's
+ * own flavor text (e.g. "Decrypt intercept" for Russian, "File before the
+ * tribunal" for French), so the context menu reads in-world rather than as a
+ * generic browser affordance. Safe to call repeatedly.
+ */
+async function rebuildContextMenu() {
+  const themeId = (await getSetting('activeThemeId', DEFAULT_THEME_ID)) ?? DEFAULT_THEME_ID
+  const theme = getTheme(themeId)
+  await chrome.contextMenus.removeAll()
   chrome.contextMenus.create({
     id: ADD_WORD_MENU_ID,
-    title: 'Add to Polyglot Chronicle: "%s"',
+    title: theme.contextMenuTitle,
     contexts: ['selection'],
   })
+}
+
+chrome.runtime.onInstalled.addListener(rebuildContextMenu)
+chrome.runtime.onStartup.addListener(rebuildContextMenu)
+
+chrome.runtime.onInstalled.addListener(scheduleCrisisChecks)
+chrome.runtime.onStartup.addListener(scheduleCrisisChecks)
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === CRISIS_ALARM_NAME) checkForCrisis()
+})
+
+chrome.runtime.onMessage.addListener((message) => {
+  if (message?.type === 'themeChanged') rebuildContextMenu()
 })
 
 chrome.contextMenus.onClicked.addListener((info) => {

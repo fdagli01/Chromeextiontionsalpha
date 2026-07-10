@@ -4,13 +4,19 @@ import { useAnimatedNumber } from '../components/useAnimatedNumber.js'
 import { getDueWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
+import { awardReputation } from '../db/factionsRepo.js'
 import { awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
 import { playLevelUpFanfare, playMissSfx, playSuccessSfx } from '../audio/sfx.js'
 import { speakTerm } from '../audio/speak.js'
+import { playPronunciationSting } from '../audio/themeAudioControl.js'
 import { levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
 import { resolveTensionVisuals } from '../themes/index.js'
+import { findFactionsForTerm } from '../factions/factions.js'
 import { QUALITY } from '../sm2/sm2.js'
 import './ReviewScreen.css'
+
+/** Reputation points awarded to each matching faction on a correct recall. */
+const FACTION_REPUTATION_PER_CORRECT = 10
 
 function shuffle(arr) {
   const a = [...arr]
@@ -35,6 +41,7 @@ export function ReviewScreen() {
   const [shake, setShake] = useState(false)
   const [tension, setTension] = useState(0)
   const [combo, setCombo] = useState(0)
+  const [factionToast, setFactionToast] = useState(null)
   const hasTension = theme.tensionLevels.length > 0
   const tensionVisuals = useMemo(() => resolveTensionVisuals(theme, tension), [theme, tension])
 
@@ -61,6 +68,7 @@ export function ReviewScreen() {
     setBadgeToast(null)
     setQuestToast(false)
     setLevelUpInfo(null)
+    setFactionToast(null)
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
       const opts = shuffle([
         { label: current.translation || '(no translation)', isCorrect: true },
@@ -70,6 +78,9 @@ export function ReviewScreen() {
     })
     getSetting('autoSpeakEnabled', true).then((enabled) => {
       if (enabled) speakTerm(current.term, theme.sourceLanguageCode)
+    })
+    getSetting('soundscapeEnabled', true).then((enabled) => {
+      if (enabled) playPronunciationSting(theme.id)
     })
   }, [current?.id, theme.id])
 
@@ -87,6 +98,16 @@ export function ReviewScreen() {
       theme.id,
       quality
     )
+
+    if (correct) {
+      const matchedFactions = findFactionsForTerm(theme.id, current.term)
+      if (matchedFactions.length > 0) {
+        await Promise.all(
+          matchedFactions.map((f) => awardReputation(f.factionId, theme.id, FACTION_REPUTATION_PER_CORRECT))
+        )
+        setFactionToast(matchedFactions[0])
+      }
+    }
 
     const nextTension = hasTension
       ? correct
@@ -132,6 +153,7 @@ export function ReviewScreen() {
     setBadgeToast(null)
     setQuestToast(false)
     setLevelUpInfo(null)
+    setFactionToast(null)
   }
 
   // Interrogation-room keyboard protocol: 1/2/3 pick an answer, Enter advances.
@@ -226,7 +248,12 @@ export function ReviewScreen() {
           {current.term}
           <button
             className="term-speak-btn"
-            onClick={() => speakTerm(current.term, theme.sourceLanguageCode)}
+            onClick={() => {
+              speakTerm(current.term, theme.sourceLanguageCode)
+              getSetting('soundscapeEnabled', true).then((enabled) => {
+                if (enabled) playPronunciationSting(theme.id)
+              })
+            }}
             title="Listen to pronunciation again"
           >
             🔊
@@ -270,7 +297,7 @@ export function ReviewScreen() {
             {xpToast && <span className="result-xp"> {xpToast}</span>}
           </div>
 
-          {(badgeToast || questToast || (isCorrect && combo >= 3)) && (
+          {(badgeToast || questToast || factionToast || (isCorrect && combo >= 3)) && (
             <div className="result-extras">
               {isCorrect && combo >= 3 && <span className="result-chip combo-chip">🔥 Combo x{combo}</span>}
               {badgeToast && (
@@ -279,6 +306,11 @@ export function ReviewScreen() {
                 </span>
               )}
               {questToast && <span className="result-chip">🎯 +{DAILY_QUEST_BONUS_XP} XP</span>}
+              {factionToast && (
+                <span className="result-chip">
+                  {factionToast.emblem} +{FACTION_REPUTATION_PER_CORRECT} {factionToast.name}
+                </span>
+              )}
             </div>
           )}
 

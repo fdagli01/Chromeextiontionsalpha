@@ -44,6 +44,7 @@ export const frenchTheme = defineTheme({
   nextButtonLabel: 'AU SUIVANT [ENTER] →',
   intelLabel: '⚖ DOSSIER',
   archiveStampLabel: "ARCHIVES D'ÉTAT",
+  contextMenuTitle: 'File before the tribunal: "%s"',
   effects: {
     paperTexture: false,
     vignette: true,
@@ -118,6 +119,24 @@ export const frenchTheme = defineTheme({
         danger: '#ff3b47',
         success: '#8fbf6f',
       },
+    },
+  ],
+  crises: [
+    {
+      id: 'fr-mob',
+      headline: 'The mob marches on the Bastille!',
+      directive: 'Denounce 5 words in 60 seconds before the gates fall.',
+      wordCount: 5,
+      timeLimitSec: 60,
+      rewardXp: 40,
+    },
+    {
+      id: 'fr-tribunal',
+      headline: 'The Tribunal convenes without warning!',
+      directive: 'Testify on 3 words in 30 seconds or be condemned.',
+      wordCount: 3,
+      timeLimitSec: 30,
+      rewardXp: 25,
     },
   ],
 })

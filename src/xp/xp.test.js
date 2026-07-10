@@ -61,7 +61,7 @@ describe('rankForLevel', () => {
   })
 
   it('falls back to a generic label when no ranks are defined', () => {
-    expect(rankForLevel([], 4)).toBe('Seviye 4')
+    expect(rankForLevel([], 4)).toBe('Level 4')
   })
 })
 

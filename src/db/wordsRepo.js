@@ -12,6 +12,7 @@ import { gradeReview } from '../sm2/sm2.js'
  * @property {string} [exampleSentence] - a sentence using the term, in the source language
  * @property {string} [exampleTranslation] - Turkish translation of exampleSentence
  * @property {string} [philosophyNote] - one-line philosophical cross-reference, for conceptually loaded terms
+ * @property {EtymologyEntry} [etymology] - AI-generated etymological/historical-linguistics breakdown
  * @property {string} createdAt - ISO timestamp
  * @property {number} repetition - SM-2: number of consecutive correct reviews
  * @property {number} interval - SM-2: days until next review
@@ -19,6 +20,14 @@ import { gradeReview } from '../sm2/sm2.js'
  * @property {string} dueDate - ISO timestamp of next scheduled review
  * @property {string|null} lastReviewedAt - ISO timestamp of last review, or null
  * @property {boolean} struggling - true after a missed recall, cleared on the next correct one
+ */
+
+/**
+ * @typedef {Object} EtymologyEntry
+ * @property {string} origin
+ * @property {string} rootLanguage
+ * @property {string} evolution
+ * @property {string} thematicTie
  */
 
 /**

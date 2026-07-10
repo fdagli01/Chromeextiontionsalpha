@@ -50,6 +50,16 @@
  */
 
 /**
+ * @typedef {Object} CrisisTemplate
+ * @property {string} id - unique slug within the theme, e.g. "ru-defector"
+ * @property {string} headline - in-world alarm text, e.g. "A defector is fleeing west!"
+ * @property {string} directive - the challenge instructions, e.g. "Verify 5 files in 60 seconds"
+ * @property {number} wordCount - how many words must be correctly recalled to win
+ * @property {number} timeLimitSec - time budget once the player begins
+ * @property {number} rewardXp - XP awarded on a win
+ */
+
+/**
  * @typedef {Object} ThemeConfig
  * @property {string} id - unique slug, e.g. "russian"
  * @property {string} name - display name, e.g. "Russian"
@@ -78,6 +88,10 @@
  * @property {ThemeTensionLevel[]} [tensionLevels] - ephemeral, session-local visual escalation
  *   indexed by tier (0 = calmest); unlike `stages`, this is driven by in-session performance
  *   (e.g. consecutive misses), not player level, and is applied only within the review screen
+ * @property {string} [contextMenuTitle] - the right-click menu label for this theme, "%s" is
+ *   replaced by Chrome with the selected text, e.g. 'Decrypt intercept: "%s"'
+ * @property {CrisisTemplate[]} [crises] - timed in-world emergency drills, triggered
+ *   opportunistically by the background scheduler instead of a generic "words due" reminder
  */
 
 /** @type {ThemeColors} */
@@ -128,8 +142,10 @@ export function defineTheme(partial) {
     nextButtonLabel: 'NEXT →',
     intelLabel: 'INTEL',
     archiveStampLabel: 'FILED',
+    contextMenuTitle: 'Add to Polyglot Chronicle: "%s"',
     stages: [],
     tensionLevels: [],
+    crises: [],
     ...partial,
     colors: { ...DEFAULT_COLORS, ...partial.colors },
     effects: { ...DEFAULT_EFFECTS, ...partial.effects },

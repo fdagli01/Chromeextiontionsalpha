@@ -1,0 +1,130 @@
+.crisis-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.crisis-headline {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--color-danger);
+  letter-spacing: 0.02em;
+}
+
+.crisis-directive {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.crisis-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-surface-strong);
+  border: 1px solid var(--color-danger);
+  padding: 8px 12px;
+}
+
+.crisis-timer {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-danger);
+}
+
+.crisis-score {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--color-accent);
+}
+
+.crisis-term-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 16px;
+  text-align: center;
+}
+
+.crisis-term-word {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.crisis-term-translit {
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--color-accent);
+  margin-top: 4px;
+}
+
+.crisis-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.crisis-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.crisis-option-btn:hover {
+  border-color: var(--color-accent);
+}
+
+.crisis-resolved {
+  align-items: center;
+  text-align: center;
+  padding: 30px 10px;
+}
+
+.crisis-outcome {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.crisis-outcome.won {
+  color: var(--color-success);
+}
+
+.crisis-outcome.lost,
+.crisis-outcome.expired {
+  color: var(--color-danger);
+}
+
+.crisis-outcome-detail {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 8px;
+}
+
+.crisis-dismiss-btn {
+  margin-top: 20px;
+  background: var(--color-primary);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: 10px 20px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}

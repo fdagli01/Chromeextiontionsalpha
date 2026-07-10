@@ -41,6 +41,7 @@ export const portugueseTheme = defineTheme({
   nextButtonLabel: 'PRÓXIMO RUMO →',
   intelLabel: '⚓ DIÁRIO DE BORDO',
   archiveStampLabel: 'ARQUIVO REAL',
+  contextMenuTitle: 'Log to the ship\'s journal: "%s"',
   effects: {
     paperTexture: true,
     vignette: true,
@@ -59,5 +60,23 @@ export const portugueseTheme = defineTheme({
     'Piloto',
     'Capitão-mor',
     'Almirante',
+  ],
+  crises: [
+    {
+      id: 'pt-storm',
+      headline: 'A storm bears down on the fleet!',
+      directive: 'Log 5 terms in 60 seconds before the squall hits.',
+      wordCount: 5,
+      timeLimitSec: 60,
+      rewardXp: 40,
+    },
+    {
+      id: 'pt-sighting',
+      headline: 'Sail sighted on the horizon!',
+      directive: 'Confirm 3 terms in 30 seconds — friend or corsair?',
+      wordCount: 3,
+      timeLimitSec: 30,
+      rewardXp: 25,
+    },
   ],
 })

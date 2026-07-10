@@ -4,7 +4,9 @@ import { DEFAULT_THEME_ID } from '../themes/index.js'
 import { getSetting } from '../db/settingsRepo.js'
 import { ReviewScreen } from '../review/ReviewScreen.jsx'
 import { ArchiveScreen } from '../archive/ArchiveScreen.jsx'
+import { FactionsScreen } from '../factions/FactionsScreen.jsx'
 import { SettingsScreen } from '../settings/SettingsScreen.jsx'
+import { CrisisScreen } from '../crisis/CrisisScreen.jsx'
 import {
   getThemeAudioChannelLabel,
   hasThemeAudio,
@@ -20,8 +22,26 @@ function AppShell({ activeThemeId, onThemeChange }) {
   const [activeTab, setActiveTab] = useState('review')
   const [audioPlaying, setAudioPlaying] = useState(isThemeAudioPlaying(theme.id))
   const [audioLabel, setAudioLabel] = useState(getThemeAudioChannelLabel(theme.id))
+  const [pendingCrisis, setPendingCrisis] = useState(null)
+  const [activeCrisis, setActiveCrisis] = useState(null)
 
   const hasAudio = hasThemeAudio(theme.id)
+
+  useEffect(() => {
+    let cancelled = false
+    chrome.storage.local.get('pendingCrisis').then(({ pendingCrisis: stored }) => {
+      if (!cancelled && stored?.themeId === theme.id) setPendingCrisis(stored)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [theme.id])
+
+  async function handleCrisisResolved() {
+    await chrome.storage.local.remove('pendingCrisis')
+    setPendingCrisis(null)
+    setActiveCrisis(null)
+  }
 
   function toggleAudio() {
     if (audioPlaying) {
@@ -42,6 +62,7 @@ function AppShell({ activeThemeId, onThemeChange }) {
   const TABS = [
     { id: 'review', icon: '⚑', label: 'INTERROGATE', node: <ReviewScreen /> },
     { id: 'archive', icon: '📁', label: 'ARCHIVE', node: <ArchiveScreen /> },
+    { id: 'factions', icon: '🎖', label: 'FACTIONS', node: <FactionsScreen /> },
     {
       id: 'settings',
       icon: '⚙',
@@ -61,9 +82,20 @@ function AppShell({ activeThemeId, onThemeChange }) {
           </h1>
           <p className="era">{theme.tagline.replace('{level}', theme.level)}</p>
         </div>
+        {pendingCrisis && !activeCrisis && (
+          <button className="crisis-alert-btn" onClick={() => setActiveCrisis(pendingCrisis)}>
+            ⚠ CRISIS
+          </button>
+        )}
       </header>
 
-      <main className="app-content">{active.node}</main>
+      <main className="app-content">
+        {activeCrisis ? (
+          <CrisisScreen crisis={activeCrisis} onResolve={handleCrisisResolved} />
+        ) : (
+          active.node
+        )}
+      </main>
 
       <nav className="app-tabs">
         {TABS.map((tab) => (

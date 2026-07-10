@@ -32,6 +32,25 @@
   flex: 1;
 }
 
+.crisis-alert-btn {
+  flex-shrink: 0;
+  background: var(--color-danger);
+  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  padding: 6px 10px;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  animation: crisis-alert-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes crisis-alert-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 .app-header h1 {
   font-family: var(--font-heading);
   font-size: 15px;

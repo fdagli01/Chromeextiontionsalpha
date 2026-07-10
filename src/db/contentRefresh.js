@@ -2,16 +2,18 @@ import { getAllWords, updateWord } from './wordsRepo.js'
 import { getSetting } from './settingsRepo.js'
 import { getExample, getFact, getPhilosophy } from '../facts/index.js'
 import { generateChronicleEntry } from '../facts/aiEngine.js'
+import { generateEtymologyEntry } from '../facts/etymologyEngine.js'
 import { getTransliteration } from '../transliteration/index.js'
 
 /**
- * Backfills fact/example/philosophy/transliteration onto words captured
- * before those fields existed (or before a term was added to the curated
- * pool). Only fills in currently-empty fields — never overwrites content
- * the user might have already seen, and is safe to run repeatedly.
+ * Backfills fact/example/philosophy/transliteration/etymology onto words
+ * captured before those fields existed (or before a term was added to the
+ * curated pool). Only fills in currently-empty fields — never overwrites
+ * content the user might have already seen, and is safe to run repeatedly.
  *
  * For words with no curated fact/example, falls back to the AI Chronicle
- * Engine when the user has enabled it and supplied an API key.
+ * Engine, and separately to the Etymological Detective for the etymology
+ * field, when the user has enabled the AI engine and supplied an API key.
  * @returns {Promise<{total: number, updated: number}>}
  */
 export async function refreshCuratedContent() {
@@ -58,6 +60,11 @@ export async function refreshCuratedContent() {
           patch.exampleTranslation = entry.translation
         }
       }
+    }
+
+    if (apiKey && !word.etymology) {
+      const etymology = await generateEtymologyEntry(word.themeId, word.term, apiKey, model)
+      if (etymology) patch.etymology = etymology
     }
 
     if (Object.keys(patch).length > 0) {

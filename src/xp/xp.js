@@ -74,7 +74,7 @@ export function levelProgress(xp) {
  * @returns {string} the rank name for this level, clamped to the last known rank
  */
 export function rankForLevel(rankNames, level) {
-  if (!rankNames || rankNames.length === 0) return `Seviye ${level}`
+  if (!rankNames || rankNames.length === 0) return `Level ${level}`
   const index = Math.min(level - 1, rankNames.length - 1)
   return rankNames[index]
 }

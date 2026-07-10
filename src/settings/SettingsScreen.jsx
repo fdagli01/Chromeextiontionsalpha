@@ -11,6 +11,7 @@ import './SettingsScreen.css'
 export function SettingsScreen({ activeThemeId, onThemeChange }) {
   const [sfxEnabled, setSfxEnabled] = useState(null)
   const [autoSpeakEnabled, setAutoSpeakEnabled] = useState(null)
+  const [soundscapeEnabled, setSoundscapeEnabled] = useState(null)
   const [earnedBadges, setEarnedBadges] = useState(null)
   const [backupMessage, setBackupMessage] = useState('')
   const [contentMessage, setContentMessage] = useState('')
@@ -21,6 +22,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
   useEffect(() => {
     getSetting('sfxEnabled', true).then(setSfxEnabled)
     getSetting('autoSpeakEnabled', true).then(setAutoSpeakEnabled)
+    getSetting('soundscapeEnabled', true).then(setSoundscapeEnabled)
     getSetting('aiEngineEnabled', false).then(setAiEngineEnabled)
     getSetting('aiEngineApiKey', '').then(setAiEngineApiKey)
   }, [])
@@ -35,8 +37,20 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     }
   }, [activeThemeId])
 
-  if (sfxEnabled === null || autoSpeakEnabled === null || earnedBadges === null || aiEngineEnabled === null) {
+  if (
+    sfxEnabled === null ||
+    autoSpeakEnabled === null ||
+    soundscapeEnabled === null ||
+    earnedBadges === null ||
+    aiEngineEnabled === null
+  ) {
     return <p className="empty-state">Loading...</p>
+  }
+
+  async function toggleSoundscape() {
+    const next = !soundscapeEnabled
+    setSoundscapeEnabled(next)
+    await setSetting('soundscapeEnabled', next)
   }
 
   async function toggleSfx() {
@@ -54,6 +68,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
   async function changeTheme(themeId) {
     pauseThemeAudio(activeThemeId)
     await setSetting('activeThemeId', themeId)
+    chrome.runtime.sendMessage({ type: 'themeChanged', themeId })
     onThemeChange(themeId)
   }
 
@@ -130,6 +145,16 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
         </div>
         <button className={`toggle-button ${autoSpeakEnabled ? 'on' : ''}`} onClick={toggleAutoSpeak}>
           {autoSpeakEnabled ? 'On' : 'Off'}
+        </button>
+      </div>
+
+      <div className="settings-row">
+        <div className="settings-row-label">
+          <span className="title">Audio Immersion</span>
+          <span className="hint">Play a brief era soundscape under each pronunciation</span>
+        </div>
+        <button className={`toggle-button ${soundscapeEnabled ? 'on' : ''}`} onClick={toggleSoundscape}>
+          {soundscapeEnabled ? 'On' : 'Off'}
         </button>
       </div>
 

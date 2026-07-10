@@ -277,3 +277,22 @@ export function getAmbientChannelName(themeId) {
 export function getAmbientChannelCount(themeId) {
   return THEME_AMBIENT_PRESETS[themeId]?.length ?? 0
 }
+
+/** How long a one-shot pronunciation sting rings out before fading, in ms. */
+const STING_DURATION_MS = 1400
+
+/**
+ * Plays a brief, one-shot swell of a theme's ambient texture underneath a
+ * word's pronunciation — a crowd murmur for French, distant surf for
+ * Portuguese, a legion drone for Italian — without disturbing the
+ * persistent "tune in the radio" ambient loop (if the player has one
+ * running, this stings independently on top of it).
+ * @param {string} themeId
+ */
+export function playPronunciationSting(themeId) {
+  const presets = THEME_AMBIENT_PRESETS[themeId]
+  if (!presets) return
+  const channelIndex = themeId === currentThemeId ? currentChannelIndex : 0
+  const stop = buildAmbientVoice(getAudioContext(), presets[channelIndex].config)
+  setTimeout(stop, STING_DURATION_MS)
+}

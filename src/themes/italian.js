@@ -40,6 +40,7 @@ export const italianTheme = defineTheme({
   nextButtonLabel: 'PERGE [ENTER] →',
   intelLabel: '⚔ COMMENTARII',
   archiveStampLabel: 'SIGNATVM',
+  contextMenuTitle: 'Inscribe in the commentarii: "%s"',
   effects: {
     paperTexture: false,
     vignette: true,
@@ -107,6 +108,24 @@ export const italianTheme = defineTheme({
         danger: '#d43a2f',
       },
       emblem: '🦅',
+    },
+  ],
+  crises: [
+    {
+      id: 'it-barbarians',
+      headline: 'Barbarians at the gates!',
+      directive: 'Name 5 words in 60 seconds before the wall is breached.',
+      wordCount: 5,
+      timeLimitSec: 60,
+      rewardXp: 40,
+    },
+    {
+      id: 'it-ambush',
+      headline: 'Ambush on the Via Appia!',
+      directive: 'Recall 3 words in 30 seconds to rally the cohort.',
+      wordCount: 3,
+      timeLimitSec: 30,
+      rewardXp: 25,
     },
   ],
 })

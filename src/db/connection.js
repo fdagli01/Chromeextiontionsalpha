@@ -1,9 +1,11 @@
 const DB_NAME = 'polyglot-chronicle'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 export const STORE_WORDS = 'words'
 export const STORE_PROGRESS = 'progress'
 export const STORE_SETTINGS = 'settings'
+export const STORE_FACTIONS = 'factions'
+export const STORE_CRISES = 'crises'
 
 /** @type {Promise<IDBDatabase> | null} */
 let dbPromise = null
@@ -34,6 +36,16 @@ export function openDB() {
 
       if (!db.objectStoreNames.contains(STORE_SETTINGS)) {
         db.createObjectStore(STORE_SETTINGS, { keyPath: 'key' })
+      }
+
+      if (!db.objectStoreNames.contains(STORE_FACTIONS)) {
+        const factions = db.createObjectStore(STORE_FACTIONS, { keyPath: 'factionId' })
+        factions.createIndex('byTheme', 'themeId', { unique: false })
+      }
+
+      if (!db.objectStoreNames.contains(STORE_CRISES)) {
+        const crises = db.createObjectStore(STORE_CRISES, { keyPath: 'id', autoIncrement: true })
+        crises.createIndex('byTheme', 'themeId', { unique: false })
       }
     }
 

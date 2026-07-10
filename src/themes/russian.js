@@ -38,6 +38,7 @@ export const russianTheme = defineTheme({
   nextButtonLabel: 'ДАЛЕЕ [ENTER] →',
   intelLabel: '★ ДОСЬЕ',
   archiveStampLabel: 'СЕКРЕТНО',
+  contextMenuTitle: 'Decrypt intercept: "%s"',
   effects: {
     paperTexture: true,
     vignette: true,
@@ -57,5 +58,23 @@ export const russianTheme = defineTheme({
     'Major',
     'Colonel',
     'General Secretary',
+  ],
+  crises: [
+    {
+      id: 'ru-defector',
+      headline: 'A defector is fleeing west!',
+      directive: 'Verify 5 files in 60 seconds before the border closes.',
+      wordCount: 5,
+      timeLimitSec: 60,
+      rewardXp: 40,
+    },
+    {
+      id: 'ru-jamming',
+      headline: 'Enemy jamming detected on the wire!',
+      directive: 'Confirm 3 intercepts in 30 seconds before the signal is lost.',
+      wordCount: 3,
+      timeLimitSec: 30,
+      rewardXp: 25,
+    },
   ],
 })
