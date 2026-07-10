@@ -181,7 +181,7 @@
   padding: 10px 14px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
+  color: var(--color-text);
   cursor: pointer;
   text-align: left;
   transition: border-color 0.12s, background 0.12s, color 0.12s;
