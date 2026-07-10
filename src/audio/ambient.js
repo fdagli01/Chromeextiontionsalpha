@@ -177,6 +177,19 @@ const THEME_AMBIENT_PRESETS = {
         pluck: { notes: [55, 65.41], type: 'sine', minDelay: 0.9, maxDelay: 1.1, gain: 0.18, decay: 0.35 },
       },
     },
+    {
+      // The Forum: senate debate and market trade — a crowd murmur under
+      // sparse coin-clink plucks, brighter and busier than the temple's
+      // stillness or the legion's march.
+      name: 'FORVM',
+      config: {
+        droneFreqs: [130.81, 196.0],
+        droneType: 'sine',
+        droneGain: 0.025,
+        murmur: { freq: 850, q: 1.2, gain: 0.045, wobbleRate: 0.2, wobbleDepth: 0.03 },
+        pluck: { notes: [659.25, 783.99, 987.77], type: 'square', minDelay: 4, maxDelay: 9, gain: 0.035, decay: 0.4 },
+      },
+    },
   ],
   portuguese: [
     {
@@ -201,6 +214,19 @@ const THEME_AMBIENT_PRESETS = {
         pluck: { notes: [440, 523.25], type: 'triangle', minDelay: 6, maxDelay: 12, gain: 0.05, decay: 1.8 },
       },
     },
+    {
+      // The Feitoria: a spice-trading post at the edge of the empire — a
+      // higher, brighter murmur (haggling voices) under sparse exotic
+      // bell-like plucks, no wave noise since we're inland at the market.
+      name: 'FEITORIA',
+      config: {
+        droneFreqs: [73.42, 110],
+        droneType: 'triangle',
+        droneGain: 0.025,
+        murmur: { freq: 900, q: 1.5, gain: 0.032, wobbleRate: 0.22, wobbleDepth: 0.02 },
+        pluck: { notes: [698.46, 830.61, 932.33, 1108.73], type: 'triangle', minDelay: 3, maxDelay: 6, gain: 0.045, decay: 1.1 },
+      },
+    },
   ],
   french: [
     {
@@ -221,6 +247,19 @@ const THEME_AMBIENT_PRESETS = {
         droneGain: 0.02,
         murmur: { freq: 700, q: 1.1, gain: 0.06, wobbleRate: 0.25, wobbleDepth: 0.03 },
         pluck: { notes: [55], type: 'sine', minDelay: 1.2, maxDelay: 2.2, gain: 0.2, decay: 0.25 },
+      },
+    },
+    {
+      // The Salon: pre-revolution aristocratic calm — a soft harpsichord-like
+      // pluck pattern over a gentle drone, deliberately elegant and unhurried
+      // to contrast with RUE's unease and TERREUR's dread.
+      name: 'SALON',
+      config: {
+        droneFreqs: [174.61, 220.0],
+        droneType: 'sine',
+        droneGain: 0.02,
+        murmur: { freq: 1000, q: 1.6, gain: 0.018, wobbleRate: 0.1, wobbleDepth: 0.01 },
+        pluck: { notes: [349.23, 440.0, 523.25, 587.33, 698.46], type: 'triangle', minDelay: 2.5, maxDelay: 5.5, gain: 0.055, decay: 1.6 },
       },
     },
   ],
