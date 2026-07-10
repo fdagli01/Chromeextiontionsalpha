@@ -21,7 +21,7 @@ const MAINFRAMES = {
   russian: 'K.G.B. Terminal (Soviet Era) — a clandestine, high-stakes Cold War Soviet epoch',
 }
 
-const DEFAULT_MODEL = 'gemini-2.5-flash'
+const DEFAULT_MODEL = 'gemini-2.0-flash'
 
 function parseChronicleJson(text) {
   const cleaned = text.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim()
@@ -38,7 +38,7 @@ function parseChronicleJson(text) {
  * @param {string} themeId
  * @param {string} term
  * @param {string} apiKey
- * @param {string} [model] - a Gemini model name, e.g. "gemini-2.5-flash"
+ * @param {string} [model] - a Gemini model name, e.g. "gemini-2.0-flash"
  * @returns {Promise<{sentence: string, translation: string, chronicle_insight: string} | null>}
  */
 export async function generateChronicleEntry(themeId, term, apiKey, model = DEFAULT_MODEL) {
