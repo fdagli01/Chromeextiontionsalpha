@@ -1,7 +1,9 @@
-import { addWord } from '../db/index.js'
+import { addWord, getSetting } from '../db/index.js'
 import { getTheme, listThemes } from '../themes/index.js'
 import { getExample, getFact, getPhilosophy } from '../facts/index.js'
 import { getTransliteration } from '../transliteration/index.js'
+import { generateChronicleEntry } from '../facts/aiEngine.js'
+import { generateEtymologyEntry } from '../facts/etymologyEngine.js'
 import { translateToEnglish } from './translate.js'
 import { checkForCrisis, CRISIS_ALARM_NAME, scheduleCrisisChecks } from './crisisScheduler.js'
 
@@ -60,6 +62,11 @@ chrome.contextMenus.onClicked.addListener((info) => {
  * English translation, attaches any curated historical trivia, persists it,
  * and confirms with a themed notification. Translation failures don't block
  * the capture — the word is still saved so nothing is lost.
+ *
+ * When the term has no curated fact/example (or etymology), and the user
+ * has the AI Chronicle Engine enabled with an API key, this falls back to
+ * Gemini for that one word before saving — a single-word request, so the
+ * per-minute quota isn't a concern the way a bulk backfill is.
  * @param {string} term
  * @param {string} themeId
  */
@@ -67,10 +74,27 @@ async function captureWord(term, themeId) {
   const theme = getTheme(themeId)
 
   const translation = await translateToEnglish(term, theme.sourceLanguageCode)
-  const fact = getFact(themeId, term)
+  let fact = getFact(themeId, term)
   const transliteration = getTransliteration(themeId, term)
-  const example = getExample(themeId, term)
+  let example = getExample(themeId, term)
   const philosophy = getPhilosophy(themeId, term)
+  let etymology
+
+  const aiEnabled = await getSetting('aiEngineEnabled', false)
+  const apiKey = aiEnabled ? await getSetting('aiEngineApiKey', '') : ''
+  if (apiKey) {
+    const model = await getSetting('aiEngineModel', undefined)
+
+    if (!fact || !example) {
+      const entry = await generateChronicleEntry(themeId, term, apiKey, model)
+      if (entry) {
+        if (!fact) fact = entry.chronicle_insight
+        if (!example) example = { sentence: entry.sentence, translation: entry.translation }
+      }
+    }
+
+    etymology = (await generateEtymologyEntry(themeId, term, apiKey, model)) ?? undefined
+  }
 
   const word = await addWord({
     themeId,
@@ -81,6 +105,7 @@ async function captureWord(term, themeId) {
     exampleSentence: example?.sentence ?? '',
     exampleTranslation: example?.translation ?? '',
     philosophyNote: philosophy,
+    etymology,
   })
 
   chrome.notifications.create({

@@ -31,7 +31,7 @@ import { bootstrapFromSm2, gradeReview, QUALITY } from '../srs/fsrs.js'
  */
 
 /**
- * @param {{themeId: string, term: string, translation: string, fact?: string, transliteration?: string, exampleSentence?: string, exampleTranslation?: string, philosophyNote?: string}} input
+ * @param {{themeId: string, term: string, translation: string, fact?: string, transliteration?: string, exampleSentence?: string, exampleTranslation?: string, philosophyNote?: string, etymology?: EtymologyEntry}} input
  * @returns {Promise<WordEntry>}
  */
 export async function addWord({
@@ -43,6 +43,7 @@ export async function addWord({
   exampleSentence = '',
   exampleTranslation = '',
   philosophyNote = '',
+  etymology = undefined,
 }) {
   const now = new Date().toISOString()
   /** @type {WordEntry} */
@@ -55,6 +56,7 @@ export async function addWord({
     exampleSentence,
     exampleTranslation,
     philosophyNote,
+    ...(etymology ? { etymology } : {}),
     createdAt: now,
     interval: 0,
     dueDate: now,
