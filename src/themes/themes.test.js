@@ -75,10 +75,26 @@ describe('theme registry', () => {
     expect(portuguese.tensionLevels).toEqual([])
   })
 
-  it('gives the French theme four tension tiers and no level-gated stages', () => {
+  it('gives the French theme four tension tiers and four level-gated stages', () => {
     const french = getTheme('french')
     expect(french.tensionLevels).toHaveLength(4)
-    expect(french.stages).toEqual([])
+    expect(french.stages).toHaveLength(4)
+    expect(french.stages.map((s) => s.minLevel)).toEqual([1, 4, 8, 14])
+  })
+
+  it('evolves the French palette through the Revolution as the level rises', () => {
+    const french = getTheme('french')
+    // Ancien Régime: the royal base palette, untouched.
+    expect(resolveThemeVisuals(french, 1).colors.primary).toBe(french.colors.primary)
+    expect(resolveThemeVisuals(french, 1).stageName).toBe('Ancien Régime')
+    // La République: tricolor blue with a red accent.
+    expect(resolveThemeVisuals(french, 5).colors.primary).toBe('#1f4f9e')
+    expect(resolveThemeVisuals(french, 5).stageName).toBe('La République')
+    // L'Empire: Napoleonic green and gold, bee emblem.
+    const empire = resolveThemeVisuals(french, 20)
+    expect(empire.colors.primary).toBe('#2f5d3a')
+    expect(empire.emblem).toBe('🐝')
+    expect(empire.stageName).toBe("L'Empire")
   })
 })
 
