@@ -1,0 +1,149 @@
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+/* Dossier card */
+.archive-item {
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 5px solid var(--color-primary);
+  padding: 11px 13px 10px;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+}
+
+/* Theme-specific dossier stamp (e.g. "TOP SECRET" for Russian) */
+.archive-item::before {
+  content: var(--archive-stamp-text);
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-family: var(--font-heading);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--color-accent);
+  opacity: 0.5;
+  border: 1px solid var(--color-accent);
+  padding: 1px 5px;
+  text-transform: uppercase;
+}
+
+.archive-item-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.archive-term-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.02em;
+}
+
+.archive-term-button:hover {
+  color: var(--color-accent);
+}
+
+.archive-translation {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.archive-struggling {
+  font-family: var(--font-heading);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 1px 6px;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+.archive-translit {
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+  font-size: 11px;
+  color: var(--color-accent);
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.archive-fact {
+  font-size: 12px;
+  font-family: var(--font-body);
+  color: var(--color-success);
+  background: rgba(0, 0, 0, 0.4);
+  border-left: 3px solid var(--color-accent);
+  padding: 5px 8px;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.archive-example {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 5px 8px;
+}
+
+.archive-example-sentence {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--color-text);
+}
+
+.archive-example-translation {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.archive-philosophy {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 10px;
+  color: var(--color-accent);
+  line-height: 1.5;
+  margin-top: 6px;
+  padding: 0 8px;
+}
+
+.archive-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 9px;
+  color: var(--color-text-muted);
+  margin-top: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: var(--font-heading);
+}
+
+.archive-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.meta-label {
+  opacity: 0.6;
+}
