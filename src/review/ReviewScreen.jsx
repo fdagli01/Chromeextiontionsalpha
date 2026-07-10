@@ -32,6 +32,7 @@ export function ReviewScreen() {
   const [questToast, setQuestToast] = useState(false)
   const [levelUpInfo, setLevelUpInfo] = useState(null)
   const [flickerKey, setFlickerKey] = useState(0)
+  const [shake, setShake] = useState(false)
   const [tension, setTension] = useState(0)
   const [combo, setCombo] = useState(0)
   const hasTension = theme.tensionLevels.length > 0
@@ -99,7 +100,11 @@ export function ReviewScreen() {
       if (correct) playSuccessSfx(theme.audio.sfxVariant, nextCombo)
       else playMissSfx(theme.audio.sfxVariant, nextTension)
     }
-    if (!correct) setFlickerKey((k) => k + 1)
+    if (!correct) {
+      setFlickerKey((k) => k + 1)
+      setShake(true)
+      setTimeout(() => setShake(false), 1000)
+    }
     if (hasTension) setTension(nextTension)
     setCombo(nextCombo)
 
@@ -189,7 +194,8 @@ export function ReviewScreen() {
 
   return (
     <div
-      className={`review-wrap ${hasTension ? `tension-${tension}` : ''}`}
+      className={`review-wrap ${hasTension ? `tension-${tension}` : ''} ${shake ? 'shake-glitch' : ''}`}
+      data-theme={theme.id}
       style={tensionStyle}
     >
       <div className="review-stats">
@@ -277,8 +283,8 @@ export function ReviewScreen() {
           )}
 
           {current.fact && (
-            <div className="result-intel">
-              <div className="result-intel-label">{theme.intelLabel}</div>
+            <div className="result-intel archive-note" key={current.id}>
+              <div className="result-intel-label">📜 {theme.intelLabel}</div>
               <div className="result-intel-text">{current.fact}</div>
               {current.exampleSentence && (
                 <div className="result-example">
