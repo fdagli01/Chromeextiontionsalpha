@@ -25,7 +25,7 @@ describe('requestGemini', () => {
       .mockResolvedValueOnce(rateLimited('2s'))
       .mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) })
 
-    const promise = requestGemini('https://example.com', '{}')
+    const promise = requestGemini('https://example.com', 'test-key', '{}')
     await vi.advanceTimersByTimeAsync(2000)
     const result = await promise
 
@@ -39,7 +39,7 @@ describe('requestGemini', () => {
       .mockResolvedValueOnce(rateLimited())
       .mockResolvedValueOnce({ ok: true, json: async () => ({ ok: true }) })
 
-    const promise = requestGemini('https://example.com', '{}')
+    const promise = requestGemini('https://example.com', 'test-key', '{}')
     await vi.advanceTimersByTimeAsync(2000)
     const result = await promise
 
@@ -50,7 +50,7 @@ describe('requestGemini', () => {
   it('gives up after exhausting retries on repeated 429s', async () => {
     global.fetch = vi.fn().mockResolvedValue(rateLimited('1s'))
 
-    const promise = requestGemini('https://example.com', '{}')
+    const promise = requestGemini('https://example.com', 'test-key', '{}')
     await vi.advanceTimersByTimeAsync(10000)
     const result = await promise
 
@@ -61,7 +61,7 @@ describe('requestGemini', () => {
   it('does not retry on a non-429 error status', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 })
 
-    const result = await requestGemini('https://example.com', '{}')
+    const result = await requestGemini('https://example.com', 'test-key', '{}')
 
     expect(result).toBeNull()
     expect(fetch).toHaveBeenCalledTimes(1)
@@ -70,7 +70,7 @@ describe('requestGemini', () => {
   it('returns null immediately on a network error, without retrying', async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('network down'))
 
-    const result = await requestGemini('https://example.com', '{}')
+    const result = await requestGemini('https://example.com', 'test-key', '{}')
 
     expect(result).toBeNull()
     expect(fetch).toHaveBeenCalledTimes(1)

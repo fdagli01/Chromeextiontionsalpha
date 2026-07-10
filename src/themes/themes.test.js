@@ -69,9 +69,10 @@ describe('theme registry', () => {
     expect(italian.stages.map((s) => s.minLevel)).toEqual([1, 4, 8, 14])
   })
 
-  it('keeps the Portuguese theme static (no stages, no tension levels)', () => {
+  it('gives the Portuguese theme four level-gated stages and no tension levels', () => {
     const portuguese = getTheme('portuguese')
-    expect(portuguese.stages).toEqual([])
+    expect(portuguese.stages).toHaveLength(4)
+    expect(portuguese.stages.map((s) => s.minLevel)).toEqual([1, 4, 8, 14])
     expect(portuguese.tensionLevels).toEqual([])
   })
 

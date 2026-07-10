@@ -215,6 +215,70 @@ export function playLevelUpFanfare() {
 }
 
 /**
+ * A short metallic clang — two gladii striking, filtered through a
+ * highpass to keep it bright rather than boomy. The Italian theme's stand-in
+ * for the KGB stamp thunk. Pitches up slightly with a consecutive-correct
+ * combo, so a streak audibly climbs.
+ * @param {number} [comboLevel]
+ */
+export function playSwordClash(comboLevel = 0) {
+  const context = getAudioContext()
+  const now = context.currentTime
+  const pitch = comboPitchMultiplier(comboLevel)
+
+  const clang = context.createBufferSource()
+  clang.buffer = createNoiseBuffer(context, 0.12)
+
+  const filter = context.createBiquadFilter()
+  filter.type = 'highpass'
+  filter.frequency.setValueAtTime(1800 * pitch, now)
+
+  const gain = context.createGain()
+  gain.gain.setValueAtTime(0.28, now)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14)
+
+  clang.connect(filter).connect(gain).connect(context.destination)
+  clang.start(now)
+
+  const ring = context.createOscillator()
+  ring.type = 'triangle'
+  ring.frequency.setValueAtTime(2200 * pitch, now)
+  const ringGain = context.createGain()
+  ringGain.gain.setValueAtTime(0.08, now)
+  ringGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18)
+  ring.connect(ringGain).connect(context.destination)
+  ring.start(now)
+  ring.stop(now + 0.18)
+}
+
+/**
+ * A low, descending brass tone — a legion's retreat horn — the Italian
+ * theme's deliberately non-punishing miss sound.
+ */
+export function playRetreatHorn() {
+  const context = getAudioContext()
+  const now = context.currentTime
+
+  const osc = context.createOscillator()
+  osc.type = 'sawtooth'
+  osc.frequency.setValueAtTime(196, now)
+  osc.frequency.linearRampToValueAtTime(147, now + 0.35)
+
+  const filter = context.createBiquadFilter()
+  filter.type = 'lowpass'
+  filter.frequency.setValueAtTime(500, now)
+
+  const gain = context.createGain()
+  gain.gain.setValueAtTime(0.001, now)
+  gain.gain.linearRampToValueAtTime(0.18, now + 0.05)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4)
+
+  osc.connect(filter).connect(gain).connect(context.destination)
+  osc.start(now)
+  osc.stop(now + 0.4)
+}
+
+/**
  * Dispatches to a theme's success SFX by variant, so callers don't need to
  * branch on theme.id directly. `comboLevel` (consecutive correct answers)
  * pitches the sound up, giving an audible sense of a streak building.
@@ -223,6 +287,7 @@ export function playLevelUpFanfare() {
  */
 export function playSuccessSfx(variant, comboLevel = 0) {
   if (variant === 'nautical') return playShipBell(comboLevel)
+  if (variant === 'legion') return playSwordClash(comboLevel)
   return playStamp(comboLevel)
 }
 
@@ -234,6 +299,7 @@ export function playSuccessSfx(variant, comboLevel = 0) {
  */
 export function playMissSfx(variant, tier = 0) {
   if (variant === 'nautical') return playDistantWave()
+  if (variant === 'legion') return playRetreatHorn()
   if (variant === 'revolution') {
     if (tier >= 3) return playGuillotineSweep()
     if (tier >= 1) return playRevolutionDrum(tier)

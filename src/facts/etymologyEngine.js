@@ -46,9 +46,9 @@ export async function generateEtymologyEntry(themeId, term, apiKey, model = DEFA
   const mainframe = MAINFRAMES[themeId]
   if (!mainframe || !apiKey) return null
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
 
-  const data = await requestGemini(endpoint, JSON.stringify({
+  const data = await requestGemini(endpoint, apiKey, JSON.stringify({
     systemInstruction: { parts: [{ text: ETYMOLOGY_SYSTEM_PROMPT }] },
     contents: [{ role: 'user', parts: [{ text: `Word: "${term}"\nMainframe: ${mainframe}` }] }],
     generationConfig: { responseMimeType: 'application/json' },

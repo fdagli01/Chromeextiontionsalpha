@@ -22,17 +22,19 @@ function retryDelayFromErrorBody(errorBody) {
  * (TooManyRequests) with the server-suggested delay or exponential
  * backoff, up to MAX_RETRIES times. Any other non-ok status, or a thrown
  * network error, resolves to null immediately (no retry).
- * @param {string} endpoint
+ * @param {string} endpoint - the generateContent URL, with no `?key=` query param
+ * @param {string} apiKey - sent via the x-goog-api-key header, not the URL,
+ *   so it doesn't leak into browser history, proxy logs, or Referer headers
  * @param {string} body - JSON-stringified request body
  * @returns {Promise<any | null>} the parsed response body, or null on failure
  */
-export async function requestGemini(endpoint, body) {
+export async function requestGemini(endpoint, apiKey, body) {
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     let response
     try {
       response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
         body,
       })
     } catch (error) {

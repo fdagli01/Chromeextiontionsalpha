@@ -10,7 +10,7 @@ import { playLevelUpFanfare, playMissSfx, playSuccessSfx } from '../audio/sfx.js
 import { speakTerm } from '../audio/speak.js'
 import { playPronunciationSting } from '../audio/themeAudioControl.js'
 import { levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
-import { resolveTensionVisuals } from '../themes/index.js'
+import { resolveTensionVisuals, resolveThemeStage } from '../themes/index.js'
 import { findFactionsForTerm } from '../factions/factions.js'
 import { findSecretForTerm } from '../secrets/secrets.js'
 import { SecretRevealOverlay } from '../secrets/SecretRevealOverlay.jsx'
@@ -174,9 +174,16 @@ export function ReviewScreen() {
     setQuestToast(dailyQuest.justCompleted)
 
     if (leveledUp) {
-      setLevelUpInfo({ level: nextProgress.level, rank: rankForLevel(theme.rankNames, nextProgress.level) })
+      const newStage = theme.stages?.some((s) => s.minLevel === nextProgress.level)
+        ? resolveThemeStage(theme, nextProgress.level)
+        : null
+      setLevelUpInfo({
+        level: nextProgress.level,
+        rank: rankForLevel(theme.rankNames, nextProgress.level),
+        stageName: newStage?.name ?? null,
+      })
       if (sfxOn) playLevelUpFanfare()
-      if (theme.id === 'italian' && theme.stages?.some((s) => s.minLevel === nextProgress.level)) {
+      if (newStage) {
         setEraWipe(true)
         setTimeout(() => setEraWipe(false), 1500)
       }
@@ -374,6 +381,7 @@ export function ReviewScreen() {
           </span>
           <div className="level-up-text">LEVEL {levelUpInfo.level}!</div>
           <div className="level-up-rank">{levelUpInfo.rank}</div>
+          {levelUpInfo.stageName && <div className="level-up-stage">A new era dawns: {levelUpInfo.stageName}</div>}
         </div>
       )}
 

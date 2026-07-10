@@ -27,6 +27,9 @@ export const italianTheme = defineTheme({
     danger: '#c23a2a',
     success: '#8a7230',
   },
+  audio: {
+    sfxVariant: 'legion',
+  },
   emblem: '🗡',
   terminalName: 'PRAETORIVM',
   terminalVersion: 'LEG. XIV',

@@ -1,0 +1,69 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+const oscillators = []
+const buffers = []
+
+function makeNode() {
+  return {
+    connect: vi.fn().mockReturnThis(),
+    start: vi.fn(),
+    stop: vi.fn(),
+    frequency: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
+    gain: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
+    type: undefined,
+    buffer: undefined,
+  }
+}
+
+vi.mock('./context.js', () => ({
+  getAudioContext: () => ({
+    currentTime: 0,
+    sampleRate: 44100,
+    destination: {},
+    createOscillator: () => {
+      const node = makeNode()
+      oscillators.push(node)
+      return node
+    },
+    createBufferSource: () => {
+      const node = makeNode()
+      buffers.push(node)
+      return node
+    },
+    createGain: () => makeNode(),
+    createBiquadFilter: () => makeNode(),
+    createBuffer: (channels, length) => ({ getChannelData: () => new Float32Array(length) }),
+  }),
+}))
+
+import { playSuccessSfx, playMissSfx, playSwordClash, playRetreatHorn } from './sfx.js'
+
+afterEach(() => {
+  oscillators.length = 0
+  buffers.length = 0
+  vi.restoreAllMocks()
+})
+
+describe('legion SFX variant (Italian theme)', () => {
+  it('playSwordClash starts both a noise burst and a ringing tone', () => {
+    playSwordClash(0)
+    expect(buffers).toHaveLength(1)
+    expect(oscillators).toHaveLength(1)
+    expect(buffers[0].start).toHaveBeenCalled()
+    expect(oscillators[0].start).toHaveBeenCalled()
+  })
+
+  it('playRetreatHorn starts a single descending oscillator', () => {
+    playRetreatHorn()
+    expect(oscillators).toHaveLength(1)
+    expect(oscillators[0].start).toHaveBeenCalled()
+  })
+
+  it('dispatches to the legion sounds for the "legion" variant', () => {
+    playSuccessSfx('legion', 2)
+    expect(buffers).toHaveLength(1) // playSwordClash's noise burst
+
+    playMissSfx('legion')
+    expect(oscillators.at(-1).frequency.linearRampToValueAtTime).toHaveBeenCalled() // playRetreatHorn's descending sweep
+  })
+})

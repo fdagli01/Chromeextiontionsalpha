@@ -6,6 +6,10 @@
   font-family: var(--font-body);
   overflow: hidden;
   isolation: isolate;
+  /* Smooths a theme's stage-gated palette shift (e.g. Republic -> Empire)
+     into a fade rather than a hard cut; harmless elsewhere since these
+     properties otherwise only change on theme mount. */
+  transition: background-color 1.2s ease, color 1.2s ease;
 }
 
 /* Aged, stained dossier paper — layered stains + fine grain, not just a flat dark box */

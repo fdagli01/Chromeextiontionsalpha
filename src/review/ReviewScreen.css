@@ -653,6 +653,25 @@
   margin-top: 2px;
 }
 
+/* Shown on top of the usual level-up banner when the level crossed a
+   theme's stage threshold (e.g. Republic -> Empire), naming the new era
+   the palette is about to sweep into via .era-wipe. */
+.level-up-stage {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent, #d4af37);
+  margin-top: 6px;
+  animation: stage-name-fade-in 1.2s ease-out;
+}
+
+@keyframes stage-name-fade-in {
+  0% { opacity: 0; }
+  40% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
 /* Roman theme: the new level reads as chiseled into stone rather than lit
    up — a soft blur-to-focus resolve instead of the default pop-scale. */
 .review-wrap[data-theme='italian'] .level-up-text {

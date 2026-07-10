@@ -1,10 +1,13 @@
 import { defineTheme } from './base.js'
 
 /**
- * "Casa da Índia" — a static, deliberately calm theme (no level-gated
- * stages, unlike Italian). Where Russian is paranoid and Italian is
- * militant, Portuguese is the quiet third register: a candlelit map room
- * logging a ship's route, not an interrogation or a campaign.
+ * "Casa da Índia" — traces the arc of the Portuguese maritime empire as the
+ * player's rank rises: Escola de Sagres (candlelit map room, planning the
+ * first voyages) → Rota do Cabo at level 4 (open-ocean teal, the Cape route
+ * found) → Império das Especiarias at level 8 (the spice trade's richer
+ * gold and cinnabar) → Século de Ouro at level 14 (the empire's opulent
+ * peak). Unlike French's session-local tension dial, this is level-gated
+ * like Italian's — a permanent, one-way evolution of the archive itself.
  */
 export const portugueseTheme = defineTheme({
   id: 'portuguese',
@@ -60,6 +63,62 @@ export const portugueseTheme = defineTheme({
     'Piloto',
     'Capitão-mor',
     'Almirante',
+  ],
+  stages: [
+    {
+      id: 'sagres',
+      name: 'Escola de Sagres',
+      minLevel: 1,
+      colors: {},
+      emblem: '❂',
+    },
+    {
+      id: 'rota-do-cabo',
+      name: 'Rota do Cabo',
+      minLevel: 4,
+      colors: {
+        background: '#0a2233',
+        surface: '#123449',
+        surfaceStrong: '#061520',
+        primary: '#2f8f7c',
+        accent: '#d8c27a',
+        border: '#2c5a63',
+        success: '#3fae8a',
+      },
+      emblem: '⚓',
+    },
+    {
+      id: 'imperio-especiarias',
+      name: 'Império das Especiarias',
+      minLevel: 8,
+      colors: {
+        background: '#1c1408',
+        surface: '#2c1f0e',
+        surfaceStrong: '#120c04',
+        primary: '#b5451f',
+        accent: '#e8b23d',
+        text: '#f2e2c3',
+        textMuted: '#b89a6a',
+        border: '#5a3c1a',
+      },
+      emblem: '🌶',
+    },
+    {
+      id: 'seculo-de-ouro',
+      name: 'Século de Ouro',
+      minLevel: 14,
+      colors: {
+        background: '#160f04',
+        surface: '#241a08',
+        surfaceStrong: '#0d0902',
+        primary: '#c9922f',
+        accent: '#f2d27a',
+        text: '#f7ecd0',
+        border: '#6b4e1e',
+        success: '#c9a227',
+      },
+      emblem: '👑',
+    },
   ],
   crises: [
     {

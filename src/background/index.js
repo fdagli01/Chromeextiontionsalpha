@@ -1,4 +1,4 @@
-import { addWord, getSetting } from '../db/index.js'
+import { addWord, getSetting, updateWord } from '../db/index.js'
 import { getTheme, listThemes } from '../themes/index.js'
 import { getExample, getFact, getPhilosophy } from '../facts/index.js'
 import { getTransliteration } from '../transliteration/index.js'
@@ -60,13 +60,14 @@ chrome.contextMenus.onClicked.addListener((info) => {
 /**
  * Captures a selected word into the chosen theme's archive: fetches an
  * English translation, attaches any curated historical trivia, persists it,
- * and confirms with a themed notification. Translation failures don't block
- * the capture — the word is still saved so nothing is lost.
+ * and confirms with a themed notification right away. Translation failures
+ * don't block the capture — the word is still saved so nothing is lost.
  *
- * When the term has no curated fact/example (or etymology), and the user
- * has the AI Chronicle Engine enabled with an API key, this falls back to
- * Gemini for that one word before saving — a single-word request, so the
- * per-minute quota isn't a concern the way a bulk backfill is.
+ * AI enrichment (when the term has no curated fact/example/etymology, and
+ * the AI Chronicle Engine is enabled with an API key) happens afterward, in
+ * the background, via enrichWordWithAi — capture never waits on Gemini, so
+ * a slow response or a 429 retry never leaves the user staring at a
+ * "nothing happened" popup.
  * @param {string} term
  * @param {string} themeId
  */
@@ -74,27 +75,10 @@ async function captureWord(term, themeId) {
   const theme = getTheme(themeId)
 
   const translation = await translateToEnglish(term, theme.sourceLanguageCode)
-  let fact = getFact(themeId, term)
+  const fact = getFact(themeId, term)
   const transliteration = getTransliteration(themeId, term)
-  let example = getExample(themeId, term)
+  const example = getExample(themeId, term)
   const philosophy = getPhilosophy(themeId, term)
-  let etymology
-
-  const aiEnabled = await getSetting('aiEngineEnabled', false)
-  const apiKey = aiEnabled ? await getSetting('aiEngineApiKey', '') : ''
-  if (apiKey) {
-    const model = await getSetting('aiEngineModel', undefined)
-
-    if (!fact || !example) {
-      const entry = await generateChronicleEntry(themeId, term, apiKey, model)
-      if (entry) {
-        if (!fact) fact = entry.chronicle_insight
-        if (!example) example = { sentence: entry.sentence, translation: entry.translation }
-      }
-    }
-
-    etymology = (await generateEtymologyEntry(themeId, term, apiKey, model)) ?? undefined
-  }
 
   const word = await addWord({
     themeId,
@@ -105,7 +89,6 @@ async function captureWord(term, themeId) {
     exampleSentence: example?.sentence ?? '',
     exampleTranslation: example?.translation ?? '',
     philosophyNote: philosophy,
-    etymology,
   })
 
   chrome.notifications.create({
@@ -114,4 +97,45 @@ async function captureWord(term, themeId) {
     title: `Filed — ${theme.name}`,
     message: translation ? `${word.term} — ${translation}` : word.term,
   })
+
+  // Etymology is always empty on a fresh capture, so this is always worth
+  // attempting when the AI engine is on — enrichWordWithAi no-ops quickly
+  // if it isn't.
+  enrichWordWithAi(word.id, themeId, term, { needsFact: !fact, needsExample: !example })
+}
+
+/**
+ * Backfills a just-captured word's fact/example/etymology from the AI
+ * Chronicle Engine, if enabled, without blocking capture. Silently no-ops
+ * if the AI engine is off, unconfigured, or the request ultimately fails —
+ * the word already exists with whatever curated content it had.
+ * @param {number} wordId
+ * @param {string} themeId
+ * @param {string} term
+ * @param {{needsFact: boolean, needsExample: boolean}} needs
+ */
+async function enrichWordWithAi(wordId, themeId, term, { needsFact, needsExample }) {
+  const aiEnabled = await getSetting('aiEngineEnabled', false)
+  if (!aiEnabled) return
+  const apiKey = await getSetting('aiEngineApiKey', '')
+  if (!apiKey) return
+  const model = await getSetting('aiEngineModel', undefined)
+
+  const patch = {}
+
+  if (needsFact || needsExample) {
+    const entry = await generateChronicleEntry(themeId, term, apiKey, model)
+    if (entry) {
+      if (needsFact) patch.fact = entry.chronicle_insight
+      if (needsExample) {
+        patch.exampleSentence = entry.sentence
+        patch.exampleTranslation = entry.translation
+      }
+    }
+  }
+
+  const etymology = await generateEtymologyEntry(themeId, term, apiKey, model)
+  if (etymology) patch.etymology = etymology
+
+  if (Object.keys(patch).length > 0) await updateWord(wordId, patch)
 }
