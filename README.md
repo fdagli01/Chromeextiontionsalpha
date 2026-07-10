@@ -41,3 +41,11 @@ Every theme features **custom UI motifs, ambient soundscapes, and thematic trivi
 | **Testing** | Vitest & Jsdom | Rigorous unit and integration testing |
 
 ---
+Development Log
+v0.2.1: Added ambient soundscapes for the Portuguese crew-murmur theme, resolved minor UI rendering bugs.
+
+v0.2.0: Introduced versioning, improved content renewal for legacy words, added level-up notifications.
+
+v0.1.0: Initial project architecture, theme system, SM-2 implementation, and Russian theme deployment.
+
+v0.0.1: Core skeleton setup, multiple-choice quiz UI, and K.G.B. terminal interface.
