@@ -1,22 +1,40 @@
 import { getAudioContext } from './context.js'
 
-function createNoiseBuffer(context, seconds) {
+/**
+ * Builds a noise buffer whose tail is crossfaded into its head, so looping
+ * it produces no audible click/crackle at the seam. A plain looped buffer
+ * of random samples jumps discontinuously every time it wraps — that jump
+ * is exactly the periodic "çıtırtı" a short raw noise loop produces.
+ */
+function createLoopableNoiseBuffer(context, seconds) {
   const length = Math.floor(context.sampleRate * seconds)
   const buffer = context.createBuffer(1, length, context.sampleRate)
   const data = buffer.getChannelData(0)
   for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1
+
+  const fadeLength = Math.floor(context.sampleRate * 0.08) // 80ms crossfade
+  for (let i = 0; i < fadeLength; i++) {
+    const fadeOut = 1 - i / fadeLength
+    const fadeIn = i / fadeLength
+    const tailIndex = length - fadeLength + i
+    const blended = data[tailIndex] * fadeOut + data[i] * fadeIn
+    data[tailIndex] = blended
+    data[i] = blended
+  }
   return buffer
 }
 
 /**
- * Builds one continuously-running generative ambient voice: a low drone,
- * an optional filtered-noise bed (with optional slow LFO "swell" on the
- * filter, for waves/wind), and an optional sparse plucked-note scheduler
- * (for distant bells, drums, or arpeggios). Fully procedural — no audio
- * assets, so it's copyright-safe and adds zero bytes to the package.
+ * Builds one continuously-running generative ambient voice: a low drone, an
+ * optional filtered-noise bed (with optional slow LFO "swell" on the
+ * filter, for waves/wind), an optional bandpassed "murmur" bed with a slow
+ * gain wobble (distant crowd/crew chatter, without needing recorded
+ * speech), and an optional sparse plucked-note scheduler (bells, drums,
+ * gulls). Fully procedural — no audio assets, so it's copyright-safe and
+ * adds zero bytes to the package.
  * @returns {() => void} a stop function that fades out and tears down the graph
  */
-function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', droneGain = 0.06, noise, pluck }) {
+function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', droneGain = 0.06, noise, murmur, pluck }) {
   const now = context.currentTime
   const master = context.createGain()
   master.gain.setValueAtTime(0, now)
@@ -38,7 +56,7 @@ function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', drone
   let noiseLfo = null
   if (noise) {
     noiseSource = context.createBufferSource()
-    noiseSource.buffer = createNoiseBuffer(context, 4)
+    noiseSource.buffer = createLoopableNoiseBuffer(context, 6)
     noiseSource.loop = true
     const filter = context.createBiquadFilter()
     filter.type = noise.filterType ?? 'lowpass'
@@ -56,6 +74,33 @@ function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', drone
       noiseLfo.connect(lfoGain).connect(filter.frequency)
       noiseLfo.start()
     }
+  }
+
+  // Distant murmur (crew/crowd chatter stand-in): bandpassed noise in the
+  // vocal register, with its gain slowly wobbling via an LFO so it reads as
+  // voices rising and falling rather than a flat hiss.
+  let murmurSource = null
+  let murmurLfo = null
+  if (murmur) {
+    murmurSource = context.createBufferSource()
+    murmurSource.buffer = createLoopableNoiseBuffer(context, 7)
+    murmurSource.loop = true
+    const bandpass = context.createBiquadFilter()
+    bandpass.type = 'bandpass'
+    bandpass.frequency.value = murmur.freq ?? 700
+    bandpass.Q.value = murmur.q ?? 1.2
+    const murmurGain = context.createGain()
+    murmurGain.gain.value = murmur.gain ?? 0.03
+    murmurSource.connect(bandpass).connect(murmurGain).connect(master)
+    murmurSource.start()
+
+    murmurLfo = context.createOscillator()
+    murmurLfo.type = 'sine'
+    murmurLfo.frequency.value = murmur.wobbleRate ?? 0.15
+    const wobbleGain = context.createGain()
+    wobbleGain.gain.value = murmur.wobbleDepth ?? (murmur.gain ?? 0.03) * 0.6
+    murmurLfo.connect(wobbleGain).connect(murmurGain.gain)
+    murmurLfo.start()
   }
 
   let pluckTimeoutId = null
@@ -93,20 +138,14 @@ function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', drone
           /* already stopped */
         }
       })
-      if (noiseSource) {
+      ;[noiseSource, noiseLfo, murmurSource, murmurLfo].forEach((node) => {
+        if (!node) return
         try {
-          noiseSource.stop()
+          node.stop()
         } catch {
           /* already stopped */
         }
-      }
-      if (noiseLfo) {
-        try {
-          noiseLfo.stop()
-        } catch {
-          /* already stopped */
-        }
-      }
+      })
       master.disconnect()
     }, 700)
   }
@@ -146,7 +185,8 @@ const THEME_AMBIENT_PRESETS = {
         droneFreqs: [55, 82.41],
         droneType: 'sine',
         droneGain: 0.035,
-        noise: { filterType: 'lowpass', filterFreq: 400, gain: 0.05, waveLfo: { rate: 0.08, depth: 180 } },
+        noise: { filterType: 'lowpass', filterFreq: 500, gain: 0.075, waveLfo: { rate: 0.09, depth: 260 } },
+        murmur: { freq: 650, q: 1.3, gain: 0.028, wobbleRate: 0.13, wobbleDepth: 0.02 },
         pluck: { notes: [1200, 1400, 1600], type: 'sawtooth', minDelay: 15, maxDelay: 35, gain: 0.03, decay: 0.15 },
       },
     },
@@ -156,7 +196,8 @@ const THEME_AMBIENT_PRESETS = {
         droneFreqs: [98, 146.83],
         droneType: 'triangle',
         droneGain: 0.03,
-        noise: { filterType: 'lowpass', filterFreq: 300, gain: 0.04, waveLfo: { rate: 0.05, depth: 120 } },
+        noise: { filterType: 'lowpass', filterFreq: 350, gain: 0.05, waveLfo: { rate: 0.06, depth: 150 } },
+        murmur: { freq: 550, q: 1.4, gain: 0.024, wobbleRate: 0.1, wobbleDepth: 0.016 },
         pluck: { notes: [440, 523.25], type: 'triangle', minDelay: 6, maxDelay: 12, gain: 0.05, decay: 1.8 },
       },
     },
@@ -168,7 +209,7 @@ const THEME_AMBIENT_PRESETS = {
         droneFreqs: [130.81, 196.0],
         droneType: 'sine',
         droneGain: 0.02,
-        noise: { filterType: 'bandpass', filterFreq: 900, gain: 0.05 },
+        murmur: { freq: 900, q: 1.1, gain: 0.05, wobbleRate: 0.18, wobbleDepth: 0.025 },
         pluck: { notes: [55, 65.41], type: 'sine', minDelay: 2.5, maxDelay: 5, gain: 0.15, decay: 0.3 },
       },
     },
@@ -178,7 +219,7 @@ const THEME_AMBIENT_PRESETS = {
         droneFreqs: [98, 146.83],
         droneType: 'sawtooth',
         droneGain: 0.02,
-        noise: { filterType: 'bandpass', filterFreq: 700, gain: 0.06 },
+        murmur: { freq: 700, q: 1.1, gain: 0.06, wobbleRate: 0.25, wobbleDepth: 0.03 },
         pluck: { notes: [55], type: 'sine', minDelay: 1.2, maxDelay: 2.2, gain: 0.2, decay: 0.25 },
       },
     },
