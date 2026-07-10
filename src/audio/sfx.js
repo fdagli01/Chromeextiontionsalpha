@@ -309,6 +309,67 @@ export function playMissSfx(variant, tier = 0) {
 }
 
 /**
+ * A bright bell chime + shimmering overtone sparkle — played once when a
+ * badge is unlocked. Theme-agnostic, like the level-up fanfare, since
+ * earning a badge is a progress-system event rather than an in-world one.
+ */
+export function playBadgeUnlock() {
+  const context = getAudioContext()
+  const now = context.currentTime
+  const chimeNotes = [784, 987.77, 1174.66] // G5, B5, D6
+
+  chimeNotes.forEach((freq, i) => {
+    const t = now + i * 0.06
+    const osc = context.createOscillator()
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(freq, t)
+    const gain = context.createGain()
+    gain.gain.setValueAtTime(0.001, t)
+    gain.gain.linearRampToValueAtTime(0.16, t + 0.02)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6)
+    osc.connect(gain).connect(context.destination)
+    osc.start(t)
+    osc.stop(t + 0.62)
+  })
+
+  const sparkle = context.createBufferSource()
+  sparkle.buffer = createNoiseBuffer(context, 0.5)
+  const sparkleFilter = context.createBiquadFilter()
+  sparkleFilter.type = 'highpass'
+  sparkleFilter.frequency.setValueAtTime(6000, now)
+  const sparkleGain = context.createGain()
+  sparkleGain.gain.setValueAtTime(0.05, now)
+  sparkleGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5)
+  sparkle.connect(sparkleFilter).connect(sparkleGain).connect(context.destination)
+  sparkle.start(now)
+}
+
+/**
+ * A short two-note upward chirp — played when a daily quest is completed.
+ * Lighter and quicker than the badge chime, since quests are a routine
+ * daily win rather than a milestone.
+ */
+export function playQuestComplete() {
+  const context = getAudioContext()
+  const now = context.currentTime
+  const notes = [880, 1318.51] // A5, E6
+
+  notes.forEach((freq, i) => {
+    const t = now + i * 0.09
+    const osc = context.createOscillator()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(freq, t)
+    const gain = context.createGain()
+    gain.gain.setValueAtTime(0.001, t)
+    gain.gain.linearRampToValueAtTime(0.14, t + 0.015)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28)
+    osc.connect(gain).connect(context.destination)
+    osc.start(t)
+    osc.stop(t + 0.3)
+  })
+}
+
+/**
  * Short radio-static burst, played when tuning in or switching channels.
  */
 export function playStaticBurst() {

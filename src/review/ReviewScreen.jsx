@@ -6,7 +6,7 @@ import { getProgress, saveProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
 import { awardReputation } from '../db/factionsRepo.js'
 import { awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
-import { playLevelUpFanfare, playMissSfx, playSuccessSfx } from '../audio/sfx.js'
+import { playBadgeUnlock, playLevelUpFanfare, playMissSfx, playQuestComplete, playSuccessSfx } from '../audio/sfx.js'
 import { speakTerm } from '../audio/speak.js'
 import { playPronunciationSting } from '../audio/themeAudioControl.js'
 import { levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
@@ -172,6 +172,10 @@ export function ReviewScreen() {
     setXpToast(xpGained > 0 ? `+${xpGained} XP` : '')
     setBadgeToast(newBadges.length > 0 ? newBadges[0] : null)
     setQuestToast(dailyQuest.justCompleted)
+    if (sfxOn) {
+      if (newBadges.length > 0) playBadgeUnlock()
+      else if (dailyQuest.justCompleted) playQuestComplete()
+    }
 
     if (leveledUp) {
       const newStage = theme.stages?.some((s) => s.minLevel === nextProgress.level)

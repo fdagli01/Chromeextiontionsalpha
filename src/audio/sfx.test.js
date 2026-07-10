@@ -36,7 +36,7 @@ vi.mock('./context.js', () => ({
   }),
 }))
 
-import { playSuccessSfx, playMissSfx, playSwordClash, playRetreatHorn } from './sfx.js'
+import { playSuccessSfx, playMissSfx, playSwordClash, playRetreatHorn, playBadgeUnlock, playQuestComplete } from './sfx.js'
 
 afterEach(() => {
   oscillators.length = 0
@@ -65,5 +65,21 @@ describe('legion SFX variant (Italian theme)', () => {
 
     playMissSfx('legion')
     expect(oscillators.at(-1).frequency.linearRampToValueAtTime).toHaveBeenCalled() // playRetreatHorn's descending sweep
+  })
+})
+
+describe('progress-system SFX (theme-agnostic)', () => {
+  it('playBadgeUnlock starts a chime of three oscillators plus a noise sparkle', () => {
+    playBadgeUnlock()
+    expect(oscillators).toHaveLength(3)
+    expect(buffers).toHaveLength(1)
+    oscillators.forEach((osc) => expect(osc.start).toHaveBeenCalled())
+    expect(buffers[0].start).toHaveBeenCalled()
+  })
+
+  it('playQuestComplete starts a two-note chirp', () => {
+    playQuestComplete()
+    expect(oscillators).toHaveLength(2)
+    oscillators.forEach((osc) => expect(osc.start).toHaveBeenCalled())
   })
 })
