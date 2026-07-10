@@ -45,6 +45,13 @@ export function ArchiveScreen() {
           </div>
           {word.transliteration && <div className="archive-translit">[ {word.transliteration} ]</div>}
           {word.fact && <div className="archive-fact">{word.fact}</div>}
+          {word.exampleSentence && (
+            <div className="archive-example">
+              <span className="archive-example-sentence">{word.exampleSentence}</span>
+              <span className="archive-example-translation">{word.exampleTranslation}</span>
+            </div>
+          )}
+          {word.philosophyNote && <div className="archive-philosophy">🏛 {word.philosophyNote}</div>}
           <div className="archive-meta">
             <span>
               <span className="meta-label">REP:</span> {word.repetition}

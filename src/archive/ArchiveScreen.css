@@ -96,6 +96,37 @@
   line-height: 1.5;
 }
 
+.archive-example {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 5px 8px;
+}
+
+.archive-example-sentence {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--color-text);
+}
+
+.archive-example-translation {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.archive-philosophy {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 10px;
+  color: var(--color-accent);
+  line-height: 1.5;
+  margin-top: 6px;
+  padding: 0 8px;
+}
+
 .archive-meta {
   display: flex;
   gap: 12px;

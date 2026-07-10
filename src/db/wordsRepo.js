@@ -9,6 +9,9 @@ import { gradeReview } from '../sm2/sm2.js'
  * @property {string} translation - English translation (lingua franca layer)
  * @property {string} [fact] - short historical/thematic trivia, pre-authored
  * @property {string} [transliteration] - Latin pronunciation hint, e.g. "radost'"
+ * @property {string} [exampleSentence] - a sentence using the term, in the source language
+ * @property {string} [exampleTranslation] - Turkish translation of exampleSentence
+ * @property {string} [philosophyNote] - one-line philosophical cross-reference, for conceptually loaded terms
  * @property {string} createdAt - ISO timestamp
  * @property {number} repetition - SM-2: number of consecutive correct reviews
  * @property {number} interval - SM-2: days until next review
@@ -19,10 +22,19 @@ import { gradeReview } from '../sm2/sm2.js'
  */
 
 /**
- * @param {{themeId: string, term: string, translation: string, fact?: string, transliteration?: string}} input
+ * @param {{themeId: string, term: string, translation: string, fact?: string, transliteration?: string, exampleSentence?: string, exampleTranslation?: string, philosophyNote?: string}} input
  * @returns {Promise<WordEntry>}
  */
-export async function addWord({ themeId, term, translation, fact = '', transliteration = '' }) {
+export async function addWord({
+  themeId,
+  term,
+  translation,
+  fact = '',
+  transliteration = '',
+  exampleSentence = '',
+  exampleTranslation = '',
+  philosophyNote = '',
+}) {
   const now = new Date().toISOString()
   /** @type {WordEntry} */
   const word = {
@@ -31,6 +43,9 @@ export async function addWord({ themeId, term, translation, fact = '', translite
     translation,
     fact,
     transliteration,
+    exampleSentence,
+    exampleTranslation,
+    philosophyNote,
     createdAt: now,
     repetition: 0,
     interval: 0,

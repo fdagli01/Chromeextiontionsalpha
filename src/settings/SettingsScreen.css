@@ -102,6 +102,52 @@
   padding: 3px 9px;
 }
 
+.settings-backup {
+  padding: 10px 12px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+}
+
+.settings-backup .title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: var(--color-text);
+}
+
+.settings-backup .hint {
+  display: block;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.backup-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.backup-button {
+  flex: 1;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface-strong);
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 7px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.backup-button:hover {
+  border-color: var(--color-accent);
+}
+
 .settings-hint-block {
   font-size: 11px;
   color: var(--color-text-muted);

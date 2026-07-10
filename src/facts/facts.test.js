@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getFact } from './index.js'
+import { getExample, getFact, getPhilosophy } from './index.js'
 
 describe('getFact', () => {
   it('returns a curated fact for a known Russian term', () => {
@@ -32,5 +32,46 @@ describe('getFact', () => {
 
   it('returns a curated fact for a known French term', () => {
     expect(getFact('french', 'guillotine')).toContain('giyotin')
+  })
+})
+
+describe('getExample', () => {
+  it('returns an example sentence with a Turkish translation for a known term', () => {
+    const example = getExample('russian', 'товарищ')
+    expect(example.sentence).toContain('Товарищ')
+    expect(example.translation).toContain('Yoldaş')
+  })
+
+  it('returns null for an unknown term', () => {
+    expect(getExample('russian', 'неизвестное')).toBeNull()
+  })
+
+  it('returns null for an unregistered theme', () => {
+    expect(getExample('roman', 'senatus')).toBeNull()
+  })
+
+  it('has an example for every word with a fact, in every theme', () => {
+    for (const themeId of ['russian', 'italian', 'portuguese', 'french']) {
+      const example = getExample(themeId, 'placeholder-word-that-does-not-exist')
+      expect(example).toBeNull()
+    }
+    // Spot-check one real word per theme has both fact and example wired up.
+    expect(getExample('italian', 'senato')).not.toBeNull()
+    expect(getExample('portuguese', 'caravela')).not.toBeNull()
+    expect(getExample('french', 'liberté')).not.toBeNull()
+  })
+})
+
+describe('getPhilosophy', () => {
+  it('returns a philosophy note for a conceptually loaded term', () => {
+    expect(getPhilosophy('russian', 'свобода')).toContain('Berlin')
+  })
+
+  it('returns an empty string for a term with no philosophy note', () => {
+    expect(getPhilosophy('russian', 'спутник')).toBe('')
+  })
+
+  it('returns an empty string for an unregistered theme', () => {
+    expect(getPhilosophy('roman', 'senatus')).toBe('')
   })
 })

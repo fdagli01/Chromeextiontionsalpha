@@ -5,7 +5,7 @@ import { getDueWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
 import { awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
-import { playMissSfx, playSuccessSfx } from '../audio/sfx.js'
+import { playLevelUpFanfare, playMissSfx, playSuccessSfx } from '../audio/sfx.js'
 import { speakTerm } from '../audio/speak.js'
 import { levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
 import { resolveTensionVisuals } from '../themes/index.js'
@@ -30,6 +30,7 @@ export function ReviewScreen() {
   const [xpToast, setXpToast] = useState('')
   const [badgeToast, setBadgeToast] = useState(null)
   const [questToast, setQuestToast] = useState(false)
+  const [levelUpInfo, setLevelUpInfo] = useState(null)
   const [flickerKey, setFlickerKey] = useState(0)
   const [tension, setTension] = useState(0)
   const [combo, setCombo] = useState(0)
@@ -58,6 +59,7 @@ export function ReviewScreen() {
     setXpToast('')
     setBadgeToast(null)
     setQuestToast(false)
+    setLevelUpInfo(null)
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
       const opts = shuffle([
         { label: current.translation || '(çeviri yok)', isCorrect: true },
@@ -92,7 +94,8 @@ export function ReviewScreen() {
       : 0
     const nextCombo = correct ? combo + 1 : 0
 
-    if (await getSetting('sfxEnabled', true)) {
+    const sfxOn = await getSetting('sfxEnabled', true)
+    if (sfxOn) {
       if (correct) playSuccessSfx(theme.audio.sfxVariant, nextCombo)
       else playMissSfx(theme.audio.sfxVariant, nextTension)
     }
@@ -101,9 +104,14 @@ export function ReviewScreen() {
     setCombo(nextCombo)
 
     setProgress(nextProgress)
-    setXpToast(xpGained > 0 ? `+${xpGained} XP${leveledUp ? ` — SEVİYE ${nextProgress.level}!` : ''}` : '')
+    setXpToast(xpGained > 0 ? `+${xpGained} XP` : '')
     setBadgeToast(newBadges.length > 0 ? newBadges[0] : null)
     setQuestToast(dailyQuest.justCompleted)
+
+    if (leveledUp) {
+      setLevelUpInfo({ level: nextProgress.level, rank: rankForLevel(theme.rankNames, nextProgress.level) })
+      if (sfxOn) playLevelUpFanfare()
+    }
   }
 
   function nextWord() {
@@ -118,6 +126,7 @@ export function ReviewScreen() {
     setXpToast('')
     setBadgeToast(null)
     setQuestToast(false)
+    setLevelUpInfo(null)
   }
 
   // Interrogation-room keyboard protocol: 1/2/3 pick an answer, Enter advances.
@@ -233,6 +242,18 @@ export function ReviewScreen() {
         })}
       </div>
 
+      {isAnswered && levelUpInfo && (
+        <div className="level-up-banner">
+          <span className="level-up-confetti" aria-hidden="true">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <span key={i} className={`confetti-bit c${i}`} />
+            ))}
+          </span>
+          <div className="level-up-text">SEVİYE {levelUpInfo.level}!</div>
+          <div className="level-up-rank">{levelUpInfo.rank}</div>
+        </div>
+      )}
+
       {isAnswered && (
         <div className={`result-panel ${isCorrect ? 'correct' : 'wrong'}`}>
           <div className={`result-stamp ${isCorrect && combo >= 3 ? 'combo' : ''}`}>
@@ -259,6 +280,15 @@ export function ReviewScreen() {
             <div className="result-intel">
               <div className="result-intel-label">{theme.intelLabel}</div>
               <div className="result-intel-text">{current.fact}</div>
+              {current.exampleSentence && (
+                <div className="result-example">
+                  <span className="result-example-sentence">{current.exampleSentence}</span>
+                  <span className="result-example-translation">{current.exampleTranslation}</span>
+                </div>
+              )}
+              {current.philosophyNote && (
+                <div className="result-philosophy">🏛 {current.philosophyNote}</div>
+              )}
             </div>
           )}
         </div>

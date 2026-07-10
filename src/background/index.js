@@ -1,6 +1,6 @@
 import { addWord, getSetting } from '../db/index.js'
 import { getTheme, DEFAULT_THEME_ID } from '../themes/index.js'
-import { getFact } from '../facts/index.js'
+import { getExample, getFact, getPhilosophy } from '../facts/index.js'
 import { getTransliteration } from '../transliteration/index.js'
 import { translateToEnglish } from './translate.js'
 
@@ -34,8 +34,19 @@ async function captureWord(term) {
   const translation = await translateToEnglish(term, theme.sourceLanguageCode)
   const fact = getFact(themeId, term)
   const transliteration = getTransliteration(themeId, term)
+  const example = getExample(themeId, term)
+  const philosophy = getPhilosophy(themeId, term)
 
-  const word = await addWord({ themeId, term, translation, fact, transliteration })
+  const word = await addWord({
+    themeId,
+    term,
+    translation,
+    fact,
+    transliteration,
+    exampleSentence: example?.sentence ?? '',
+    exampleTranslation: example?.translation ?? '',
+    philosophyNote: philosophy,
+  })
 
   chrome.notifications.create({
     type: 'basic',

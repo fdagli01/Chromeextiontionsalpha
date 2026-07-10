@@ -190,6 +190,31 @@ export function playGuillotineSweep() {
 }
 
 /**
+ * A short ascending four-note fanfare (C5-E5-G5-C6), played once when the
+ * player levels up — deliberately theme-agnostic, since leveling up is a
+ * progress-system event, not an in-world one.
+ */
+export function playLevelUpFanfare() {
+  const context = getAudioContext()
+  const now = context.currentTime
+  const notes = [523.25, 659.25, 783.99, 1046.5]
+
+  notes.forEach((freq, i) => {
+    const t = now + i * 0.11
+    const osc = context.createOscillator()
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(freq, t)
+    const gain = context.createGain()
+    gain.gain.setValueAtTime(0.001, t)
+    gain.gain.linearRampToValueAtTime(0.18, t + 0.02)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4)
+    osc.connect(gain).connect(context.destination)
+    osc.start(t)
+    osc.stop(t + 0.42)
+  })
+}
+
+/**
  * Dispatches to a theme's success SFX by variant, so callers don't need to
  * branch on theme.id directly. `comboLevel` (consecutive correct answers)
  * pitches the sound up, giving an audible sense of a streak building.

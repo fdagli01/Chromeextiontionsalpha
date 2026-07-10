@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getSetting, setSetting } from '../db/settingsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
+import { exportBackup, importBackup } from '../db/backup.js'
 import { listThemes } from '../themes/index.js'
 import { pauseThemeAudio } from '../audio/themeAudioControl.js'
 import { BADGE_DEFS, resolveBadges } from '../badges/badges.js'
@@ -10,6 +11,8 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
   const [sfxEnabled, setSfxEnabled] = useState(null)
   const [autoSpeakEnabled, setAutoSpeakEnabled] = useState(null)
   const [earnedBadges, setEarnedBadges] = useState(null)
+  const [backupMessage, setBackupMessage] = useState('')
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     getSetting('sfxEnabled', true).then(setSfxEnabled)
@@ -46,6 +49,38 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     pauseThemeAudio(activeThemeId)
     await setSetting('activeThemeId', themeId)
     onThemeChange(themeId)
+  }
+
+  async function handleExport() {
+    const backup = await exportBackup()
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `polyglot-chronicle-yedek-${new Date().toISOString().slice(0, 10)}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+    setBackupMessage(`${backup.words.length} kelime dosyaya kaydedildi.`)
+  }
+
+  function triggerImport() {
+    fileInputRef.current?.click()
+  }
+
+  async function handleImportFile(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    try {
+      const data = JSON.parse(await file.text())
+      const { wordsImported } = await importBackup(data)
+      setBackupMessage(
+        `${wordsImported} kelime içe aktarıldı. Görünmesi için popup'ı kapatıp tekrar aç.`
+      )
+    } catch {
+      setBackupMessage('İçe aktarma başarısız: dosya geçersiz veya bozuk.')
+    }
   }
 
   return (
@@ -97,6 +132,29 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
             ))}
           </div>
         )}
+      </div>
+
+      <div className="settings-backup">
+        <span className="title">Yedekleme</span>
+        <span className="hint">
+          Kelimelerin uzantı klasörünün taşınması/yeniden yüklenmesiyle kaybolmasın diye dosyaya kaydet.
+        </span>
+        <div className="backup-buttons">
+          <button className="backup-button" onClick={handleExport}>
+            ⬇ Dışa Aktar
+          </button>
+          <button className="backup-button" onClick={triggerImport}>
+            ⬆ İçe Aktar
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json"
+            onChange={handleImportFile}
+            style={{ display: 'none' }}
+          />
+        </div>
+        {backupMessage && <p className="hint">{backupMessage}</p>}
       </div>
 
       <p className="settings-hint-block">Atmosfer sesini açmak/kapatmak ve kanal değiştirmek için üstteki 📻 çubuğunu kullan.</p>
