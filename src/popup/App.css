@@ -1,9 +1,29 @@
+body {
+  margin: 0;
+}
+
+/* Popup mode stays a fixed compact width (Chrome caps action-popup size
+   anyway). Detached-window mode (opened via the pin button) gets a real
+   browser window and should use the extra room instead of floating a
+   380px column in a sea of empty background. */
 .app {
   width: 380px;
   min-height: 560px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 0 0 2px var(--color-border), 8px 8px 0 rgba(0, 0, 0, 0.75);
+}
+
+@media (min-width: 480px) {
+  .app {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .app-content {
+    padding: 4px 24px;
+  }
 }
 
 /* ── Header ── */
@@ -154,6 +174,17 @@
 
 .app-tabs button.active .tab-label {
   color: var(--color-accent);
+}
+
+/* Progressive-unlock: a locked tab stays visible (so the player knows a
+   system exists and at what level it opens up) but is dimmed and inert. */
+.app-tabs button.locked {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.app-tabs button.locked:hover {
+  background: none;
 }
 
 /* Radio buttons */

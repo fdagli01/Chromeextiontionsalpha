@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { ThemeProvider, useThemeConfig } from '../components/ThemeProvider.jsx'
 import { DEFAULT_THEME_ID } from '../themes/index.js'
 import { getSetting } from '../db/settingsRepo.js'
+import { getProgress } from '../db/progressRepo.js'
+import { onProgressChanged } from '../xp/progressEvents.js'
+import { isUnlocked, UNLOCK_LEVELS } from '../progression/unlocks.js'
 import { ReviewScreen } from '../review/ReviewScreen.jsx'
 import { ArchiveScreen } from '../archive/ArchiveScreen.jsx'
 import { FactionsScreen } from '../factions/FactionsScreen.jsx'
@@ -28,8 +31,8 @@ function openInWindow() {
   chrome.windows.create({
     url: chrome.runtime.getURL('src/popup/index.html?window=1'),
     type: 'popup',
-    width: 420,
-    height: 680,
+    width: 760,
+    height: 720,
   })
 }
 
@@ -40,6 +43,7 @@ function AppShell({ activeThemeId, onThemeChange }) {
   const [audioLabel, setAudioLabel] = useState(getThemeAudioChannelLabel(theme.id))
   const [pendingCrisis, setPendingCrisis] = useState(null)
   const [activeCrisis, setActiveCrisis] = useState(null)
+  const [level, setLevel] = useState(1)
 
   const hasAudio = hasThemeAudio(theme.id)
 
@@ -50,6 +54,22 @@ function AppShell({ activeThemeId, onThemeChange }) {
     })
     return () => {
       cancelled = true
+    }
+  }, [theme.id])
+
+  // Drives the progressive-unlock tab gating below — level starts at 1 on
+  // theme switch and stays live via progress-changed events, so a level-up
+  // mid-review unlocks a tab immediately instead of waiting for a reopen.
+  useEffect(() => {
+    let cancelled = false
+    setLevel(1)
+    getProgress(theme.id).then((progress) => {
+      if (!cancelled) setLevel(progress.level)
+    })
+    const unsubscribe = onProgressChanged(theme.id, (progress) => setLevel(progress.level))
+    return () => {
+      cancelled = true
+      unsubscribe()
     }
   }, [theme.id])
 
@@ -78,7 +98,14 @@ function AppShell({ activeThemeId, onThemeChange }) {
   const TABS = [
     { id: 'review', icon: '⚑', label: 'INTERROGATE', node: <ReviewScreen /> },
     { id: 'archive', icon: '📁', label: 'ARCHIVE', node: <ArchiveScreen /> },
-    { id: 'factions', icon: '🎖', label: 'FACTIONS', node: <FactionsScreen /> },
+    {
+      id: 'factions',
+      icon: '🎖',
+      label: 'FACTIONS',
+      node: <FactionsScreen />,
+      locked: !isUnlocked('factions', level),
+      unlockLevel: UNLOCK_LEVELS.factions,
+    },
     {
       id: 'settings',
       icon: '⚙',
@@ -86,7 +113,8 @@ function AppShell({ activeThemeId, onThemeChange }) {
       node: <SettingsScreen activeThemeId={activeThemeId} onThemeChange={onThemeChange} />,
     },
   ]
-  const active = TABS.find((t) => t.id === activeTab)
+  const rawActive = TABS.find((t) => t.id === activeTab)
+  const active = rawActive && !rawActive.locked ? rawActive : TABS[0]
 
   return (
     <div className="app">
@@ -122,11 +150,13 @@ function AppShell({ activeThemeId, onThemeChange }) {
         {TABS.map((tab) => (
           <button
             key={tab.id}
-            className={tab.id === activeTab ? 'active' : ''}
-            onClick={() => setActiveTab(tab.id)}
+            className={`${tab.id === active.id ? 'active' : ''} ${tab.locked ? 'locked' : ''}`}
+            onClick={() => !tab.locked && setActiveTab(tab.id)}
+            disabled={tab.locked}
+            title={tab.locked ? `Unlocks at level ${tab.unlockLevel}` : undefined}
           >
-            <span className="tab-icon">{tab.icon}</span>
-            <span className="tab-label">{tab.label}</span>
+            <span className="tab-icon">{tab.locked ? '🔒' : tab.icon}</span>
+            <span className="tab-label">{tab.locked ? `LVL ${tab.unlockLevel}` : tab.label}</span>
           </button>
         ))}
         {hasAudio && (

@@ -6,6 +6,7 @@ import { getProgress, saveProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
 import { awardReputation, getFactionProgress } from '../db/factionsRepo.js'
 import { awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
+import { isUnlocked } from '../progression/unlocks.js'
 import {
   playBadgeUnlock,
   playComboMilestone,
@@ -154,10 +155,15 @@ export function ReviewScreen() {
         const afterReps = await Promise.all(
           matchedFactions.map((f) => awardReputation(f.factionId, theme.id, FACTION_REPUTATION_PER_CORRECT))
         )
-        factionPromoted = matchedFactions.some(
-          (f, i) => rankForReputation(f.rankNames, beforeReps[i].reputation) !== rankForReputation(f.rankNames, afterReps[i].reputation)
-        )
-        setFactionToast(matchedFactions[0])
+        // Reputation still quietly accrues before the Factions tab unlocks
+        // (nothing is lost), but the toast/promotion sting stay silent so a
+        // brand-new player isn't shown a system they can't see yet.
+        if (isUnlocked('factions', nextProgress.level)) {
+          factionPromoted = matchedFactions.some(
+            (f, i) => rankForReputation(f.rankNames, beforeReps[i].reputation) !== rankForReputation(f.rankNames, afterReps[i].reputation)
+          )
+          setFactionToast(matchedFactions[0])
+        }
       }
 
       const secret = findSecretForTerm(theme.id, current.term)
