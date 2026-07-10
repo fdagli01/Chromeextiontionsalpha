@@ -17,6 +17,22 @@ import {
 } from '../audio/themeAudioControl.js'
 import './App.css'
 
+const isDetachedWindow = new URLSearchParams(window.location.search).has('window')
+
+/**
+ * Opens this same popup UI in a real, separate browser window instead of
+ * the transient action popup — a normal window doesn't auto-close when the
+ * user clicks elsewhere, which the action popup always does by design.
+ */
+function openInWindow() {
+  chrome.windows.create({
+    url: chrome.runtime.getURL('src/popup/index.html?window=1'),
+    type: 'popup',
+    width: 420,
+    height: 680,
+  })
+}
+
 function AppShell({ activeThemeId, onThemeChange }) {
   const theme = useThemeConfig()
   const [activeTab, setActiveTab] = useState('review')
@@ -82,6 +98,11 @@ function AppShell({ activeThemeId, onThemeChange }) {
           </h1>
           <p className="era">{theme.tagline.replace('{level}', theme.level)}</p>
         </div>
+        {!isDetachedWindow && (
+          <button className="pin-window-btn" onClick={openInWindow} title="Open in a window that stays open">
+            📌
+          </button>
+        )}
         {pendingCrisis && !activeCrisis && (
           <button className="crisis-alert-btn" onClick={() => setActiveCrisis(pendingCrisis)}>
             ⚠ CRISIS

@@ -3,6 +3,7 @@ import { getSetting, setSetting } from '../db/settingsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { exportBackup, importBackup } from '../db/backup.js'
 import { refreshCuratedContent } from '../db/contentRefresh.js'
+import { seedSampleWords } from '../db/seedWords.js'
 import { listThemes } from '../themes/index.js'
 import { pauseThemeAudio } from '../audio/themeAudioControl.js'
 import { BADGE_DEFS, resolveBadges } from '../badges/badges.js'
@@ -17,6 +18,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
   const [contentMessage, setContentMessage] = useState('')
   const [aiEngineEnabled, setAiEngineEnabled] = useState(null)
   const [aiEngineApiKey, setAiEngineApiKey] = useState('')
+  const [seedMessage, setSeedMessage] = useState('')
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -126,6 +128,16 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     )
   }
 
+  async function handleSeedSampleWords() {
+    setSeedMessage('Loading...')
+    const { total, added } = await seedSampleWords(activeThemeId)
+    setSeedMessage(
+      added > 0
+        ? `Added ${added}/${total} sample words. Close and reopen the popup to see them.`
+        : `All ${total} sample words are already in your archive.`
+    )
+  }
+
   return (
     <div className="settings-list">
       <div className="settings-row">
@@ -185,6 +197,20 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
             ))}
           </div>
         )}
+      </div>
+
+      <div className="settings-backup">
+        <span className="title">Sample Words</span>
+        <span className="hint">
+          Loads 10 curated words for the current theme so you can try reviewing without
+          right-clicking words on the web first.
+        </span>
+        <div className="backup-buttons">
+          <button className="backup-button" onClick={handleSeedSampleWords}>
+            🌱 Load Sample Words
+          </button>
+        </div>
+        {seedMessage && <p className="hint">{seedMessage}</p>}
       </div>
 
       <div className="settings-backup">
