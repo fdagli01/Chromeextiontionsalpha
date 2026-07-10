@@ -5,6 +5,9 @@ import manifest from './manifest.json' with { type: 'json' }
 
 export default defineConfig({
   plugins: [react(), crx({ manifest })],
+  define: {
+    __APP_VERSION__: JSON.stringify(manifest.version),
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

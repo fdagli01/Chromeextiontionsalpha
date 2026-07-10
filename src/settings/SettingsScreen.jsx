@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getSetting, setSetting } from '../db/settingsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { exportBackup, importBackup } from '../db/backup.js'
+import { refreshCuratedContent } from '../db/contentRefresh.js'
 import { listThemes } from '../themes/index.js'
 import { pauseThemeAudio } from '../audio/themeAudioControl.js'
 import { BADGE_DEFS, resolveBadges } from '../badges/badges.js'
@@ -12,6 +13,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
   const [autoSpeakEnabled, setAutoSpeakEnabled] = useState(null)
   const [earnedBadges, setEarnedBadges] = useState(null)
   const [backupMessage, setBackupMessage] = useState('')
+  const [contentMessage, setContentMessage] = useState('')
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -83,6 +85,16 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     }
   }
 
+  async function handleRefreshContent() {
+    setContentMessage('Yenileniyor...')
+    const { total, updated } = await refreshCuratedContent()
+    setContentMessage(
+      updated > 0
+        ? `${updated}/${total} kelimeye eksik örnek cümle/felsefe notu/tarihi bilgi eklendi.`
+        : `${total} kelime kontrol edildi, eklenecek yeni içerik yoktu.`
+    )
+  }
+
   return (
     <div className="settings-list">
       <div className="settings-row">
@@ -135,6 +147,20 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
       </div>
 
       <div className="settings-backup">
+        <span className="title">İçerikleri Yenile</span>
+        <span className="hint">
+          Daha önce eklediğin kelimelere, sonradan eklenen örnek cümle/felsefe notu gibi
+          eksik içerikleri doldurur.
+        </span>
+        <div className="backup-buttons">
+          <button className="backup-button" onClick={handleRefreshContent}>
+            ✨ İçerikleri Yenile
+          </button>
+        </div>
+        {contentMessage && <p className="hint">{contentMessage}</p>}
+      </div>
+
+      <div className="settings-backup">
         <span className="title">Yedekleme</span>
         <span className="hint">
           Kelimelerin uzantı klasörünün taşınması/yeniden yüklenmesiyle kaybolmasın diye dosyaya kaydet.
@@ -158,6 +184,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
       </div>
 
       <p className="settings-hint-block">Atmosfer sesini açmak/kapatmak ve kanal değiştirmek için üstteki 📻 çubuğunu kullan.</p>
+      <p className="settings-version">Sürüm {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '?'}</p>
     </div>
   )
 }
