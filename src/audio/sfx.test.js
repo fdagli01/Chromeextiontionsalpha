@@ -36,7 +36,17 @@ vi.mock('./context.js', () => ({
   }),
 }))
 
-import { playSuccessSfx, playMissSfx, playSwordClash, playRetreatHorn, playBadgeUnlock, playQuestComplete } from './sfx.js'
+import {
+  playSuccessSfx,
+  playMissSfx,
+  playSwordClash,
+  playRetreatHorn,
+  playBadgeUnlock,
+  playQuestComplete,
+  playStreakTierUp,
+  playComboMilestone,
+  playFactionPromotion,
+} from './sfx.js'
 
 afterEach(() => {
   oscillators.length = 0
@@ -79,6 +89,26 @@ describe('progress-system SFX (theme-agnostic)', () => {
 
   it('playQuestComplete starts a two-note chirp', () => {
     playQuestComplete()
+    expect(oscillators).toHaveLength(2)
+    oscillators.forEach((osc) => expect(osc.start).toHaveBeenCalled())
+  })
+
+  it('playStreakTierUp starts a crackle burst and a rising sweep', () => {
+    playStreakTierUp()
+    expect(buffers).toHaveLength(1)
+    expect(oscillators).toHaveLength(1)
+    expect(buffers[0].start).toHaveBeenCalled()
+    expect(oscillators[0].start).toHaveBeenCalled()
+  })
+
+  it('playComboMilestone starts a single ascending sweep', () => {
+    playComboMilestone()
+    expect(oscillators).toHaveLength(1)
+    expect(oscillators[0].frequency.exponentialRampToValueAtTime).toHaveBeenCalled()
+  })
+
+  it('playFactionPromotion starts a thud and a delayed ring', () => {
+    playFactionPromotion()
     expect(oscillators).toHaveLength(2)
     oscillators.forEach((osc) => expect(osc.start).toHaveBeenCalled())
   })

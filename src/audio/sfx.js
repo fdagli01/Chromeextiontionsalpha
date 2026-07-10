@@ -370,6 +370,101 @@ export function playQuestComplete() {
 }
 
 /**
+ * A crackling noise burst under a rising oscillator sweep — played once when
+ * the streak flame grows into a new tier (3/7/14 days). Evokes a fire
+ * catching and climbing, distinct from the level-up fanfare's clean notes.
+ */
+export function playStreakTierUp() {
+  const context = getAudioContext()
+  const now = context.currentTime
+
+  const crackle = context.createBufferSource()
+  crackle.buffer = createNoiseBuffer(context, 0.35)
+  const crackleFilter = context.createBiquadFilter()
+  crackleFilter.type = 'highpass'
+  crackleFilter.frequency.setValueAtTime(2500, now)
+  const crackleGain = context.createGain()
+  crackleGain.gain.setValueAtTime(0.001, now)
+  crackleGain.gain.linearRampToValueAtTime(0.1, now + 0.05)
+  crackleGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35)
+  crackle.connect(crackleFilter).connect(crackleGain).connect(context.destination)
+  crackle.start(now)
+
+  const rise = context.createOscillator()
+  rise.type = 'sawtooth'
+  rise.frequency.setValueAtTime(160, now)
+  rise.frequency.exponentialRampToValueAtTime(640, now + 0.4)
+  const riseFilter = context.createBiquadFilter()
+  riseFilter.type = 'lowpass'
+  riseFilter.frequency.setValueAtTime(1200, now)
+  const riseGain = context.createGain()
+  riseGain.gain.setValueAtTime(0.001, now)
+  riseGain.gain.linearRampToValueAtTime(0.14, now + 0.1)
+  riseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.45)
+  rise.connect(riseFilter).connect(riseGain).connect(context.destination)
+  rise.start(now)
+  rise.stop(now + 0.45)
+}
+
+/**
+ * A bright ascending sweep — played when a consecutive-correct combo hits a
+ * milestone (every 5). Quicker and punchier than the streak/badge sounds,
+ * since it fires mid-session without breaking review flow.
+ */
+export function playComboMilestone() {
+  const context = getAudioContext()
+  const now = context.currentTime
+
+  const sweep = context.createOscillator()
+  sweep.type = 'square'
+  sweep.frequency.setValueAtTime(440, now)
+  sweep.frequency.exponentialRampToValueAtTime(1760, now + 0.18)
+  const filter = context.createBiquadFilter()
+  filter.type = 'lowpass'
+  filter.frequency.setValueAtTime(3000, now)
+  const gain = context.createGain()
+  gain.gain.setValueAtTime(0.001, now)
+  gain.gain.linearRampToValueAtTime(0.12, now + 0.02)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2)
+  sweep.connect(filter).connect(gain).connect(context.destination)
+  sweep.start(now)
+  sweep.stop(now + 0.2)
+}
+
+/**
+ * A deep thud followed by a low metallic ring — like an official seal being
+ * pressed — played when a faction reputation rank is promoted. Lower and
+ * weightier than playBadgeUnlock, since a promotion is an in-world honor
+ * rather than a progress-system milestone.
+ */
+export function playFactionPromotion() {
+  const context = getAudioContext()
+  const now = context.currentTime
+
+  const thud = context.createOscillator()
+  thud.type = 'sine'
+  thud.frequency.setValueAtTime(90, now)
+  thud.frequency.exponentialRampToValueAtTime(45, now + 0.2)
+  const thudGain = context.createGain()
+  thudGain.gain.setValueAtTime(0.4, now)
+  thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25)
+  thud.connect(thudGain).connect(context.destination)
+  thud.start(now)
+  thud.stop(now + 0.25)
+
+  const ring = context.createOscillator()
+  ring.type = 'triangle'
+  ring.frequency.setValueAtTime(220, now + 0.05)
+  const ringGain = context.createGain()
+  ringGain.gain.setValueAtTime(0.001, now + 0.05)
+  ringGain.gain.linearRampToValueAtTime(0.15, now + 0.09)
+  ringGain.gain.exponentialRampToValueAtTime(0.001, now + 0.7)
+  ring.connect(ringGain).connect(context.destination)
+  ring.start(now + 0.05)
+  ring.stop(now + 0.72)
+}
+
+/**
  * Short radio-static burst, played when tuning in or switching channels.
  */
 export function playStaticBurst() {

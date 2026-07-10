@@ -4,14 +4,23 @@ import { useAnimatedNumber } from '../components/useAnimatedNumber.js'
 import { getDueWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
 import { getProgress, saveProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
-import { awardReputation } from '../db/factionsRepo.js'
+import { awardReputation, getFactionProgress } from '../db/factionsRepo.js'
 import { awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
-import { playBadgeUnlock, playLevelUpFanfare, playMissSfx, playQuestComplete, playSuccessSfx } from '../audio/sfx.js'
+import {
+  playBadgeUnlock,
+  playComboMilestone,
+  playFactionPromotion,
+  playLevelUpFanfare,
+  playMissSfx,
+  playQuestComplete,
+  playStreakTierUp,
+  playSuccessSfx,
+} from '../audio/sfx.js'
 import { speakTerm } from '../audio/speak.js'
 import { playPronunciationSting } from '../audio/themeAudioControl.js'
 import { levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
 import { resolveTensionVisuals, resolveThemeStage } from '../themes/index.js'
-import { findFactionsForTerm } from '../factions/factions.js'
+import { findFactionsForTerm, rankForReputation } from '../factions/factions.js'
 import { findSecretForTerm } from '../secrets/secrets.js'
 import { SecretRevealOverlay } from '../secrets/SecretRevealOverlay.jsx'
 import { QUALITY } from '../srs/fsrs.js'
@@ -23,6 +32,9 @@ const FACTION_REPUTATION_PER_CORRECT = 10
 /** Response-time thresholds (ms) used to derive Easy/Hard from a correct answer. */
 const FAST_ANSWER_MS = 3000
 const SLOW_ANSWER_MS = 8000
+
+/** Consecutive-correct combo count that triggers a milestone sting. */
+const COMBO_MILESTONE_STEP = 5
 
 function shuffle(arr) {
   const a = [...arr]
@@ -120,11 +132,18 @@ export function ReviewScreen() {
     )
 
     let finalProgress = nextProgress
+    let factionPromoted = false
     if (correct) {
       const matchedFactions = findFactionsForTerm(theme.id, current.term)
       if (matchedFactions.length > 0) {
-        await Promise.all(
+        const beforeReps = await Promise.all(
+          matchedFactions.map((f) => getFactionProgress(f.factionId, theme.id))
+        )
+        const afterReps = await Promise.all(
           matchedFactions.map((f) => awardReputation(f.factionId, theme.id, FACTION_REPUTATION_PER_CORRECT))
+        )
+        factionPromoted = matchedFactions.some(
+          (f, i) => rankForReputation(f.rankNames, beforeReps[i].reputation) !== rankForReputation(f.rankNames, afterReps[i].reputation)
         )
         setFactionToast(matchedFactions[0])
       }
@@ -146,9 +165,14 @@ export function ReviewScreen() {
     const nextCombo = correct ? combo + 1 : 0
 
     const sfxOn = await getSetting('sfxEnabled', true)
+    const streakTierUp = streakTier(nextProgress.streak) > streakTier(progress?.streak ?? 0)
+    const comboMilestoneHit = correct && nextCombo > 0 && nextCombo % COMBO_MILESTONE_STEP === 0
     if (sfxOn) {
       if (correct) playSuccessSfx(theme.audio.sfxVariant, nextCombo)
       else playMissSfx(theme.audio.sfxVariant, nextTension)
+      if (comboMilestoneHit) playComboMilestone()
+      if (streakTierUp) playStreakTierUp()
+      if (factionPromoted) playFactionPromotion()
     }
     if (!correct) {
       setFlickerKey((k) => k + 1)
