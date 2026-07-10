@@ -36,7 +36,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
   }, [activeThemeId])
 
   if (sfxEnabled === null || autoSpeakEnabled === null || earnedBadges === null || aiEngineEnabled === null) {
-    return <p className="empty-state">Yükleniyor...</p>
+    return <p className="empty-state">Loading...</p>
   }
 
   async function toggleSfx() {
@@ -63,10 +63,10 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `polyglot-chronicle-yedek-${new Date().toISOString().slice(0, 10)}.json`
+    link.download = `polyglot-chronicle-backup-${new Date().toISOString().slice(0, 10)}.json`
     link.click()
     URL.revokeObjectURL(url)
-    setBackupMessage(`${backup.words.length} kelime dosyaya kaydedildi.`)
+    setBackupMessage(`${backup.words.length} words saved to file.`)
   }
 
   function triggerImport() {
@@ -82,10 +82,10 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
       const data = JSON.parse(await file.text())
       const { wordsImported } = await importBackup(data)
       setBackupMessage(
-        `${wordsImported} kelime içe aktarıldı. Görünmesi için popup'ı kapatıp tekrar aç.`
+        `${wordsImported} words imported. Close and reopen the popup to see them.`
       )
     } catch {
-      setBackupMessage('İçe aktarma başarısız: dosya geçersiz veya bozuk.')
+      setBackupMessage('Import failed: file is invalid or corrupted.')
     }
   }
 
@@ -102,12 +102,12 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
   }
 
   async function handleRefreshContent() {
-    setContentMessage('Yenileniyor...')
+    setContentMessage('Refreshing...')
     const { total, updated } = await refreshCuratedContent()
     setContentMessage(
       updated > 0
-        ? `${updated}/${total} kelimeye eksik örnek cümle/felsefe notu/tarihi bilgi eklendi.`
-        : `${total} kelime kontrol edildi, eklenecek yeni içerik yoktu.`
+        ? `Added missing example sentences/philosophy notes/historical facts to ${updated}/${total} words.`
+        : `Checked ${total} words — no new content to add.`
     )
   }
 
@@ -115,28 +115,28 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     <div className="settings-list">
       <div className="settings-row">
         <div className="settings-row-label">
-          <span className="title">Ses Efektleri</span>
-          <span className="hint">Doğru/yanlış cevap sesleri (damga/statik)</span>
+          <span className="title">Sound Effects</span>
+          <span className="hint">Correct/wrong answer sounds (stamp/static)</span>
         </div>
         <button className={`toggle-button ${sfxEnabled ? 'on' : ''}`} onClick={toggleSfx}>
-          {sfxEnabled ? 'Açık' : 'Kapalı'}
+          {sfxEnabled ? 'On' : 'Off'}
         </button>
       </div>
 
       <div className="settings-row">
         <div className="settings-row-label">
-          <span className="title">Otomatik Telaffuz</span>
-          <span className="hint">Kelime ekrana gelince otomatik seslendirilsin</span>
+          <span className="title">Auto Pronunciation</span>
+          <span className="hint">Automatically speak the word when it appears</span>
         </div>
         <button className={`toggle-button ${autoSpeakEnabled ? 'on' : ''}`} onClick={toggleAutoSpeak}>
-          {autoSpeakEnabled ? 'Açık' : 'Kapalı'}
+          {autoSpeakEnabled ? 'On' : 'Off'}
         </button>
       </div>
 
       <div className="settings-row">
         <div className="settings-row-label">
-          <span className="title">Tema</span>
-          <span className="hint">Öğrendiğin dil/dönem</span>
+          <span className="title">Theme</span>
+          <span className="hint">The language/era you're learning</span>
         </div>
         <select value={activeThemeId} onChange={(e) => changeTheme(e.target.value)}>
           {listThemes().map((theme) => (
@@ -148,9 +148,9 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
       </div>
 
       <div className="settings-badges">
-        <span className="title">Rozetler ({earnedBadges.length}/{BADGE_DEFS.length})</span>
+        <span className="title">Badges ({earnedBadges.length}/{BADGE_DEFS.length})</span>
         {earnedBadges.length === 0 ? (
-          <p className="hint">Henüz rozet kazanmadın — tekrar yaparak kazan.</p>
+          <p className="hint">No badges earned yet — keep reviewing to unlock them.</p>
         ) : (
           <div className="badges-grid">
             {earnedBadges.map((b) => (
@@ -165,20 +165,20 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
       <div className="settings-backup">
         <span className="title">AI Chronicle Engine</span>
         <span className="hint">
-          Statik arşivde olmayan kelimeler için tarihi cümle, çeviri ve içgörüyü
-          kendi Anthropic API anahtarınla üretir.
+          Generates a historical sentence, translation, and insight for words missing
+          from the static archive, using your own Anthropic API key.
         </span>
         <div className="ai-engine-toggle-row">
-          <span className="hint">Etkin</span>
+          <span className="hint">Enabled</span>
           <button className={`toggle-button ${aiEngineEnabled ? 'on' : ''}`} onClick={toggleAiEngine}>
-            {aiEngineEnabled ? 'Açık' : 'Kapalı'}
+            {aiEngineEnabled ? 'On' : 'Off'}
           </button>
         </div>
         {aiEngineEnabled && (
           <input
             className="ai-api-key-input"
             type="password"
-            placeholder="Anthropic API Anahtarı (sk-ant-...)"
+            placeholder="Anthropic API Key (sk-ant-...)"
             defaultValue={aiEngineApiKey}
             onBlur={handleApiKeyBlur}
           />
@@ -186,30 +186,30 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
       </div>
 
       <div className="settings-backup">
-        <span className="title">İçerikleri Yenile</span>
+        <span className="title">Refresh Content</span>
         <span className="hint">
-          Daha önce eklediğin kelimelere, sonradan eklenen örnek cümle/felsefe notu gibi
-          eksik içerikleri doldurur.
+          Fills in missing content — like example sentences or philosophy notes added
+          later — for words you already captured.
         </span>
         <div className="backup-buttons">
           <button className="backup-button" onClick={handleRefreshContent}>
-            ✨ İçerikleri Yenile
+            ✨ Refresh Content
           </button>
         </div>
         {contentMessage && <p className="hint">{contentMessage}</p>}
       </div>
 
       <div className="settings-backup">
-        <span className="title">Yedekleme</span>
+        <span className="title">Backup</span>
         <span className="hint">
-          Kelimelerin uzantı klasörünün taşınması/yeniden yüklenmesiyle kaybolmasın diye dosyaya kaydet.
+          Save to a file so your words aren't lost if the extension's folder moves or reloads.
         </span>
         <div className="backup-buttons">
           <button className="backup-button" onClick={handleExport}>
-            ⬇ Dışa Aktar
+            ⬇ Export
           </button>
           <button className="backup-button" onClick={triggerImport}>
-            ⬆ İçe Aktar
+            ⬆ Import
           </button>
           <input
             ref={fileInputRef}
@@ -222,8 +222,8 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
         {backupMessage && <p className="hint">{backupMessage}</p>}
       </div>
 
-      <p className="settings-hint-block">Atmosfer sesini açmak/kapatmak ve kanal değiştirmek için üstteki 📻 çubuğunu kullan.</p>
-      <p className="settings-version">Sürüm {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '?'}</p>
+      <p className="settings-hint-block">Use the 📻 bar above to toggle ambient sound and switch channels.</p>
+      <p className="settings-version">Version {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '?'}</p>
     </div>
   )
 }

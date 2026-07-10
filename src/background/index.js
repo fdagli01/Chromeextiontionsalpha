@@ -9,7 +9,7 @@ const ADD_WORD_MENU_ID = 'polyglot-chronicle-add-word'
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: ADD_WORD_MENU_ID,
-    title: 'Polyglot Chronicle\'a ekle: "%s"',
+    title: 'Add to Polyglot Chronicle: "%s"',
     contexts: ['selection'],
   })
 })
@@ -51,7 +51,7 @@ async function captureWord(term) {
   chrome.notifications.create({
     type: 'basic',
     iconUrl: 'src/assets/images/icon128.png',
-    title: 'Dosyalandı',
+    title: 'Filed',
     message: translation ? `${word.term} — ${translation}` : word.term,
   })
 }

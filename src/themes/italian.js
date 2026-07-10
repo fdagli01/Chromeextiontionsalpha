@@ -10,9 +10,9 @@ import { defineTheme } from './base.js'
  */
 export const italianTheme = defineTheme({
   id: 'italian',
-  name: 'İtalyanca',
+  name: 'Italian',
   sourceLanguageCode: 'it',
-  era: "Roma İmparatorluğu'nun Yükselişi — Lejyon Seferi",
+  era: 'The Rise of Rome — Legion Campaign',
   fontHeading: '"Cinzel", "Georgia", serif',
   fontBody: '"Alegreya Sans SC", "Georgia", serif',
   colors: {
@@ -32,9 +32,9 @@ export const italianTheme = defineTheme({
   terminalVersion: 'LEG. XIV',
   tagline: 'CASTRA VERBORVM — LEGIO {level}',
   stampSuccessWord: 'VICTORIA',
-  stampSuccessFlavor: 'Lejyon senin için tezahürat yapıyor.',
+  stampSuccessFlavor: 'The legion cheers for you.',
   stampFailWord: 'PERIIT',
-  stampFailFlavor: 'Keşif düştü — yeniden tatbikat emredildi.',
+  stampFailFlavor: 'The scout has fallen — drill ordered again.',
   strugglingLabel: 'DESERTOR',
   eyebrowLabel: '⚔ HOSTIS CAPTUS',
   nextButtonLabel: 'PERGE [ENTER] →',
@@ -62,14 +62,14 @@ export const italianTheme = defineTheme({
   stages: [
     {
       id: 'kingdom',
-      name: 'Krallık',
+      name: 'Kingdom',
       minLevel: 1,
       colors: {},
       emblem: '🗡',
     },
     {
       id: 'republic',
-      name: 'Cumhuriyet',
+      name: 'Republic',
       minLevel: 4,
       colors: {
         primary: '#9e1b1b',
@@ -81,7 +81,7 @@ export const italianTheme = defineTheme({
     },
     {
       id: 'empire',
-      name: 'İmparatorluk',
+      name: 'Empire',
       minLevel: 8,
       colors: {
         primary: '#9e1b1b',
@@ -95,7 +95,7 @@ export const italianTheme = defineTheme({
     },
     {
       id: 'decline',
-      name: 'Geç Dönem',
+      name: 'Late Period',
       minLevel: 14,
       colors: {
         primary: '#7a2e28',

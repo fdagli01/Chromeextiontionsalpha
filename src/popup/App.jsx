@@ -41,7 +41,7 @@ function AppShell({ activeThemeId, onThemeChange }) {
 
   const TABS = [
     { id: 'review', icon: '⚑', label: 'INTERROGATE', node: <ReviewScreen /> },
-    { id: 'archive', icon: '📁', label: 'ARŞİV', node: <ArchiveScreen /> },
+    { id: 'archive', icon: '📁', label: 'ARCHIVE', node: <ArchiveScreen /> },
     {
       id: 'settings',
       icon: '⚙',
@@ -81,12 +81,12 @@ function AppShell({ activeThemeId, onThemeChange }) {
             <button
               className={`tab-radio ${audioPlaying ? 'on' : ''}`}
               onClick={toggleAudio}
-              title="Atmosfer sesi aç/kapat"
+              title="Toggle ambient sound"
             >
               <span className="tab-icon">📻</span>
-              <span className="tab-label">{audioPlaying ? audioLabel : 'SES'}</span>
+              <span className="tab-label">{audioPlaying ? audioLabel : 'SOUND'}</span>
             </button>
-            <button className="tab-next" onClick={advanceChannel} title="Sonraki kanal">
+            <button className="tab-next" onClick={advanceChannel} title="Next channel">
               <span className="tab-icon">⏭</span>
               <span className="tab-label">NEXT</span>
             </button>

@@ -18,11 +18,11 @@ export function ArchiveScreen() {
     }
   }, [theme.id])
 
-  if (words === null) return <p className="empty-state">Yükleniyor...</p>
+  if (words === null) return <p className="empty-state">Loading...</p>
   if (words.length === 0)
     return (
       <p className="empty-state">
-        Arşivin henüz boş. Bir sayfada kelime seçip sağ tıklayarak ekle.
+        Your archive is still empty. Select a word on any page and right-click to add it.
       </p>
     )
 
@@ -34,11 +34,11 @@ export function ArchiveScreen() {
             <button
               className="archive-term-button"
               onClick={() => speakTerm(word.term, theme.sourceLanguageCode)}
-              title="Telaffuzu dinle"
+              title="Listen to pronunciation"
             >
               🔊 {word.term}
             </button>
-            <span className="archive-translation">{word.translation || '(çeviri yok)'}</span>
+            <span className="archive-translation">{word.translation || '(no translation)'}</span>
             {word.struggling && theme.strugglingLabel && (
               <span className="archive-struggling">{theme.strugglingLabel}</span>
             )}

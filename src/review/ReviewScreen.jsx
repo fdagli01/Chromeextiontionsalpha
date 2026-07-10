@@ -63,7 +63,7 @@ export function ReviewScreen() {
     setLevelUpInfo(null)
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
       const opts = shuffle([
-        { label: current.translation || '(çeviri yok)', isCorrect: true },
+        { label: current.translation || '(no translation)', isCorrect: true },
         ...distractors.map((d) => ({ label: d.translation || '—', isCorrect: false })),
       ])
       setOptions(opts)
@@ -154,13 +154,13 @@ export function ReviewScreen() {
   })
 
   if (queue === null || progress === null) {
-    return <p className="empty-state">Yükleniyor...</p>
+    return <p className="empty-state">Loading...</p>
   }
 
   if (queue.length === 0) {
     return (
       <p className="empty-state">
-        Tekrar edilecek kelime yok. Bir sayfada kelime seçip sağ tıklayarak arşivine ekle.
+        No words due for review. Select a word on any page and right-click to archive it.
       </p>
     )
   }
@@ -208,7 +208,7 @@ export function ReviewScreen() {
         <div className="level-bar">
           <div className="level-bar-fill" style={{ width: `${barPct}%` }} />
         </div>
-        <div className="quest-pips" title={`Günlük görev: ${dailyQuestCount}/${DAILY_QUEST_TARGET}`}>
+        <div className="quest-pips" title={`Daily quest: ${dailyQuestCount}/${DAILY_QUEST_TARGET}`}>
           {Array.from({ length: DAILY_QUEST_TARGET }).map((_, i) => (
             <span key={i} className={`pip ${i < dailyQuestCount ? 'filled' : ''}`} />
           ))}
@@ -227,7 +227,7 @@ export function ReviewScreen() {
           <button
             className="term-speak-btn"
             onClick={() => speakTerm(current.term, theme.sourceLanguageCode)}
-            title="Telaffuzu tekrar dinle"
+            title="Listen to pronunciation again"
           >
             🔊
           </button>
@@ -255,7 +255,7 @@ export function ReviewScreen() {
               <span key={i} className={`confetti-bit c${i}`} />
             ))}
           </span>
-          <div className="level-up-text">SEVİYE {levelUpInfo.level}!</div>
+          <div className="level-up-text">LEVEL {levelUpInfo.level}!</div>
           <div className="level-up-rank">{levelUpInfo.rank}</div>
         </div>
       )}

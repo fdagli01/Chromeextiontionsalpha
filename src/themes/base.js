@@ -35,7 +35,7 @@
 /**
  * @typedef {Object} ThemeStage
  * @property {string} id - unique slug within the theme, e.g. "republic"
- * @property {string} name - display name, e.g. "Cumhuriyet"
+ * @property {string} name - display name, e.g. "Republic"
  * @property {number} minLevel - lowest player level at which this stage applies
  * @property {Partial<ThemeColors>} [colors] - overrides merged onto the theme's base colors
  * @property {string} [emblem] - overrides the theme's base watermark glyph
@@ -52,9 +52,9 @@
 /**
  * @typedef {Object} ThemeConfig
  * @property {string} id - unique slug, e.g. "russian"
- * @property {string} name - display name, e.g. "Rusça"
+ * @property {string} name - display name, e.g. "Russian"
  * @property {string} sourceLanguageCode - BCP-47 code of the language being learned, e.g. "ru"
- * @property {string} era - historical/thematic framing, e.g. "Soğuk Savaş / KGB Arşivi"
+ * @property {string} era - historical/thematic framing, e.g. "Cold War / K.G.B. Archive"
  * @property {string} fontHeading
  * @property {string} fontBody
  * @property {ThemeColors} colors
@@ -66,9 +66,9 @@
  * @property {string} [terminalVersion] - small version tag next to the header title
  * @property {string} [tagline] - header subtitle line; "{level}" is replaced with the player's level
  * @property {string} [stampSuccessWord] - short (<=12 char) foreign-language stamp word for a correct answer
- * @property {string} [stampSuccessFlavor] - one-line Turkish flavor text shown under the success stamp
+ * @property {string} [stampSuccessFlavor] - one-line flavor text shown under the success stamp
  * @property {string} [stampFailWord] - short (<=12 char) foreign-language stamp word for a missed answer
- * @property {string} [stampFailFlavor] - one-line Turkish flavor text shown under the fail stamp
+ * @property {string} [stampFailFlavor] - one-line flavor text shown under the fail stamp
  * @property {string} [strugglingLabel] - tag shown on words currently missed/re-drilled, e.g. "DESERTOR"
  * @property {string} [eyebrowLabel] - small label above the term on the review card, e.g. "★ ЦЕЛЬ"
  * @property {string} [nextButtonLabel] - label for the "next word" button

@@ -36,7 +36,7 @@ export async function exportBackup() {
  */
 export async function importBackup(data) {
   if (!data || typeof data !== 'object' || !Array.isArray(data.words)) {
-    throw new Error('Geçersiz yedek dosyası: kelime listesi bulunamadı.')
+    throw new Error('Invalid backup file: no word list found.')
   }
 
   for (const word of data.words) {

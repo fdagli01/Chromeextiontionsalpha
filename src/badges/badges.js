@@ -8,12 +8,12 @@
 
 /** @type {BadgeDef[]} */
 export const BADGE_DEFS = [
-  { id: 'streak-3', icon: '🔥', name: 'Isınıyor', check: (p) => p.streak >= 3 },
-  { id: 'streak-5', icon: '🥸', name: "Stalin'in Bıyığı", check: (p) => p.streak >= 5 },
-  { id: 'streak-7', icon: '🎖', name: 'Haftalık Sadakat', check: (p) => p.streak >= 7 },
-  { id: 'streak-14', icon: '🐺', name: 'Kurt Kanı', check: (p) => p.streak >= 14 },
-  { id: 'level-5', icon: '⭐', name: 'Terfi Aldı', check: (p) => p.level >= 5 },
-  { id: 'level-10', icon: '👑', name: 'Genel Sekreter', check: (p) => p.level >= 10 },
+  { id: 'streak-3', icon: '🔥', name: 'Warming Up', check: (p) => p.streak >= 3 },
+  { id: 'streak-5', icon: '🥸', name: "Stalin's Mustache", check: (p) => p.streak >= 5 },
+  { id: 'streak-7', icon: '🎖', name: 'Weekly Loyalty', check: (p) => p.streak >= 7 },
+  { id: 'streak-14', icon: '🐺', name: "Wolf's Blood", check: (p) => p.streak >= 14 },
+  { id: 'level-5', icon: '⭐', name: 'Promoted', check: (p) => p.level >= 5 },
+  { id: 'level-10', icon: '👑', name: 'General Secretary', check: (p) => p.level >= 10 },
 ]
 
 /**

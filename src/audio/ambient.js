@@ -4,7 +4,7 @@ import { getAudioContext } from './context.js'
  * Builds a noise buffer whose tail is crossfaded into its head, so looping
  * it produces no audible click/crackle at the seam. A plain looped buffer
  * of random samples jumps discontinuously every time it wraps — that jump
- * is exactly the periodic "çıtırtı" a short raw noise loop produces.
+ * is exactly the periodic crackle a short raw noise loop produces.
  */
 function createLoopableNoiseBuffer(context, seconds) {
   const length = Math.floor(context.sampleRate * seconds)

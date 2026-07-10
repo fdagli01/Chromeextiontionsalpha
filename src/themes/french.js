@@ -11,9 +11,9 @@ import { defineTheme } from './base.js'
  */
 export const frenchTheme = defineTheme({
   id: 'french',
-  name: 'Fransızca',
+  name: 'French',
   sourceLanguageCode: 'fr',
-  era: 'Fransız Devrimi — Tribunal Salonu',
+  era: 'French Revolution — Tribunal Chamber',
   fontHeading: '"Cormorant Garamond", Georgia, serif',
   fontBody: '"EB Garamond", Georgia, serif',
   colors: {
@@ -36,9 +36,9 @@ export const frenchTheme = defineTheme({
   terminalVersion: 'An II',
   tagline: 'Liberté, Égalité, Vocabulaire',
   stampSuccessWord: 'ACQUITTÉ',
-  stampSuccessFlavor: 'Cumhuriyet dostlarını unutmaz.',
+  stampSuccessFlavor: 'The Republic does not forget its friends.',
   stampFailWord: 'CONDAMNÉ',
-  stampFailFlavor: 'Giyotine sevk edildi — kelime yeniden yargılanacak.',
+  stampFailFlavor: 'Sent to the guillotine — the word will be retried.',
   strugglingLabel: 'SUSPECT',
   eyebrowLabel: '⚖ ACCUSÉ',
   nextButtonLabel: 'AU SUIVANT [ENTER] →',

@@ -8,9 +8,9 @@ import { defineTheme } from './base.js'
  */
 export const portugueseTheme = defineTheme({
   id: 'portuguese',
-  name: 'Portekizce',
+  name: 'Portuguese',
   sourceLanguageCode: 'pt',
-  era: 'Keşifler Çağı / Casa da Índia',
+  era: 'Age of Discovery / Casa da Índia',
   fontHeading: '"IM Fell English SC", Georgia, serif',
   fontBody: '"EB Garamond", Georgia, serif',
   colors: {
@@ -33,9 +33,9 @@ export const portugueseTheme = defineTheme({
   terminalVersion: 'Anno MDVI',
   tagline: 'Arquivo Real de Rotas & Palavras — Lisboa',
   stampSuccessWord: 'REGISTADO',
-  stampSuccessFlavor: 'Seyir defterine işlendi, rota açık.',
+  stampSuccessFlavor: 'Logged in the ship\'s journal, course is clear.',
   stampFailWord: 'DESVIO',
-  stampFailFlavor: 'Pusula yeniden ayarlandı, rota düzeltildi.',
+  stampFailFlavor: 'Compass recalibrated, course corrected.',
   strugglingLabel: 'À DERIVA',
   eyebrowLabel: '⚓ AVISTADO',
   nextButtonLabel: 'PRÓXIMO RUMO →',
