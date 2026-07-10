@@ -215,3 +215,9 @@ body {
   line-height: 1.6;
   padding: 0 6px;
 }
+
+.empty-state-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

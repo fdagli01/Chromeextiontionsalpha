@@ -108,6 +108,26 @@
   color: var(--color-text-muted);
 }
 
+/* Redaction: a missed recall censors this word's meaning in the archive
+   until it's answered correctly again — mirrors the review card's redact
+   sweep, but persistent rather than a one-off animation. */
+.archive-redacted-bar {
+  display: inline-block;
+  width: 70px;
+  height: 11px;
+  background: repeating-linear-gradient(90deg, #000 0px, #000 4px, #1a1a1a 4px, #1a1a1a 6px);
+  border-radius: 1px;
+}
+
+.archive-redacted-notice {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--color-danger);
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
 .archive-struggling {
   font-family: var(--font-heading);
   font-size: 9px;

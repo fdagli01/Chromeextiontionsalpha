@@ -127,6 +127,29 @@ export function getAllWords() {
   return withStore(STORE_WORDS, 'readonly', (store) => store.getAll())
 }
 
+/** Days since a word's last review (or creation, if never reviewed) before it counts as a "cold case". */
+const COLD_CASE_THRESHOLD_DAYS = 21
+
+/**
+ * Surfaces due words that have gone unreviewed the longest — words on the
+ * edge of being forgotten entirely — for a special "cold case" mini-session
+ * distinct from the routine due queue. Only draws from words already due,
+ * so this never invents extra review pressure; it just re-frames the most
+ * neglected slice of it.
+ * @param {string} themeId
+ * @param {Date} [asOf]
+ * @param {number} [limit]
+ * @returns {Promise<WordEntry[]>}
+ */
+export async function getColdCaseWords(themeId, asOf = new Date(), limit = 5) {
+  const due = await getDueWords(themeId, asOf)
+  const cutoff = new Date(asOf.getTime() - COLD_CASE_THRESHOLD_DAYS * 24 * 60 * 60 * 1000).toISOString()
+  return due
+    .filter((w) => (w.lastReviewedAt ?? w.createdAt) <= cutoff)
+    .sort((a, b) => (a.lastReviewedAt ?? a.createdAt).localeCompare(b.lastReviewedAt ?? b.createdAt))
+    .slice(0, limit)
+}
+
 /**
  * Returns up to `count` random words from a theme, excluding one word.
  * Used to build multiple-choice distractors.

@@ -82,27 +82,39 @@ export function ArchiveScreen() {
             >
               🔊 {word.term}
             </button>
-            <span className="archive-translation">{word.translation || '(no translation)'}</span>
+            {word.struggling ? (
+              <span className="archive-translation archive-redacted-bar" aria-hidden="true" />
+            ) : (
+              <span className="archive-translation">{word.translation || '(no translation)'}</span>
+            )}
             {word.struggling && theme.strugglingLabel && (
               <span className="archive-struggling">{theme.strugglingLabel}</span>
             )}
           </div>
           {word.transliteration && <div className="archive-translit">[ {word.transliteration} ]</div>}
-          {word.fact && <div className="archive-fact">{word.fact}</div>}
-          {word.exampleSentence && (
-            <div className="archive-example">
-              <span className="archive-example-sentence">{word.exampleSentence}</span>
-              <span className="archive-example-translation">{word.exampleTranslation}</span>
+          {word.struggling ? (
+            <div className="archive-redacted-notice">
+              🔒 REDACTED — access revoked after a missed recall. Declassifies on the next correct answer.
             </div>
-          )}
-          {word.philosophyNote && <div className="archive-philosophy">🏛 {word.philosophyNote}</div>}
-          {word.etymology && (
-            <div className="archive-etymology">
-              <div className="archive-etymology-head">🔎 {word.etymology.rootLanguage}</div>
-              <div>{word.etymology.origin}</div>
-              <div>{word.etymology.evolution}</div>
-              <div className="archive-etymology-tie">{word.etymology.thematicTie}</div>
-            </div>
+          ) : (
+            <>
+              {word.fact && <div className="archive-fact">{word.fact}</div>}
+              {word.exampleSentence && (
+                <div className="archive-example">
+                  <span className="archive-example-sentence">{word.exampleSentence}</span>
+                  <span className="archive-example-translation">{word.exampleTranslation}</span>
+                </div>
+              )}
+              {word.philosophyNote && <div className="archive-philosophy">🏛 {word.philosophyNote}</div>}
+              {word.etymology && (
+                <div className="archive-etymology">
+                  <div className="archive-etymology-head">🔎 {word.etymology.rootLanguage}</div>
+                  <div>{word.etymology.origin}</div>
+                  <div>{word.etymology.evolution}</div>
+                  <div className="archive-etymology-tie">{word.etymology.thematicTie}</div>
+                </div>
+              )}
+            </>
           )}
           <div className="archive-meta">
             <span>

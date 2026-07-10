@@ -5,11 +5,13 @@ import { getSetting } from '../db/settingsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { onProgressChanged } from '../xp/progressEvents.js'
 import { isUnlocked, UNLOCK_LEVELS } from '../progression/unlocks.js'
+import { getWeeklySummary } from '../db/activityLog.js'
 import { ReviewScreen } from '../review/ReviewScreen.jsx'
 import { ArchiveScreen } from '../archive/ArchiveScreen.jsx'
 import { FactionsScreen } from '../factions/FactionsScreen.jsx'
 import { SettingsScreen } from '../settings/SettingsScreen.jsx'
 import { CrisisScreen } from '../crisis/CrisisScreen.jsx'
+import { WeeklyReportOverlay } from './WeeklyReportOverlay.jsx'
 import {
   getThemeAudioChannelLabel,
   hasThemeAudio,
@@ -21,6 +23,16 @@ import {
 import './App.css'
 
 const isDetachedWindow = new URLSearchParams(window.location.search).has('window')
+const WEEKLY_REPORT_SHOWN_KEY = 'weeklyReportShownWeek'
+
+/** Monday-of-the-current-week as a YYYY-MM-DD key, used to show the intel report once per week. */
+function currentWeekKey(now = new Date()) {
+  const monday = new Date(now)
+  const day = monday.getDay()
+  const diffToMonday = day === 0 ? -6 : 1 - day
+  monday.setDate(monday.getDate() + diffToMonday)
+  return monday.toISOString().slice(0, 10)
+}
 
 /**
  * Opens this same popup UI in a real, separate browser window instead of
@@ -44,8 +56,24 @@ function AppShell({ activeThemeId, onThemeChange }) {
   const [pendingCrisis, setPendingCrisis] = useState(null)
   const [activeCrisis, setActiveCrisis] = useState(null)
   const [level, setLevel] = useState(1)
+  const [weeklyReport, setWeeklyReport] = useState(null)
 
   const hasAudio = hasThemeAudio(theme.id)
+
+  // Monday-first-open intel report: shows at most once per calendar week,
+  // and only if there's a full week's history to summarize.
+  useEffect(() => {
+    const weekKey = currentWeekKey()
+    if (new Date().getDay() !== 1) return
+    chrome.storage.local.get(WEEKLY_REPORT_SHOWN_KEY).then(({ [WEEKLY_REPORT_SHOWN_KEY]: lastShown }) => {
+      if (lastShown === weekKey) return
+      getWeeklySummary().then((summary) => {
+        if (summary.reviewed === 0) return
+        setWeeklyReport(summary)
+        chrome.storage.local.set({ [WEEKLY_REPORT_SHOWN_KEY]: weekKey })
+      })
+    })
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -176,6 +204,10 @@ function AppShell({ activeThemeId, onThemeChange }) {
           </>
         )}
       </nav>
+
+      {weeklyReport && (
+        <WeeklyReportOverlay summary={weeklyReport} onDismiss={() => setWeeklyReport(null)} />
+      )}
     </div>
   )
 }

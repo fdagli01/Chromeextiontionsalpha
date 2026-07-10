@@ -1,0 +1,124 @@
+.weekly-report-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.85);
+  animation: weekly-report-fade-in 0.3s ease;
+}
+
+@keyframes weekly-report-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.weekly-report-card {
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.7), 0 0 40px color-mix(in srgb, var(--color-accent) 30%, transparent);
+  padding: 22px 20px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+  animation: weekly-report-pop-in 0.35s ease;
+}
+
+@keyframes weekly-report-pop-in {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.weekly-report-label {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  margin-bottom: 16px;
+}
+
+.weekly-report-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+.weekly-report-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.weekly-report-value {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.weekly-report-stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.weekly-report-suspects {
+  text-align: left;
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+  margin-bottom: 16px;
+}
+
+.weekly-report-suspects-head {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-danger);
+  margin-bottom: 6px;
+}
+
+.weekly-report-suspects-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.weekly-report-suspects-list li {
+  padding: 2px 0;
+}
+
+.weekly-report-suspects-list li::before {
+  content: '✗ ';
+  color: var(--color-danger);
+}
+
+.weekly-report-clean {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 0 0 16px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+}
+
+.weekly-report-dismiss {
+  background: var(--color-primary);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: 9px 18px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
