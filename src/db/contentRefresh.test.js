@@ -1,11 +1,16 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { _resetConnectionForTests } from './connection.js'
 import { addWord, getWord } from './wordsRepo.js'
+import { setSetting } from './settingsRepo.js'
 import { refreshCuratedContent } from './contentRefresh.js'
 
 beforeEach(() => {
   indexedDB = new IDBFactory()
   _resetConnectionForTests()
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 describe('refreshCuratedContent', () => {
@@ -54,5 +59,44 @@ describe('refreshCuratedContent', () => {
     expect(refreshed.fact).toBe('')
     expect(refreshed.exampleSentence).toBe('')
     expect(refreshed.philosophyNote).toBe('')
+  })
+
+  it('leaves a term with no curated entry untouched when the AI engine is disabled', async () => {
+    global.fetch = vi.fn()
+    const word = await addWord({ themeId: 'russian', term: 'абракадабра', translation: 'gibberish' })
+    await refreshCuratedContent()
+
+    expect(fetch).not.toHaveBeenCalled()
+    const refreshed = await getWord(word.id)
+    expect(refreshed.fact).toBe('')
+  })
+
+  it('falls back to the AI chronicle engine for a term with no curated entry when enabled', async () => {
+    await setSetting('aiEngineEnabled', true)
+    await setSetting('aiEngineApiKey', 'sk-ant-test')
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        content: [
+          {
+            text: JSON.stringify({
+              sentence: 'Абракадабра не является настоящим словом.',
+              translation: 'Abracadabra is not a real word.',
+              chronicle_insight: 'A placeholder nonsense-word, useful only for testing.',
+            }),
+          },
+        ],
+      }),
+    })
+
+    const word = await addWord({ themeId: 'russian', term: 'абракадабра', translation: 'gibberish' })
+    const { updated } = await refreshCuratedContent()
+
+    expect(updated).toBe(1)
+    const refreshed = await getWord(word.id)
+    expect(refreshed.fact).toBe('A placeholder nonsense-word, useful only for testing.')
+    expect(refreshed.exampleSentence).toBe('Абракадабра не является настоящим словом.')
+    expect(refreshed.exampleTranslation).toBe('Abracadabra is not a real word.')
   })
 })

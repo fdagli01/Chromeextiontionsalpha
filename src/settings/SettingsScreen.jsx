@@ -14,11 +14,15 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
   const [earnedBadges, setEarnedBadges] = useState(null)
   const [backupMessage, setBackupMessage] = useState('')
   const [contentMessage, setContentMessage] = useState('')
+  const [aiEngineEnabled, setAiEngineEnabled] = useState(null)
+  const [aiEngineApiKey, setAiEngineApiKey] = useState('')
   const fileInputRef = useRef(null)
 
   useEffect(() => {
     getSetting('sfxEnabled', true).then(setSfxEnabled)
     getSetting('autoSpeakEnabled', true).then(setAutoSpeakEnabled)
+    getSetting('aiEngineEnabled', false).then(setAiEngineEnabled)
+    getSetting('aiEngineApiKey', '').then(setAiEngineApiKey)
   }, [])
 
   useEffect(() => {
@@ -31,7 +35,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     }
   }, [activeThemeId])
 
-  if (sfxEnabled === null || autoSpeakEnabled === null || earnedBadges === null) {
+  if (sfxEnabled === null || autoSpeakEnabled === null || earnedBadges === null || aiEngineEnabled === null) {
     return <p className="empty-state">Yükleniyor...</p>
   }
 
@@ -83,6 +87,18 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     } catch {
       setBackupMessage('İçe aktarma başarısız: dosya geçersiz veya bozuk.')
     }
+  }
+
+  async function toggleAiEngine() {
+    const next = !aiEngineEnabled
+    setAiEngineEnabled(next)
+    await setSetting('aiEngineEnabled', next)
+  }
+
+  async function handleApiKeyBlur(e) {
+    const key = e.target.value.trim()
+    setAiEngineApiKey(key)
+    await setSetting('aiEngineApiKey', key)
   }
 
   async function handleRefreshContent() {
@@ -143,6 +159,29 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
               </span>
             ))}
           </div>
+        )}
+      </div>
+
+      <div className="settings-backup">
+        <span className="title">AI Chronicle Engine</span>
+        <span className="hint">
+          Statik arşivde olmayan kelimeler için tarihi cümle, çeviri ve içgörüyü
+          kendi Anthropic API anahtarınla üretir.
+        </span>
+        <div className="ai-engine-toggle-row">
+          <span className="hint">Etkin</span>
+          <button className={`toggle-button ${aiEngineEnabled ? 'on' : ''}`} onClick={toggleAiEngine}>
+            {aiEngineEnabled ? 'Açık' : 'Kapalı'}
+          </button>
+        </div>
+        {aiEngineEnabled && (
+          <input
+            className="ai-api-key-input"
+            type="password"
+            placeholder="Anthropic API Anahtarı (sk-ant-...)"
+            defaultValue={aiEngineApiKey}
+            onBlur={handleApiKeyBlur}
+          />
         )}
       </div>
 

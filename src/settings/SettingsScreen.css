@@ -125,6 +125,29 @@
   margin-top: 4px;
 }
 
+.ai-engine-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.ai-api-key-input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 8px;
+  background: var(--color-surface-strong);
+  color: var(--color-text);
+  border: 2px solid var(--color-border);
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+}
+
+.ai-api-key-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
 .backup-buttons {
   display: flex;
   gap: 8px;
