@@ -15,7 +15,7 @@ export const DAILY_QUEST_BONUS_XP = 25
  * tracks today's review count toward the daily quest (awarding a one-time
  * bonus the moment the target is reached). Called once per graded review.
  * @param {string} themeId
- * @param {number} quality - 0-5, see sm2.QUALITY
+ * @param {number} quality - 1-4, see srs/fsrs.js QUALITY
  * @param {Date} [now]
  * @returns {Promise<{
  *   progress: import('../db/progressRepo.js').ThemeProgress,

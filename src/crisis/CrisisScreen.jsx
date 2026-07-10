@@ -3,7 +3,7 @@ import { useThemeConfig } from '../components/ThemeProvider.jsx'
 import { getDueWords, getRandomWords, getWordsByTheme, reviewWord } from '../db/wordsRepo.js'
 import { resolveCrisis } from '../db/crisesRepo.js'
 import { awardBonusXp } from '../xp/xpService.js'
-import { QUALITY } from '../sm2/sm2.js'
+import { QUALITY } from '../srs/fsrs.js'
 import './CrisisScreen.css'
 
 function shuffle(arr) {

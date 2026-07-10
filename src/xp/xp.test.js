@@ -8,7 +8,7 @@ import {
   xpForQuality,
   xpRequiredForLevel,
 } from './xp.js'
-import { QUALITY } from '../sm2/sm2.js'
+import { QUALITY } from '../srs/fsrs.js'
 
 describe('xpForQuality', () => {
   it('awards no XP for a failed recall', () => {

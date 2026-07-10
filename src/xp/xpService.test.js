@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { _resetConnectionForTests } from '../db/connection.js'
 import { getProgress } from '../db/progressRepo.js'
 import { awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from './xpService.js'
-import { QUALITY } from '../sm2/sm2.js'
+import { QUALITY } from '../srs/fsrs.js'
 import { xpRequiredForLevel } from './xp.js'
 
 beforeEach(() => {

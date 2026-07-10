@@ -1,5 +1,5 @@
 import { STORE_WORDS, withStore } from './connection.js'
-import { gradeReview } from '../sm2/sm2.js'
+import { bootstrapFromSm2, gradeReview, QUALITY } from '../srs/fsrs.js'
 
 /**
  * @typedef {Object} WordEntry
@@ -14,9 +14,9 @@ import { gradeReview } from '../sm2/sm2.js'
  * @property {string} [philosophyNote] - one-line philosophical cross-reference, for conceptually loaded terms
  * @property {EtymologyEntry} [etymology] - AI-generated etymological/historical-linguistics breakdown
  * @property {string} createdAt - ISO timestamp
- * @property {number} repetition - SM-2: number of consecutive correct reviews
- * @property {number} interval - SM-2: days until next review
- * @property {number} easeFactor - SM-2: ease factor, starts at 2.5
+ * @property {number} [difficulty] - FSRS: 1 (easiest) - 10 (hardest), unset until first reviewed
+ * @property {number} [stability] - FSRS: days until recall probability decays to 90%, unset until first reviewed
+ * @property {number} interval - days until next review
  * @property {string} dueDate - ISO timestamp of next scheduled review
  * @property {string|null} lastReviewedAt - ISO timestamp of last review, or null
  * @property {boolean} struggling - true after a missed recall, cleared on the next correct one
@@ -56,9 +56,7 @@ export async function addWord({
     exampleTranslation,
     philosophyNote,
     createdAt: now,
-    repetition: 0,
     interval: 0,
-    easeFactor: 2.5,
     dueDate: now,
     lastReviewedAt: null,
     struggling: false,
@@ -146,29 +144,34 @@ export async function getRandomWords(themeId, excludeId, count) {
 }
 
 /**
- * Grades a review for a word using SM-2 and persists the resulting
- * scheduling state. A failed recall (quality < 3) makes the word
- * immediately due again, prioritizing it in the current session, and marks
- * it `struggling` until the next correct recall clears the flag.
+ * Grades a review for a word using FSRS and persists the resulting
+ * scheduling state. A failed recall (AGAIN) makes the word immediately due
+ * again, prioritizing it in the current session, and marks it `struggling`
+ * until the next correct recall clears the flag. Words still carrying only
+ * the old SM-2 fields (from before this app switched schedulers) have their
+ * progress bootstrapped into an equivalent starting difficulty/stability
+ * instead of being reset to a brand-new word.
  * @param {number} id
- * @param {number} quality - 0-5, see sm2.QUALITY for named presets
+ * @param {number} quality - 1-4, see srs/fsrs.js QUALITY for named presets
  * @returns {Promise<WordEntry>}
  */
 export async function reviewWord(id, quality) {
   const word = await getWord(id)
   if (!word) throw new Error(`Word ${id} not found`)
 
-  const { repetition, interval, easeFactor, dueDate, lastReviewedAt } = gradeReview(
-    { repetition: word.repetition, interval: word.interval, easeFactor: word.easeFactor },
-    quality
-  )
+  const srsState =
+    word.stability == null && word.difficulty == null
+      ? bootstrapFromSm2(word)
+      : { difficulty: word.difficulty, stability: word.stability, lastReviewedAt: word.lastReviewedAt }
+
+  const { difficulty, stability, interval, dueDate, lastReviewedAt } = gradeReview(srsState, quality)
 
   return updateWord(id, {
-    repetition,
+    difficulty,
+    stability,
     interval,
-    easeFactor,
     dueDate,
     lastReviewedAt,
-    struggling: quality < 3,
+    struggling: quality === QUALITY.AGAIN,
   })
 }

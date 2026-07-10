@@ -1,4 +1,4 @@
-import { QUALITY } from '../sm2/sm2.js'
+import { QUALITY } from '../srs/fsrs.js'
 
 /**
  * XP awarded per review outcome. A failed recall (AGAIN) earns no XP —

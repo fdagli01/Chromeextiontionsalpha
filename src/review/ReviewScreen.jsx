@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useThemeConfig } from '../components/ThemeProvider.jsx'
 import { useAnimatedNumber } from '../components/useAnimatedNumber.js'
 import { getDueWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
@@ -14,11 +14,15 @@ import { resolveTensionVisuals } from '../themes/index.js'
 import { findFactionsForTerm } from '../factions/factions.js'
 import { findSecretForTerm } from '../secrets/secrets.js'
 import { SecretRevealOverlay } from '../secrets/SecretRevealOverlay.jsx'
-import { QUALITY } from '../sm2/sm2.js'
+import { QUALITY } from '../srs/fsrs.js'
 import './ReviewScreen.css'
 
 /** Reputation points awarded to each matching faction on a correct recall. */
 const FACTION_REPUTATION_PER_CORRECT = 10
+
+/** Response-time thresholds (ms) used to derive Easy/Hard from a correct answer. */
+const FAST_ANSWER_MS = 3000
+const SLOW_ANSWER_MS = 8000
 
 function shuffle(arr) {
   const a = [...arr]
@@ -48,6 +52,7 @@ export function ReviewScreen() {
   const [legionScatter, setLegionScatter] = useState(false)
   const [scatterCount, setScatterCount] = useState(0)
   const [eraWipe, setEraWipe] = useState(false)
+  const shownAtRef = useRef(performance.now())
   const hasTension = theme.tensionLevels.length > 0
   const tensionVisuals = useMemo(() => resolveTensionVisuals(theme, tension), [theme, tension])
 
@@ -76,6 +81,7 @@ export function ReviewScreen() {
     setLevelUpInfo(null)
     setFactionToast(null)
     setSecretReveal(null)
+    shownAtRef.current = performance.now()
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
       const opts = shuffle([
         { label: current.translation || '(no translation)', isCorrect: true },
@@ -98,7 +104,14 @@ export function ReviewScreen() {
     if (isAnswered || !options[index]) return
     setSelected(index)
     const correct = options[index].isCorrect
-    const quality = correct ? QUALITY.GOOD : QUALITY.AGAIN
+    const elapsedMs = performance.now() - shownAtRef.current
+    const quality = !correct
+      ? QUALITY.AGAIN
+      : elapsedMs < FAST_ANSWER_MS
+        ? QUALITY.EASY
+        : elapsedMs > SLOW_ANSWER_MS
+          ? QUALITY.HARD
+          : QUALITY.GOOD
 
     await reviewWord(current.id, quality)
     const { progress: nextProgress, xpGained, leveledUp, newBadges, dailyQuest } = await awardReviewXp(

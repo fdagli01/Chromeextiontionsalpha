@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { _resetConnectionForTests } from './connection.js'
 import { addWord, deleteWord, getDueWords, getWord, getWordsByTheme, reviewWord, updateWord } from './wordsRepo.js'
-import { QUALITY } from '../sm2/sm2.js'
+import { QUALITY } from '../srs/fsrs.js'
 import { getProgress, saveProgress } from './progressRepo.js'
 import { getSetting, setSetting } from './settingsRepo.js'
 
@@ -11,11 +11,12 @@ beforeEach(() => {
 })
 
 describe('wordsRepo', () => {
-  it('adds a word with SM-2 defaults and an auto id', async () => {
+  it('adds a word with FSRS defaults and an auto id', async () => {
     const word = await addWord({ themeId: 'russian', term: 'товарищ', translation: 'comrade' })
     expect(word.id).toBeTypeOf('number')
-    expect(word.repetition).toBe(0)
-    expect(word.easeFactor).toBe(2.5)
+    expect(word.difficulty).toBeUndefined()
+    expect(word.stability).toBeUndefined()
+    expect(word.interval).toBe(0)
     expect(word.dueDate).toBeTruthy()
   })
 
@@ -27,8 +28,8 @@ describe('wordsRepo', () => {
 
   it('updates a word and preserves untouched fields', async () => {
     const word = await addWord({ themeId: 'russian', term: 'да', translation: 'yes' })
-    const updated = await updateWord(word.id, { repetition: 1, interval: 6 })
-    expect(updated.repetition).toBe(1)
+    const updated = await updateWord(word.id, { difficulty: 5, interval: 6 })
+    expect(updated.difficulty).toBe(5)
     expect(updated.interval).toBe(6)
     expect(updated.term).toBe('да')
   })

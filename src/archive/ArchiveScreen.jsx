@@ -106,10 +106,12 @@ export function ArchiveScreen() {
           )}
           <div className="archive-meta">
             <span>
-              <span className="meta-label">REP:</span> {word.repetition}
+              <span className="meta-label">STAB:</span>{' '}
+              {word.stability != null ? `${word.stability.toFixed(1)}d` : 'new'}
             </span>
             <span>
-              <span className="meta-label">EF:</span> {word.easeFactor.toFixed(2)}
+              <span className="meta-label">DIFF:</span>{' '}
+              {word.difficulty != null ? word.difficulty.toFixed(1) : '—'}
             </span>
             <span>
               <span className="meta-label">INT:</span> {word.interval}d
