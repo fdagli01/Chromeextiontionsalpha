@@ -5,6 +5,48 @@
   padding-top: 2px;
 }
 
+.archive-secrets {
+  background: var(--color-surface-strong);
+  border: 1px solid var(--color-accent);
+  padding: 9px 12px;
+  margin-bottom: 2px;
+}
+
+.archive-secrets-head {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.archive-secrets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.archive-secret-item {
+  border-left: 3px solid var(--color-accent);
+  padding: 4px 8px;
+}
+
+.archive-secret-title {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 3px;
+}
+
+.archive-secret-anecdote {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
 /* Dossier card */
 .archive-item {
   position: relative;

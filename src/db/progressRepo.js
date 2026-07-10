@@ -11,6 +11,7 @@ import { STORE_PROGRESS, withStore } from './connection.js'
  * @property {string|null} dailyQuestDate - ISO date (YYYY-MM-DD) dailyReviewCount is counting for
  * @property {number} dailyReviewCount - reviews graded on dailyQuestDate
  * @property {boolean} dailyQuestClaimed - whether today's quest bonus XP has been awarded
+ * @property {string[]} secretsUnlocked - lowercased terms whose one-time secret anecdote has been revealed
  */
 
 /**
@@ -28,6 +29,7 @@ function emptyProgress(themeId) {
     dailyQuestDate: null,
     dailyReviewCount: 0,
     dailyQuestClaimed: false,
+    secretsUnlocked: [],
   }
 }
 
@@ -43,6 +45,7 @@ export async function getProgress(themeId) {
     dailyQuestDate: null,
     dailyReviewCount: 0,
     dailyQuestClaimed: false,
+    secretsUnlocked: [],
     ...existing,
   }
 }

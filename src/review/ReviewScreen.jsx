@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useThemeConfig } from '../components/ThemeProvider.jsx'
 import { useAnimatedNumber } from '../components/useAnimatedNumber.js'
 import { getDueWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
-import { getProgress } from '../db/progressRepo.js'
+import { getProgress, saveProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
 import { awardReputation } from '../db/factionsRepo.js'
 import { awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
@@ -12,6 +12,8 @@ import { playPronunciationSting } from '../audio/themeAudioControl.js'
 import { levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
 import { resolveTensionVisuals } from '../themes/index.js'
 import { findFactionsForTerm } from '../factions/factions.js'
+import { findSecretForTerm } from '../secrets/secrets.js'
+import { SecretRevealOverlay } from '../secrets/SecretRevealOverlay.jsx'
 import { QUALITY } from '../sm2/sm2.js'
 import './ReviewScreen.css'
 
@@ -42,6 +44,7 @@ export function ReviewScreen() {
   const [tension, setTension] = useState(0)
   const [combo, setCombo] = useState(0)
   const [factionToast, setFactionToast] = useState(null)
+  const [secretReveal, setSecretReveal] = useState(null)
   const hasTension = theme.tensionLevels.length > 0
   const tensionVisuals = useMemo(() => resolveTensionVisuals(theme, tension), [theme, tension])
 
@@ -69,6 +72,7 @@ export function ReviewScreen() {
     setQuestToast(false)
     setLevelUpInfo(null)
     setFactionToast(null)
+    setSecretReveal(null)
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
       const opts = shuffle([
         { label: current.translation || '(no translation)', isCorrect: true },
@@ -99,6 +103,7 @@ export function ReviewScreen() {
       quality
     )
 
+    let finalProgress = nextProgress
     if (correct) {
       const matchedFactions = findFactionsForTerm(theme.id, current.term)
       if (matchedFactions.length > 0) {
@@ -106,6 +111,14 @@ export function ReviewScreen() {
           matchedFactions.map((f) => awardReputation(f.factionId, theme.id, FACTION_REPUTATION_PER_CORRECT))
         )
         setFactionToast(matchedFactions[0])
+      }
+
+      const secret = findSecretForTerm(theme.id, current.term)
+      if (secret && !nextProgress.secretsUnlocked.includes(secret.term)) {
+        finalProgress = await saveProgress(theme.id, {
+          secretsUnlocked: [...nextProgress.secretsUnlocked, secret.term],
+        })
+        setSecretReveal(secret)
       }
     }
 
@@ -129,7 +142,7 @@ export function ReviewScreen() {
     if (hasTension) setTension(nextTension)
     setCombo(nextCombo)
 
-    setProgress(nextProgress)
+    setProgress(finalProgress)
     setXpToast(xpGained > 0 ? `+${xpGained} XP` : '')
     setBadgeToast(newBadges.length > 0 ? newBadges[0] : null)
     setQuestToast(dailyQuest.justCompleted)
@@ -154,6 +167,7 @@ export function ReviewScreen() {
     setQuestToast(false)
     setLevelUpInfo(null)
     setFactionToast(null)
+    setSecretReveal(null)
   }
 
   // Interrogation-room keyboard protocol: 1/2/3 pick an answer, Enter advances.
@@ -220,6 +234,8 @@ export function ReviewScreen() {
       data-theme={theme.id}
       style={tensionStyle}
     >
+      {secretReveal && <SecretRevealOverlay secret={secretReveal} onDismiss={() => setSecretReveal(null)} />}
+
       <div className="review-stats">
         <span className="stat-rank">⚑ {rank}</span>
         <span className={`stat-streak tier-${streakTier(progress.streak)}`}>🔥 {progress.streak}</span>

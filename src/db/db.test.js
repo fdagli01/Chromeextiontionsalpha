@@ -83,6 +83,7 @@ describe('progressRepo', () => {
       dailyQuestDate: null,
       dailyReviewCount: 0,
       dailyQuestClaimed: false,
+      secretsUnlocked: [],
     })
   })
 
@@ -99,6 +100,7 @@ describe('progressRepo', () => {
       dailyQuestDate: null,
       dailyReviewCount: 0,
       dailyQuestClaimed: false,
+      secretsUnlocked: [],
     })
   })
 })
