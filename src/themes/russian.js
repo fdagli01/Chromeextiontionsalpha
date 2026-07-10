@@ -19,12 +19,7 @@ export const russianTheme = defineTheme({
     danger: '#ff4d4d',
     success: '#3dff3d',
   },
-  audio: {
-    radioTrack: 'src/assets/audio/russian/track1.mp3',
-    stampSound: 'src/assets/audio/russian/stamp.mp3',
-    correctSound: 'src/assets/audio/russian/correct.mp3',
-    incorrectSound: 'src/assets/audio/russian/incorrect.mp3',
-  },
+  audio: {},
   emblem: '☭',
   terminalName: 'K.G.B. TERMINAL',
   terminalVersion: 'v14.0',
