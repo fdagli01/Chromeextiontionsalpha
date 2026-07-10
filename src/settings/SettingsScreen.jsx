@@ -70,7 +70,6 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
   async function changeTheme(themeId) {
     pauseThemeAudio(activeThemeId)
     await setSetting('activeThemeId', themeId)
-    chrome.runtime.sendMessage({ type: 'themeChanged', themeId })
     onThemeChange(themeId)
   }
 

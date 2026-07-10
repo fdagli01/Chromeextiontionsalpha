@@ -1,31 +1,45 @@
-import { addWord, getSetting } from '../db/index.js'
-import { getTheme, DEFAULT_THEME_ID } from '../themes/index.js'
+import { addWord } from '../db/index.js'
+import { getTheme, listThemes } from '../themes/index.js'
 import { getExample, getFact, getPhilosophy } from '../facts/index.js'
 import { getTransliteration } from '../transliteration/index.js'
 import { translateToEnglish } from './translate.js'
 import { checkForCrisis, CRISIS_ALARM_NAME, scheduleCrisisChecks } from './crisisScheduler.js'
 
-const ADD_WORD_MENU_ID = 'polyglot-chronicle-add-word'
+const MENU_ROOT_ID = 'polyglot-chronicle-root'
 
-/**
- * (Re)creates the right-click "add word" menu item using the active theme's
- * own flavor text (e.g. "Decrypt intercept" for Russian, "File before the
- * tribunal" for French), so the context menu reads in-world rather than as a
- * generic browser affordance. Safe to call repeatedly.
- */
-async function rebuildContextMenu() {
-  const themeId = (await getSetting('activeThemeId', DEFAULT_THEME_ID)) ?? DEFAULT_THEME_ID
-  const theme = getTheme(themeId)
-  await chrome.contextMenus.removeAll()
-  chrome.contextMenus.create({
-    id: ADD_WORD_MENU_ID,
-    title: theme.contextMenuTitle,
-    contexts: ['selection'],
-  })
+/** @param {string} themeId */
+function menuIdForTheme(themeId) {
+  return `polyglot-chronicle-add-${themeId}`
 }
 
-chrome.runtime.onInstalled.addListener(rebuildContextMenu)
-chrome.runtime.onStartup.addListener(rebuildContextMenu)
+/**
+ * Builds the right-click "add word" menu as a submenu with one entry per
+ * theme (each using that theme's own flavor text, e.g. "Decrypt intercept"
+ * for Russian, "File before the tribunal" for French), so capturing a word
+ * always files it under the theme the user explicitly picks — language
+ * auto-detection from a single bare word is unreliable, so this replaces
+ * relying on whichever theme happens to be "active" at the time. Safe to
+ * call repeatedly.
+ */
+async function createContextMenu() {
+  await chrome.contextMenus.removeAll()
+  chrome.contextMenus.create({
+    id: MENU_ROOT_ID,
+    title: 'Polyglot Chronicle: file "%s" as…',
+    contexts: ['selection'],
+  })
+  for (const theme of listThemes()) {
+    chrome.contextMenus.create({
+      id: menuIdForTheme(theme.id),
+      parentId: MENU_ROOT_ID,
+      title: theme.contextMenuTitle,
+      contexts: ['selection'],
+    })
+  }
+}
+
+chrome.runtime.onInstalled.addListener(createContextMenu)
+chrome.runtime.onStartup.addListener(createContextMenu)
 
 chrome.runtime.onInstalled.addListener(scheduleCrisisChecks)
 chrome.runtime.onStartup.addListener(scheduleCrisisChecks)
@@ -34,25 +48,22 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === CRISIS_ALARM_NAME) checkForCrisis()
 })
 
-chrome.runtime.onMessage.addListener((message) => {
-  if (message?.type === 'themeChanged') rebuildContextMenu()
-})
-
 chrome.contextMenus.onClicked.addListener((info) => {
-  if (info.menuItemId !== ADD_WORD_MENU_ID) return
+  const theme = listThemes().find((t) => menuIdForTheme(t.id) === info.menuItemId)
+  if (!theme) return
   const term = info.selectionText?.trim()
-  if (term) captureWord(term)
+  if (term) captureWord(term, theme.id)
 })
 
 /**
- * Captures a selected word into the active theme's archive: fetches an
+ * Captures a selected word into the chosen theme's archive: fetches an
  * English translation, attaches any curated historical trivia, persists it,
  * and confirms with a themed notification. Translation failures don't block
  * the capture — the word is still saved so nothing is lost.
  * @param {string} term
+ * @param {string} themeId
  */
-async function captureWord(term) {
-  const themeId = (await getSetting('activeThemeId', DEFAULT_THEME_ID)) ?? DEFAULT_THEME_ID
+async function captureWord(term, themeId) {
   const theme = getTheme(themeId)
 
   const translation = await translateToEnglish(term, theme.sourceLanguageCode)
@@ -75,7 +86,7 @@ async function captureWord(term) {
   chrome.notifications.create({
     type: 'basic',
     iconUrl: 'src/assets/images/icon128.png',
-    title: 'Filed',
+    title: `Filed — ${theme.name}`,
     message: translation ? `${word.term} — ${translation}` : word.term,
   })
 }
