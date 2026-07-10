@@ -21,8 +21,7 @@ const MAINFRAMES = {
   russian: 'K.G.B. Terminal (Soviet Era) — a clandestine, high-stakes Cold War Soviet epoch',
 }
 
-const API_ENDPOINT = 'https://api.anthropic.com/v1/messages'
-const DEFAULT_MODEL = 'claude-haiku-4-5-20251001'
+const DEFAULT_MODEL = 'gemini-2.5-flash'
 
 function parseChronicleJson(text) {
   const cleaned = text.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim()
@@ -32,40 +31,36 @@ function parseChronicleJson(text) {
 }
 
 /**
- * Generates an immersive example sentence + Turkish-context historical
- * insight for a word using the Anthropic API, in the voice of the word's
- * thematic "Mainframe". Requires the user's own API key (settings). Returns
- * null on any failure so callers can fall back to curated content.
+ * Generates an immersive example sentence + historical insight for a word
+ * using Google's Gemini API, in the voice of the word's thematic
+ * "Mainframe". Requires the user's own API key (settings). Returns null on
+ * any failure so callers can fall back to curated content.
  * @param {string} themeId
  * @param {string} term
  * @param {string} apiKey
- * @param {string} [model]
+ * @param {string} [model] - a Gemini model name, e.g. "gemini-2.5-flash"
  * @returns {Promise<{sentence: string, translation: string, chronicle_insight: string} | null>}
  */
 export async function generateChronicleEntry(themeId, term, apiKey, model = DEFAULT_MODEL) {
   const mainframe = MAINFRAMES[themeId]
   if (!mainframe || !apiKey) return null
 
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+
   try {
-    const response = await fetch(API_ENDPOINT, {
+    const response = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        model,
-        max_tokens: 400,
-        system: CHRONICLE_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: `Word: "${term}"\nMainframe: ${mainframe}` }],
+        systemInstruction: { parts: [{ text: CHRONICLE_SYSTEM_PROMPT }] },
+        contents: [{ role: 'user', parts: [{ text: `Word: "${term}"\nMainframe: ${mainframe}` }] }],
+        generationConfig: { responseMimeType: 'application/json' },
       }),
     })
     if (!response.ok) return null
 
     const data = await response.json()
-    const raw = data?.content?.[0]?.text
+    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text
     if (!raw) return null
 
     return parseChronicleJson(raw)

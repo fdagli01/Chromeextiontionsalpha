@@ -166,7 +166,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
         <span className="title">AI Chronicle Engine</span>
         <span className="hint">
           Generates a historical sentence, translation, and insight for words missing
-          from the static archive, using your own Anthropic API key.
+          from the static archive, using your own Google Gemini API key.
         </span>
         <div className="ai-engine-toggle-row">
           <span className="hint">Enabled</span>
@@ -178,7 +178,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
           <input
             className="ai-api-key-input"
             type="password"
-            placeholder="Anthropic API Key (sk-ant-...)"
+            placeholder="Gemini API Key (AIza...)"
             defaultValue={aiEngineApiKey}
             onBlur={handleApiKeyBlur}
           />

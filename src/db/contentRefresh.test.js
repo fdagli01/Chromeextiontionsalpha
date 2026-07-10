@@ -73,18 +73,24 @@ describe('refreshCuratedContent', () => {
 
   it('falls back to the AI chronicle engine for a term with no curated entry when enabled', async () => {
     await setSetting('aiEngineEnabled', true)
-    await setSetting('aiEngineApiKey', 'sk-ant-test')
+    await setSetting('aiEngineApiKey', 'gemini-test-key')
 
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        content: [
+        candidates: [
           {
-            text: JSON.stringify({
-              sentence: 'Абракадабра не является настоящим словом.',
-              translation: 'Abracadabra is not a real word.',
-              chronicle_insight: 'A placeholder nonsense-word, useful only for testing.',
-            }),
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    sentence: 'Абракадабра не является настоящим словом.',
+                    translation: 'Abracadabra is not a real word.',
+                    chronicle_insight: 'A placeholder nonsense-word, useful only for testing.',
+                  }),
+                },
+              ],
+            },
           },
         ],
       }),
