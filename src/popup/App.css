@@ -1,11 +1,24 @@
+html, body {
+  height: 100%;
+}
+
 body {
   margin: 0;
+  /* Falls back to a near-black page background so a taller detached
+     window never shows blank white below the themed card before/after
+     it — the card's own background still comes from --color-background. */
+  background: #0a0a0a;
+}
+
+#root {
+  min-height: 100%;
 }
 
 /* Popup mode stays a fixed compact width (Chrome caps action-popup size
    anyway). Detached-window mode (opened via the pin button) gets a real
    browser window and should use the extra room instead of floating a
-   380px column in a sea of empty background. */
+   380px column in a sea of empty background — and should fill the
+   window's full height instead of leaving a blank strip below the nav. */
 .app {
   width: 380px;
   min-height: 560px;
@@ -18,6 +31,7 @@ body {
   .app {
     width: 100%;
     max-width: 720px;
+    min-height: 100vh;
     margin: 0 auto;
   }
 

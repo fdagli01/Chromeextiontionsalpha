@@ -34,7 +34,7 @@ function createLoopableNoiseBuffer(context, seconds) {
  * adds zero bytes to the package.
  * @returns {() => void} a stop function that fades out and tears down the graph
  */
-function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', droneGain = 0.06, noise, murmur, pluck }) {
+function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', droneGain = 0.06, noise, murmur, chant, pluck }) {
   const now = context.currentTime
   const master = context.createGain()
   master.gain.setValueAtTime(0, now)
@@ -103,6 +103,38 @@ function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', drone
     murmurLfo.start()
   }
 
+  // Synthetic "human voice": sustained sawtooth tones passed through a
+  // narrow bandpass (a crude vowel formant) with a slow vibrato per voice,
+  // so several layered together read as a distant a cappella choir/chant
+  // rather than an obviously-electronic drone. No recorded speech involved.
+  const chantOscs = []
+  const chantLfos = []
+  if (chant) {
+    chant.notes.forEach((freq, i) => {
+      const osc = context.createOscillator()
+      osc.type = chant.type ?? 'sawtooth'
+      osc.frequency.value = freq
+      const formant = context.createBiquadFilter()
+      formant.type = 'bandpass'
+      formant.frequency.value = chant.formantFreq ?? freq * 2
+      formant.Q.value = chant.formantQ ?? 4
+      const voiceGain = context.createGain()
+      voiceGain.gain.value = chant.gain ?? 0.02
+      osc.connect(formant).connect(voiceGain).connect(master)
+      osc.start()
+      chantOscs.push(osc)
+
+      const vibrato = context.createOscillator()
+      vibrato.type = 'sine'
+      vibrato.frequency.value = (chant.vibratoRate ?? 0.3) + i * 0.04
+      const vibratoGain = context.createGain()
+      vibratoGain.gain.value = chant.vibratoDepth ?? 2
+      vibrato.connect(vibratoGain).connect(osc.frequency)
+      vibrato.start()
+      chantLfos.push(vibrato)
+    })
+  }
+
   let pluckTimeoutId = null
   function schedulePluck() {
     const delay = pluck.minDelay + Math.random() * (pluck.maxDelay - pluck.minDelay)
@@ -138,7 +170,7 @@ function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', drone
           /* already stopped */
         }
       })
-      ;[noiseSource, noiseLfo, murmurSource, murmurLfo].forEach((node) => {
+      ;[noiseSource, noiseLfo, murmurSource, murmurLfo, ...chantOscs, ...chantLfos].forEach((node) => {
         if (!node) return
         try {
           node.stop()
@@ -153,7 +185,7 @@ function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', drone
 
 /**
  * Per-theme generative "radio channels" — the copyright-safe stand-in for
- * Russian's real MP3 tracks (see radioPlayer.js). Each theme gets 2
+ * Russian's real MP3 tracks (see radioPlayer.js). Each theme gets several
  * channels, matching the "cycle through frequencies" UI metaphor.
  */
 const THEME_AMBIENT_PRESETS = {
@@ -188,6 +220,26 @@ const THEME_AMBIENT_PRESETS = {
         droneGain: 0.025,
         murmur: { freq: 850, q: 1.2, gain: 0.045, wobbleRate: 0.2, wobbleDepth: 0.03 },
         pluck: { notes: [659.25, 783.99, 987.77], type: 'square', minDelay: 4, maxDelay: 9, gain: 0.035, decay: 0.4 },
+      },
+    },
+    {
+      // The Oracle's chamber: a low sustained priestly chant (synthetic
+      // "voices", not recorded speech) under the temple's stone stillness —
+      // the most ritual, least martial of the four Roman channels.
+      name: 'ORACVLVM',
+      config: {
+        droneFreqs: [98],
+        droneType: 'sine',
+        droneGain: 0.02,
+        chant: {
+          notes: [130.81, 164.81, 196.0],
+          type: 'sawtooth',
+          gain: 0.018,
+          formantQ: 5,
+          vibratoRate: 0.2,
+          vibratoDepth: 1.5,
+        },
+        pluck: { notes: [392.0, 440.0], type: 'sine', minDelay: 8, maxDelay: 16, gain: 0.04, decay: 2.5 },
       },
     },
   ],
@@ -227,6 +279,26 @@ const THEME_AMBIENT_PRESETS = {
         pluck: { notes: [698.46, 830.61, 932.33, 1108.73], type: 'triangle', minDelay: 3, maxDelay: 6, gain: 0.045, decay: 1.1 },
       },
     },
+    {
+      // The Chapel: a sailors' hymn sung low before departure — synthetic
+      // layered "voices" in close harmony, warmer and steadier than the
+      // ocean swell or market haggle of the other three channels.
+      name: 'CAPELA',
+      config: {
+        droneFreqs: [65.41],
+        droneType: 'sine',
+        droneGain: 0.02,
+        chant: {
+          notes: [130.81, 164.81, 196.0, 246.94],
+          type: 'sawtooth',
+          gain: 0.015,
+          formantQ: 4.5,
+          vibratoRate: 0.18,
+          vibratoDepth: 1.2,
+        },
+        pluck: { notes: [523.25, 659.25], type: 'sine', minDelay: 10, maxDelay: 20, gain: 0.03, decay: 2.0 },
+      },
+    },
   ],
   french: [
     {
@@ -260,6 +332,27 @@ const THEME_AMBIENT_PRESETS = {
         droneGain: 0.02,
         murmur: { freq: 1000, q: 1.6, gain: 0.018, wobbleRate: 0.1, wobbleDepth: 0.01 },
         pluck: { notes: [349.23, 440.0, 523.25, 587.33, 698.46], type: 'triangle', minDelay: 2.5, maxDelay: 5.5, gain: 0.055, decay: 1.6 },
+      },
+    },
+    {
+      // The Tribunal: a cold, flat reading of charges — a low unison
+      // "voice" with almost no vibrato (deliberately unlike the Chapel's
+      // warm harmony or the Oracle's ritual), under a slow judge's-gavel
+      // pluck.
+      name: 'TRIBUNAL',
+      config: {
+        droneFreqs: [87.31],
+        droneType: 'sawtooth',
+        droneGain: 0.018,
+        chant: {
+          notes: [98, 130.81],
+          type: 'sawtooth',
+          gain: 0.02,
+          formantQ: 6,
+          vibratoRate: 0.08,
+          vibratoDepth: 0.6,
+        },
+        pluck: { notes: [65.41], type: 'square', minDelay: 5, maxDelay: 9, gain: 0.09, decay: 0.4 },
       },
     },
   ],
