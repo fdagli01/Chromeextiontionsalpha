@@ -25,31 +25,81 @@ function createLoopableNoiseBuffer(context, seconds) {
 }
 
 /**
+ * Builds a procedural room/hall impulse response for the reverb: a burst of
+ * noise whose energy decays exponentially, lowpassed so the tail darkens
+ * over time like reflections off stone rather than glass. Cached per
+ * (seconds, decay) since generating it is the priciest step here.
+ */
+const impulseCache = new Map()
+function createReverbImpulse(context, seconds, decay) {
+  const key = `${seconds}:${decay}:${context.sampleRate}`
+  if (impulseCache.has(key)) return impulseCache.get(key)
+  const length = Math.floor(context.sampleRate * seconds)
+  const impulse = context.createBuffer(2, length, context.sampleRate)
+  for (let channel = 0; channel < 2; channel++) {
+    const data = impulse.getChannelData(channel)
+    for (let i = 0; i < length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay)
+    }
+  }
+  impulseCache.set(key, impulse)
+  return impulse
+}
+
+/**
  * Builds one continuously-running generative ambient voice: a low drone, an
  * optional filtered-noise bed (with optional slow LFO "swell" on the
  * filter, for waves/wind), an optional bandpassed "murmur" bed with a slow
  * gain wobble (distant crowd/crew chatter, without needing recorded
- * speech), and an optional sparse plucked-note scheduler (bells, drums,
- * gulls). Fully procedural — no audio assets, so it's copyright-safe and
- * adds zero bytes to the package.
+ * speech), an optional synthetic-choir "chant" layer, and an optional
+ * sparse plucked-note scheduler (bells, drums, gulls). Everything is mixed
+ * through a shared convolution reverb (see `reverb` option) so the layers
+ * sit together in one acoustic space — a hall, a quayside, a chamber —
+ * instead of playing dry against the speaker. Fully procedural — no audio
+ * assets, so it's copyright-safe and adds zero bytes to the package.
  * @returns {() => void} a stop function that fades out and tears down the graph
  */
-function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', droneGain = 0.06, noise, murmur, chant, pluck }) {
+function buildAmbientVoice(
+  context,
+  { droneFreqs = [], droneType = 'sine', droneGain = 0.06, reverb, noise, murmur, chant, pluck }
+) {
   const now = context.currentTime
   const master = context.createGain()
   master.gain.setValueAtTime(0, now)
-  master.gain.linearRampToValueAtTime(1, now + 1.5)
-  master.connect(context.destination)
+  master.gain.linearRampToValueAtTime(1, now + 2.5)
 
-  const droneOscs = droneFreqs.map((freq) => {
-    const osc = context.createOscillator()
-    osc.type = droneType
-    osc.frequency.value = freq
-    const gain = context.createGain()
-    gain.gain.value = droneGain
-    osc.connect(gain).connect(master)
-    osc.start()
-    return osc
+  // Wet/dry split: the wet path through the convolver is what makes the
+  // layers read as "a place" rather than tones next to your ear. Defaults
+  // lean wet on purpose — this is background atmosphere, not lead sound.
+  const dryGain = context.createGain()
+  dryGain.gain.value = reverb?.dry ?? 0.4
+  const wetGain = context.createGain()
+  wetGain.gain.value = reverb?.wet ?? 0.8
+  const convolver = context.createConvolver()
+  convolver.buffer = createReverbImpulse(context, reverb?.seconds ?? 3.5, reverb?.decay ?? 2.5)
+  master.connect(dryGain).connect(context.destination)
+  master.connect(convolver).connect(wetGain).connect(context.destination)
+
+  // Drones run as slightly-detuned pairs through a dark lowpass: the detune
+  // beats slowly against itself (organic movement instead of a flat test
+  // tone), and the filter strips the buzzy upper harmonics that made raw
+  // sawtooth/square drones sound like cheap synths.
+  const droneLowpass = context.createBiquadFilter()
+  droneLowpass.type = 'lowpass'
+  droneLowpass.frequency.value = 320
+  droneLowpass.connect(master)
+
+  const droneOscs = droneFreqs.flatMap((freq) => {
+    return [freq, freq * 1.004].map((f) => {
+      const osc = context.createOscillator()
+      osc.type = droneType
+      osc.frequency.value = f
+      const gain = context.createGain()
+      gain.gain.value = droneGain / 2
+      osc.connect(gain).connect(droneLowpass)
+      osc.start()
+      return osc
+    })
   })
 
   let noiseSource = null
@@ -110,17 +160,29 @@ function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', drone
   const chantOscs = []
   const chantLfos = []
   if (chant) {
+    // Shared vocal-register shaping: everything above ~1kHz is rolled off so
+    // the "voices" sit far back in the room instead of buzzing up front.
+    const chantDarkener = context.createBiquadFilter()
+    chantDarkener.type = 'lowpass'
+    chantDarkener.frequency.value = chant.darkness ?? 900
+    chantDarkener.connect(master)
+
     chant.notes.forEach((freq, i) => {
       const osc = context.createOscillator()
-      osc.type = chant.type ?? 'sawtooth'
+      osc.type = chant.type ?? 'triangle'
       osc.frequency.value = freq
       const formant = context.createBiquadFilter()
       formant.type = 'bandpass'
       formant.frequency.value = chant.formantFreq ?? freq * 2
-      formant.Q.value = chant.formantQ ?? 4
+      formant.Q.value = chant.formantQ ?? 3
       const voiceGain = context.createGain()
-      voiceGain.gain.value = chant.gain ?? 0.02
-      osc.connect(formant).connect(voiceGain).connect(master)
+      // Each voice fades in over several seconds, staggered, so the choir
+      // assembles gradually the way distant singing registers — never a
+      // synth chord snapping on.
+      const target = chant.gain ?? 0.02
+      voiceGain.gain.setValueAtTime(0.0001, now)
+      voiceGain.gain.linearRampToValueAtTime(target, now + 4 + i * 1.5)
+      osc.connect(formant).connect(voiceGain).connect(chantDarkener)
       osc.start()
       chantOscs.push(osc)
 
@@ -132,6 +194,18 @@ function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', drone
       vibrato.connect(vibratoGain).connect(osc.frequency)
       vibrato.start()
       chantLfos.push(vibrato)
+
+      // A slow "breath" swell per voice (offset phases across the choir):
+      // voices rise and recede against each other, like phrases being sung,
+      // rather than one static held cluster.
+      const breath = context.createOscillator()
+      breath.type = 'sine'
+      breath.frequency.value = 0.05 + i * 0.017
+      const breathGain = context.createGain()
+      breathGain.gain.value = target * 0.5
+      breath.connect(breathGain).connect(voiceGain.gain)
+      breath.start()
+      chantLfos.push(breath)
     })
   }
 
@@ -191,168 +265,182 @@ function buildAmbientVoice(context, { droneFreqs = [], droneType = 'sine', drone
 const THEME_AMBIENT_PRESETS = {
   italian: [
     {
+      // A vast stone temple: long reverb tail, air moving through the
+      // colonnade, a faint votive chant far behind the altar. The place is
+      // the sound — the tones only color it.
       name: 'TEMPLVM',
       config: {
-        droneFreqs: [146.83, 220.0],
+        reverb: { seconds: 5, decay: 2.2, wet: 0.9, dry: 0.3 },
+        droneFreqs: [146.83],
         droneType: 'sine',
-        droneGain: 0.05,
-        noise: { filterType: 'lowpass', filterFreq: 220, gain: 0.015 },
-        pluck: { notes: [293.66, 349.23, 392.0, 440.0, 523.25], type: 'triangle', minDelay: 3, maxDelay: 7, gain: 0.06, decay: 2.2 },
+        droneGain: 0.03,
+        noise: { filterType: 'lowpass', filterFreq: 260, gain: 0.05, waveLfo: { rate: 0.05, depth: 60 } },
+        chant: { notes: [130.81, 196.0], type: 'triangle', gain: 0.012, darkness: 700, vibratoRate: 0.15, vibratoDepth: 1 },
+        pluck: { notes: [392.0, 523.25], type: 'sine', minDelay: 9, maxDelay: 18, gain: 0.035, decay: 3 },
       },
     },
     {
+      // The Senate in session: a chamber of overlapping debate — layered
+      // crowd murmur with an orator's low voice rising over it now and
+      // then, sandals and shuffling as a soft noise floor.
+      name: 'SENATVS',
+      config: {
+        reverb: { seconds: 3.2, decay: 2.6, wet: 0.75, dry: 0.4 },
+        droneFreqs: [98],
+        droneType: 'sine',
+        droneGain: 0.015,
+        noise: { filterType: 'lowpass', filterFreq: 400, gain: 0.035, waveLfo: { rate: 0.11, depth: 90 } },
+        murmur: { freq: 750, q: 1.0, gain: 0.055, wobbleRate: 0.21, wobbleDepth: 0.035 },
+        chant: { notes: [110], type: 'triangle', gain: 0.014, darkness: 800, vibratoRate: 0.35, vibratoDepth: 3 },
+        pluck: { notes: [220, 246.94], type: 'sine', minDelay: 7, maxDelay: 14, gain: 0.03, decay: 0.8 },
+      },
+    },
+    {
+      // A legion camp at dusk, heard from the rampart: wind over the plain,
+      // distant drums keeping time, the low mass of men as murmur.
       name: 'LEGIO',
       config: {
-        droneFreqs: [110, 164.81],
+        reverb: { seconds: 2.5, decay: 3, wet: 0.6, dry: 0.5 },
+        droneFreqs: [82.41],
         droneType: 'sine',
-        droneGain: 0.04,
-        pluck: { notes: [55, 65.41], type: 'sine', minDelay: 0.9, maxDelay: 1.1, gain: 0.18, decay: 0.35 },
+        droneGain: 0.02,
+        noise: { filterType: 'lowpass', filterFreq: 320, gain: 0.045, waveLfo: { rate: 0.07, depth: 110 } },
+        murmur: { freq: 500, q: 1.2, gain: 0.03, wobbleRate: 0.13, wobbleDepth: 0.02 },
+        pluck: { notes: [55, 65.41], type: 'sine', minDelay: 1.6, maxDelay: 2.2, gain: 0.1, decay: 0.5 },
       },
     },
     {
-      // The Forum: senate debate and market trade — a crowd murmur under
-      // sparse coin-clink plucks, brighter and busier than the temple's
-      // stillness or the legion's march.
-      name: 'FORVM',
-      config: {
-        droneFreqs: [130.81, 196.0],
-        droneType: 'sine',
-        droneGain: 0.025,
-        murmur: { freq: 850, q: 1.2, gain: 0.045, wobbleRate: 0.2, wobbleDepth: 0.03 },
-        pluck: { notes: [659.25, 783.99, 987.77], type: 'square', minDelay: 4, maxDelay: 9, gain: 0.035, decay: 0.4 },
-      },
-    },
-    {
-      // The Oracle's chamber: a low sustained priestly chant (synthetic
-      // "voices", not recorded speech) under the temple's stone stillness —
-      // the most ritual, least martial of the four Roman channels.
+      // The oracle's cavern: dripping-stone stillness, a ritual chant that
+      // swells and recedes in slow breaths, the longest reverb of the four.
       name: 'ORACVLVM',
       config: {
+        reverb: { seconds: 6, decay: 2, wet: 1.0, dry: 0.25 },
         droneFreqs: [98],
         droneType: 'sine',
         droneGain: 0.02,
-        chant: {
-          notes: [130.81, 164.81, 196.0],
-          type: 'sawtooth',
-          gain: 0.018,
-          formantQ: 5,
-          vibratoRate: 0.2,
-          vibratoDepth: 1.5,
-        },
-        pluck: { notes: [392.0, 440.0], type: 'sine', minDelay: 8, maxDelay: 16, gain: 0.04, decay: 2.5 },
+        noise: { filterType: 'lowpass', filterFreq: 200, gain: 0.03, waveLfo: { rate: 0.04, depth: 40 } },
+        chant: { notes: [130.81, 164.81, 196.0], type: 'triangle', gain: 0.014, darkness: 650, vibratoRate: 0.18, vibratoDepth: 1.4 },
+        pluck: { notes: [392.0, 440.0], type: 'sine', minDelay: 12, maxDelay: 24, gain: 0.03, decay: 3.5 },
       },
     },
   ],
   portuguese: [
     {
+      // Open ocean — the channel that already worked; kept noise-first,
+      // with only a light quayside reverb so the swell stays natural.
       name: 'OCEANO',
       config: {
-        droneFreqs: [55, 82.41],
-        droneType: 'sine',
-        droneGain: 0.035,
-        noise: { filterType: 'lowpass', filterFreq: 500, gain: 0.075, waveLfo: { rate: 0.09, depth: 260 } },
-        murmur: { freq: 650, q: 1.3, gain: 0.028, wobbleRate: 0.13, wobbleDepth: 0.02 },
-        pluck: { notes: [1200, 1400, 1600], type: 'sawtooth', minDelay: 15, maxDelay: 35, gain: 0.03, decay: 0.15 },
-      },
-    },
-    {
-      name: 'PORTO',
-      config: {
-        droneFreqs: [98, 146.83],
-        droneType: 'triangle',
-        droneGain: 0.03,
-        noise: { filterType: 'lowpass', filterFreq: 350, gain: 0.05, waveLfo: { rate: 0.06, depth: 150 } },
-        murmur: { freq: 550, q: 1.4, gain: 0.024, wobbleRate: 0.1, wobbleDepth: 0.016 },
-        pluck: { notes: [440, 523.25], type: 'triangle', minDelay: 6, maxDelay: 12, gain: 0.05, decay: 1.8 },
-      },
-    },
-    {
-      // The Feitoria: a spice-trading post at the edge of the empire — a
-      // higher, brighter murmur (haggling voices) under sparse exotic
-      // bell-like plucks, no wave noise since we're inland at the market.
-      name: 'FEITORIA',
-      config: {
-        droneFreqs: [73.42, 110],
-        droneType: 'triangle',
-        droneGain: 0.025,
-        murmur: { freq: 900, q: 1.5, gain: 0.032, wobbleRate: 0.22, wobbleDepth: 0.02 },
-        pluck: { notes: [698.46, 830.61, 932.33, 1108.73], type: 'triangle', minDelay: 3, maxDelay: 6, gain: 0.045, decay: 1.1 },
-      },
-    },
-    {
-      // The Chapel: a sailors' hymn sung low before departure — synthetic
-      // layered "voices" in close harmony, warmer and steadier than the
-      // ocean swell or market haggle of the other three channels.
-      name: 'CAPELA',
-      config: {
-        droneFreqs: [65.41],
+        reverb: { seconds: 2.5, decay: 3.5, wet: 0.4, dry: 0.7 },
+        droneFreqs: [55],
         droneType: 'sine',
         droneGain: 0.02,
-        chant: {
-          notes: [130.81, 164.81, 196.0, 246.94],
-          type: 'sawtooth',
-          gain: 0.015,
-          formantQ: 4.5,
-          vibratoRate: 0.18,
-          vibratoDepth: 1.2,
-        },
-        pluck: { notes: [523.25, 659.25], type: 'sine', minDelay: 10, maxDelay: 20, gain: 0.03, decay: 2.0 },
+        noise: { filterType: 'lowpass', filterFreq: 500, gain: 0.085, waveLfo: { rate: 0.09, depth: 260 } },
+        murmur: { freq: 650, q: 1.3, gain: 0.022, wobbleRate: 0.13, wobbleDepth: 0.016 },
+        pluck: { notes: [1200, 1400, 1600], type: 'sine', minDelay: 15, maxDelay: 35, gain: 0.025, decay: 0.2 },
+      },
+    },
+    {
+      // Lisbon harbor: water lapping the hulls, gulls overhead, dockworkers
+      // and sailors as a live murmur — the "you are standing on the quay"
+      // channel.
+      name: 'PORTO',
+      config: {
+        reverb: { seconds: 2.8, decay: 3, wet: 0.55, dry: 0.55 },
+        droneFreqs: [73.42],
+        droneType: 'sine',
+        droneGain: 0.015,
+        noise: { filterType: 'lowpass', filterFreq: 420, gain: 0.06, waveLfo: { rate: 0.12, depth: 170 } },
+        murmur: { freq: 620, q: 1.1, gain: 0.045, wobbleRate: 0.17, wobbleDepth: 0.03 },
+        pluck: { notes: [1150, 1350, 1500], type: 'sine', minDelay: 6, maxDelay: 14, gain: 0.03, decay: 0.25 },
+      },
+    },
+    {
+      // The spice house: an enclosed trading floor — closer reverb, busier
+      // haggling murmur, wood-creak floor noise, no sea.
+      name: 'FEITORIA',
+      config: {
+        reverb: { seconds: 2.2, decay: 3, wet: 0.6, dry: 0.5 },
+        droneFreqs: [73.42],
+        droneType: 'sine',
+        droneGain: 0.015,
+        noise: { filterType: 'lowpass', filterFreq: 340, gain: 0.035, waveLfo: { rate: 0.09, depth: 70 } },
+        murmur: { freq: 850, q: 1.2, gain: 0.05, wobbleRate: 0.24, wobbleDepth: 0.032 },
+        pluck: { notes: [698.46, 830.61, 932.33], type: 'triangle', minDelay: 5, maxDelay: 10, gain: 0.03, decay: 1.2 },
+      },
+    },
+    {
+      // A seamen's chapel before departure: stone room, candle-quiet, a low
+      // hymn in close harmony breathing in and out over the hush.
+      name: 'CAPELA',
+      config: {
+        reverb: { seconds: 4.5, decay: 2.2, wet: 0.9, dry: 0.3 },
+        droneFreqs: [65.41],
+        droneType: 'sine',
+        droneGain: 0.018,
+        noise: { filterType: 'lowpass', filterFreq: 220, gain: 0.025, waveLfo: { rate: 0.05, depth: 40 } },
+        chant: { notes: [130.81, 164.81, 196.0, 246.94], type: 'triangle', gain: 0.011, darkness: 750, vibratoRate: 0.16, vibratoDepth: 1.2 },
+        pluck: { notes: [523.25, 659.25], type: 'sine', minDelay: 14, maxDelay: 26, gain: 0.025, decay: 2.5 },
       },
     },
   ],
   french: [
     {
+      // A Paris street in 1793: crowd unrest as weather — murmur swelling
+      // in waves, wind between buildings, a far-off drum now and then.
       name: 'RUE',
       config: {
-        droneFreqs: [130.81, 196.0],
+        reverb: { seconds: 2.8, decay: 3, wet: 0.55, dry: 0.55 },
+        droneFreqs: [130.81],
         droneType: 'sine',
-        droneGain: 0.02,
-        murmur: { freq: 900, q: 1.1, gain: 0.05, wobbleRate: 0.18, wobbleDepth: 0.025 },
-        pluck: { notes: [55, 65.41], type: 'sine', minDelay: 2.5, maxDelay: 5, gain: 0.15, decay: 0.3 },
+        droneGain: 0.012,
+        noise: { filterType: 'lowpass', filterFreq: 380, gain: 0.04, waveLfo: { rate: 0.08, depth: 120 } },
+        murmur: { freq: 800, q: 1.0, gain: 0.055, wobbleRate: 0.18, wobbleDepth: 0.035 },
+        pluck: { notes: [55, 65.41], type: 'sine', minDelay: 4, maxDelay: 8, gain: 0.09, decay: 0.5 },
       },
     },
     {
+      // The Terror: same street, but the crowd is quieter and the drums are
+      // closer — dread as absence, kept dark and low.
       name: 'TERREUR',
       config: {
-        droneFreqs: [98, 146.83],
-        droneType: 'sawtooth',
-        droneGain: 0.02,
-        murmur: { freq: 700, q: 1.1, gain: 0.06, wobbleRate: 0.25, wobbleDepth: 0.03 },
-        pluck: { notes: [55], type: 'sine', minDelay: 1.2, maxDelay: 2.2, gain: 0.2, decay: 0.25 },
-      },
-    },
-    {
-      // The Salon: pre-revolution aristocratic calm — a soft harpsichord-like
-      // pluck pattern over a gentle drone, deliberately elegant and unhurried
-      // to contrast with RUE's unease and TERREUR's dread.
-      name: 'SALON',
-      config: {
-        droneFreqs: [174.61, 220.0],
+        reverb: { seconds: 3.5, decay: 2.4, wet: 0.7, dry: 0.4 },
+        droneFreqs: [87.31],
         droneType: 'sine',
         droneGain: 0.02,
-        murmur: { freq: 1000, q: 1.6, gain: 0.018, wobbleRate: 0.1, wobbleDepth: 0.01 },
-        pluck: { notes: [349.23, 440.0, 523.25, 587.33, 698.46], type: 'triangle', minDelay: 2.5, maxDelay: 5.5, gain: 0.055, decay: 1.6 },
+        noise: { filterType: 'lowpass', filterFreq: 240, gain: 0.035, waveLfo: { rate: 0.05, depth: 60 } },
+        murmur: { freq: 600, q: 1.2, gain: 0.03, wobbleRate: 0.1, wobbleDepth: 0.02 },
+        pluck: { notes: [55], type: 'sine', minDelay: 2.2, maxDelay: 4, gain: 0.11, decay: 0.4 },
       },
     },
     {
-      // The Tribunal: a cold, flat reading of charges — a low unison
-      // "voice" with almost no vibrato (deliberately unlike the Chapel's
-      // warm harmony or the Oracle's ritual), under a slow judge's-gavel
-      // pluck.
+      // A pre-revolution salon: a warm parlor — close reverb, glass-and-
+      // silverware quiet, refined conversation, a harpsichord being played
+      // unhurriedly in the corner.
+      name: 'SALON',
+      config: {
+        reverb: { seconds: 1.8, decay: 3.2, wet: 0.5, dry: 0.6 },
+        droneFreqs: [174.61],
+        droneType: 'sine',
+        droneGain: 0.01,
+        noise: { filterType: 'lowpass', filterFreq: 300, gain: 0.02, waveLfo: { rate: 0.06, depth: 40 } },
+        murmur: { freq: 950, q: 1.5, gain: 0.022, wobbleRate: 0.11, wobbleDepth: 0.013 },
+        pluck: { notes: [349.23, 440.0, 523.25, 587.33, 698.46], type: 'triangle', minDelay: 2.5, maxDelay: 5.5, gain: 0.045, decay: 1.8 },
+      },
+    },
+    {
+      // The Tribunal: a cold high-ceilinged courtroom — a flat official
+      // voice droning through charges, papers and coughs in the gallery,
+      // the gavel landing every so often.
       name: 'TRIBUNAL',
       config: {
+        reverb: { seconds: 4, decay: 2.3, wet: 0.8, dry: 0.35 },
         droneFreqs: [87.31],
-        droneType: 'sawtooth',
-        droneGain: 0.018,
-        chant: {
-          notes: [98, 130.81],
-          type: 'sawtooth',
-          gain: 0.02,
-          formantQ: 6,
-          vibratoRate: 0.08,
-          vibratoDepth: 0.6,
-        },
-        pluck: { notes: [65.41], type: 'square', minDelay: 5, maxDelay: 9, gain: 0.09, decay: 0.4 },
+        droneType: 'sine',
+        droneGain: 0.014,
+        noise: { filterType: 'lowpass', filterFreq: 280, gain: 0.03, waveLfo: { rate: 0.07, depth: 50 } },
+        murmur: { freq: 700, q: 1.4, gain: 0.025, wobbleRate: 0.09, wobbleDepth: 0.015 },
+        chant: { notes: [98, 123.47], type: 'triangle', gain: 0.013, darkness: 700, vibratoRate: 0.09, vibratoDepth: 0.6 },
+        pluck: { notes: [65.41], type: 'sine', minDelay: 8, maxDelay: 15, gain: 0.07, decay: 0.5 },
       },
     },
   ],
