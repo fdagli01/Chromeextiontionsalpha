@@ -1,17 +1,30 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useThemeConfig } from '../components/ThemeProvider.jsx'
 import { useAnimatedNumber } from '../components/useAnimatedNumber.js'
-import { getDueWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
+import { getColdCaseWords, getDueWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
 import { getProgress, saveProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
-import { awardReputation } from '../db/factionsRepo.js'
-import { awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
-import { playLevelUpFanfare, playMissSfx, playSuccessSfx } from '../audio/sfx.js'
+import { awardReputation, getFactionProgress } from '../db/factionsRepo.js'
+import { logReviewActivity } from '../db/activityLog.js'
+import { awardBonusXp, awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
+import { isUnlocked } from '../progression/unlocks.js'
+import { isReverseDay } from './reverseMode.js'
+import {
+  playBadgeUnlock,
+  playComboMilestone,
+  playFactionPromotion,
+  playLevelUpFanfare,
+  playMissSfx,
+  playQuestComplete,
+  playSessionComplete,
+  playStreakTierUp,
+  playSuccessSfx,
+} from '../audio/sfx.js'
 import { speakTerm } from '../audio/speak.js'
 import { playPronunciationSting } from '../audio/themeAudioControl.js'
 import { levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
-import { resolveTensionVisuals } from '../themes/index.js'
-import { findFactionsForTerm } from '../factions/factions.js'
+import { resolveTensionVisuals, resolveThemeStage } from '../themes/index.js'
+import { findFactionsForTerm, rankForReputation } from '../factions/factions.js'
 import { findSecretForTerm } from '../secrets/secrets.js'
 import { SecretRevealOverlay } from '../secrets/SecretRevealOverlay.jsx'
 import { QUALITY } from '../srs/fsrs.js'
@@ -23,6 +36,9 @@ const FACTION_REPUTATION_PER_CORRECT = 10
 /** Response-time thresholds (ms) used to derive Easy/Hard from a correct answer. */
 const FAST_ANSWER_MS = 3000
 const SLOW_ANSWER_MS = 8000
+
+/** Consecutive-correct combo count that triggers a milestone sting. */
+const COMBO_MILESTONE_STEP = 5
 
 function shuffle(arr) {
   const a = [...arr]
@@ -48,27 +64,56 @@ export function ReviewScreen() {
   const [tension, setTension] = useState(0)
   const [combo, setCombo] = useState(0)
   const [factionToast, setFactionToast] = useState(null)
+  const [promotionCeremony, setPromotionCeremony] = useState(null)
+  const [doubleAgentChoice, setDoubleAgentChoice] = useState(null)
   const [secretReveal, setSecretReveal] = useState(null)
   const [legionScatter, setLegionScatter] = useState(false)
   const [scatterCount, setScatterCount] = useState(0)
   const [eraWipe, setEraWipe] = useState(false)
+  const [sessionStats, setSessionStats] = useState({
+    reviewed: 0,
+    correct: 0,
+    xpGained: 0,
+    bestCombo: 0,
+    badgesEarned: 0,
+    questCompleted: false,
+  })
+  const [coldCaseWords, setColdCaseWords] = useState([])
+  const [coldCaseSession, setColdCaseSession] = useState(false)
+  const sessionCompleteAnnouncedRef = useRef(false)
   const shownAtRef = useRef(performance.now())
   const hasTension = theme.tensionLevels.length > 0
   const tensionVisuals = useMemo(() => resolveTensionVisuals(theme, tension), [theme, tension])
+  const reverseMode = useMemo(() => isReverseDay(), [])
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([getDueWords(theme.id), getProgress(theme.id)]).then(([words, prog]) => {
-      if (cancelled) return
-      setQueue(words)
-      setProgress(prog)
-    })
+    Promise.all([getDueWords(theme.id), getProgress(theme.id), getColdCaseWords(theme.id)]).then(
+      ([words, prog, coldCases]) => {
+        if (cancelled) return
+        setQueue(words)
+        setProgress(prog)
+        setColdCaseWords(coldCases)
+      }
+    )
     setTension(0)
     setCombo(0)
+    setColdCaseSession(false)
+    setSessionStats({ reviewed: 0, correct: 0, xpGained: 0, bestCombo: 0, badgesEarned: 0, questCompleted: false })
+    sessionCompleteAnnouncedRef.current = false
     return () => {
       cancelled = true
     }
   }, [theme.id])
+
+  /** Starts a focused mini-session over just the most-neglected due words, at double XP. */
+  function startColdCaseSession() {
+    setQueue(coldCaseWords)
+    setColdCaseSession(true)
+    setCombo(0)
+    setSessionStats({ reviewed: 0, correct: 0, xpGained: 0, bestCombo: 0, badgesEarned: 0, questCompleted: false })
+    sessionCompleteAnnouncedRef.current = false
+  }
 
   const current = queue?.[0]
 
@@ -83,15 +128,24 @@ export function ReviewScreen() {
     setSecretReveal(null)
     shownAtRef.current = performance.now()
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
-      const opts = shuffle([
-        { label: current.translation || '(no translation)', isCorrect: true },
-        ...distractors.map((d) => ({ label: d.translation || '—', isCorrect: false })),
-      ])
+      const opts = reverseMode
+        ? shuffle([
+            { label: current.term, isCorrect: true },
+            ...distractors.map((d) => ({ label: d.term, isCorrect: false })),
+          ])
+        : shuffle([
+            { label: current.translation || '(no translation)', isCorrect: true },
+            ...distractors.map((d) => ({ label: d.translation || '—', isCorrect: false })),
+          ])
       setOptions(opts)
     })
-    getSetting('autoSpeakEnabled', true).then((enabled) => {
-      if (enabled) speakTerm(current.term, theme.sourceLanguageCode)
-    })
+    // Auto-speaking the term before the player has answered would hand them
+    // the answer on a reverse day, since the term is what they're picking.
+    if (!reverseMode) {
+      getSetting('autoSpeakEnabled', true).then((enabled) => {
+        if (enabled) speakTerm(current.term, theme.sourceLanguageCode)
+      })
+    }
     getSetting('soundscapeEnabled', true).then((enabled) => {
       if (enabled) playPronunciationSting(theme.id)
     })
@@ -114,19 +168,54 @@ export function ReviewScreen() {
           : QUALITY.GOOD
 
     await reviewWord(current.id, quality)
-    const { progress: nextProgress, xpGained, leveledUp, newBadges, dailyQuest } = await awardReviewXp(
+    logReviewActivity(current.term, correct)
+    let { progress: nextProgress, xpGained, leveledUp, newBadges, dailyQuest } = await awardReviewXp(
       theme.id,
       quality
     )
 
+    // Cold case sessions run at double XP — the whole point is to make
+    // rescuing a near-forgotten word worth more than a routine review.
+    if (coldCaseSession && xpGained > 0) {
+      const bonus = await awardBonusXp(theme.id, xpGained)
+      xpGained *= 2
+      nextProgress = bonus.progress
+      leveledUp = leveledUp || bonus.leveledUp
+      newBadges = [...newBadges, ...bonus.newBadges]
+    }
+
     let finalProgress = nextProgress
+    let factionPromoted = false
     if (correct) {
       const matchedFactions = findFactionsForTerm(theme.id, current.term)
-      if (matchedFactions.length > 0) {
-        await Promise.all(
+      if (matchedFactions.length > 1 && isUnlocked('factions', nextProgress.level)) {
+        // A word two rival factions both want — hold reputation until the
+        // player picks who to report it to, instead of quietly feeding both.
+        setDoubleAgentChoice({ term: current.term, factions: matchedFactions })
+      } else if (matchedFactions.length > 0) {
+        const beforeReps = await Promise.all(
+          matchedFactions.map((f) => getFactionProgress(f.factionId, theme.id))
+        )
+        const afterReps = await Promise.all(
           matchedFactions.map((f) => awardReputation(f.factionId, theme.id, FACTION_REPUTATION_PER_CORRECT))
         )
-        setFactionToast(matchedFactions[0])
+        // Reputation still quietly accrues before the Factions tab unlocks
+        // (nothing is lost), but the toast/promotion sting stay silent so a
+        // brand-new player isn't shown a system they can't see yet.
+        if (isUnlocked('factions', nextProgress.level)) {
+          const promotedIndex = matchedFactions.findIndex(
+            (f, i) => rankForReputation(f.rankNames, beforeReps[i].reputation) !== rankForReputation(f.rankNames, afterReps[i].reputation)
+          )
+          factionPromoted = promotedIndex !== -1
+          if (factionPromoted) {
+            setPromotionCeremony({
+              faction: matchedFactions[promotedIndex],
+              rank: rankForReputation(matchedFactions[promotedIndex].rankNames, afterReps[promotedIndex].reputation),
+            })
+          } else {
+            setFactionToast(matchedFactions[0])
+          }
+        }
       }
 
       const secret = findSecretForTerm(theme.id, current.term)
@@ -146,9 +235,15 @@ export function ReviewScreen() {
     const nextCombo = correct ? combo + 1 : 0
 
     const sfxOn = await getSetting('sfxEnabled', true)
+    const streakTierUp = streakTier(nextProgress.streak) > streakTier(progress?.streak ?? 0)
+    const comboMilestoneHit = correct && nextCombo > 0 && nextCombo % COMBO_MILESTONE_STEP === 0
     if (sfxOn) {
       if (correct) playSuccessSfx(theme.audio.sfxVariant, nextCombo)
       else playMissSfx(theme.audio.sfxVariant, nextTension)
+      if (comboMilestoneHit) playComboMilestone()
+      if (streakTierUp) playStreakTierUp()
+      // Faction promotion sting now plays once via the promotionCeremony
+      // effect below, covering both this path and resolveDoubleAgent's.
     }
     if (!correct) {
       setFlickerKey((k) => k + 1)
@@ -167,20 +262,59 @@ export function ReviewScreen() {
       }
     }
     setCombo(nextCombo)
+    setSessionStats((prev) => ({
+      reviewed: prev.reviewed + 1,
+      correct: prev.correct + (correct ? 1 : 0),
+      xpGained: prev.xpGained + xpGained,
+      bestCombo: Math.max(prev.bestCombo, nextCombo),
+      badgesEarned: prev.badgesEarned + newBadges.length,
+      questCompleted: prev.questCompleted || dailyQuest.justCompleted,
+    }))
 
     setProgress(finalProgress)
-    setXpToast(xpGained > 0 ? `+${xpGained} XP` : '')
+    setXpToast(xpGained > 0 ? `+${xpGained} XP${coldCaseSession ? ' (COLD CASE ×2)' : ''}` : '')
     setBadgeToast(newBadges.length > 0 ? newBadges[0] : null)
     setQuestToast(dailyQuest.justCompleted)
+    if (sfxOn) {
+      if (newBadges.length > 0) playBadgeUnlock()
+      else if (dailyQuest.justCompleted) playQuestComplete()
+    }
 
     if (leveledUp) {
-      setLevelUpInfo({ level: nextProgress.level, rank: rankForLevel(theme.rankNames, nextProgress.level) })
+      const newStage = theme.stages?.some((s) => s.minLevel === nextProgress.level)
+        ? resolveThemeStage(theme, nextProgress.level)
+        : null
+      setLevelUpInfo({
+        level: nextProgress.level,
+        rank: rankForLevel(theme.rankNames, nextProgress.level),
+        stageName: newStage?.name ?? null,
+      })
       if (sfxOn) playLevelUpFanfare()
-      if (theme.id === 'italian' && theme.stages?.some((s) => s.minLevel === nextProgress.level)) {
+      if (newStage) {
         setEraWipe(true)
         setTimeout(() => setEraWipe(false), 1500)
       }
     }
+  }
+
+  /**
+   * Resolves a "double agent" word — one that fed two rival factions —
+   * by awarding reputation only to the chosen faction. The other faction
+   * gets nothing this round, making the choice a real tradeoff rather than
+   * flavor text.
+   * @param {import('../factions/factions.js').FactionDef} faction
+   */
+  async function resolveDoubleAgent(faction) {
+    const before = await getFactionProgress(faction.factionId, theme.id)
+    const after = await awardReputation(faction.factionId, theme.id, FACTION_REPUTATION_PER_CORRECT)
+    const beforeRank = rankForReputation(faction.rankNames, before.reputation)
+    const afterRank = rankForReputation(faction.rankNames, after.reputation)
+    if (beforeRank !== afterRank) {
+      setPromotionCeremony({ faction, rank: afterRank })
+    } else {
+      setFactionToast(faction)
+    }
+    setDoubleAgentChoice(null)
   }
 
   function nextWord() {
@@ -197,6 +331,8 @@ export function ReviewScreen() {
     setQuestToast(false)
     setLevelUpInfo(null)
     setFactionToast(null)
+    setPromotionCeremony(null)
+    setDoubleAgentChoice(null)
     setSecretReveal(null)
   }
 
@@ -210,7 +346,7 @@ export function ReviewScreen() {
           e.preventDefault()
           pick(index)
         }
-      } else if (e.key === 'Enter') {
+      } else if (e.key === 'Enter' && !doubleAgentChoice) {
         e.preventDefault()
         nextWord()
       }
@@ -219,15 +355,83 @@ export function ReviewScreen() {
     return () => window.removeEventListener('keydown', onKeyDown)
   })
 
+  // Plays the promotion sting exactly once per ceremony, whichever path
+  // (routine recall or a resolved double-agent choice) triggered it.
+  useEffect(() => {
+    if (!promotionCeremony) return
+    getSetting('sfxEnabled', true).then((sfxOn) => {
+      if (sfxOn) playFactionPromotion()
+    })
+  }, [promotionCeremony])
+
+  // Announces the session-complete cadence exactly once, the moment the due
+  // queue drains after at least one graded review this session.
+  useEffect(() => {
+    if (!queue || queue.length !== 0 || sessionStats.reviewed === 0 || sessionCompleteAnnouncedRef.current) return
+    sessionCompleteAnnouncedRef.current = true
+    getSetting('sfxEnabled', true).then((sfxOn) => {
+      if (sfxOn) playSessionComplete()
+    })
+    // Refreshes the cold-case list so it reflects words just reviewed —
+    // otherwise the CTA could re-offer words that are no longer due.
+    getColdCaseWords(theme.id).then(setColdCaseWords)
+  }, [queue, sessionStats.reviewed, theme.id])
+
   if (queue === null || progress === null) {
     return <p className="empty-state">Loading...</p>
   }
 
+  const coldCaseCta =
+    coldCaseWords.length > 0 && !coldCaseSession ? (
+      <button className="cold-case-btn" onClick={startColdCaseSession}>
+        🗃 {coldCaseWords.length} COLD CASE{coldCaseWords.length > 1 ? 'S' : ''} — INVESTIGATE (×2 XP)
+      </button>
+    ) : null
+
   if (queue.length === 0) {
+    if (sessionStats.reviewed === 0) {
+      return (
+        <div className="empty-state-wrap">
+          <p className="empty-state">
+            No words due for review. Select a word on any page and right-click to archive it.
+          </p>
+          {coldCaseCta}
+        </div>
+      )
+    }
+    const accuracyPct = Math.round((sessionStats.correct / sessionStats.reviewed) * 100)
     return (
-      <p className="empty-state">
-        No words due for review. Select a word on any page and right-click to archive it.
-      </p>
+      <div className="session-complete">
+        <p className="session-complete-title">Session Complete</p>
+        <div className="session-complete-stats">
+          <div className="session-stat">
+            <span className="session-stat-value">{sessionStats.reviewed}</span>
+            <span className="session-stat-label">reviewed</span>
+          </div>
+          <div className="session-stat">
+            <span className="session-stat-value">{accuracyPct}%</span>
+            <span className="session-stat-label">accuracy</span>
+          </div>
+          <div className="session-stat">
+            <span className="session-stat-value">+{sessionStats.xpGained}</span>
+            <span className="session-stat-label">XP</span>
+          </div>
+          <div className="session-stat">
+            <span className="session-stat-value">{sessionStats.bestCombo}</span>
+            <span className="session-stat-label">best combo</span>
+          </div>
+        </div>
+        {(sessionStats.badgesEarned > 0 || sessionStats.questCompleted) && (
+          <p className="session-complete-extra">
+            {sessionStats.badgesEarned > 0 &&
+              `${sessionStats.badgesEarned} badge${sessionStats.badgesEarned > 1 ? 's' : ''} earned`}
+            {sessionStats.badgesEarned > 0 && sessionStats.questCompleted && ' · '}
+            {sessionStats.questCompleted && 'Daily quest complete'}
+          </p>
+        )}
+        <p className="empty-state">No more words due. Come back later, or archive new ones from any page.</p>
+        {coldCaseCta}
+      </div>
     )
   }
 
@@ -267,6 +471,21 @@ export function ReviewScreen() {
       style={tensionStyle}
     >
       {secretReveal && <SecretRevealOverlay secret={secretReveal} onDismiss={() => setSecretReveal(null)} />}
+
+      {promotionCeremony && (
+        <div className="promotion-ceremony-overlay">
+          <div className="promotion-ceremony-card">
+            <div className="promotion-ceremony-label">◆ PROMOTED ◆</div>
+            <div className="promotion-ceremony-emblem">{promotionCeremony.faction.emblem}</div>
+            <div className="promotion-ceremony-faction">{promotionCeremony.faction.name}</div>
+            <div className="promotion-ceremony-rank">{promotionCeremony.rank}</div>
+            <p className="promotion-ceremony-ideology">{promotionCeremony.faction.ideology}</p>
+            <button className="promotion-ceremony-dismiss" onClick={() => setPromotionCeremony(null)}>
+              CONTINUE →
+            </button>
+          </div>
+        </div>
+      )}
       {eraWipe && <div className="era-wipe" aria-hidden="true" />}
 
       <div className="review-stats">
@@ -313,27 +532,31 @@ export function ReviewScreen() {
           </div>
         )}
         <div className="term-eyebrow">
-          {theme.eyebrowLabel}
+          {reverseMode ? 'REVERSE INTERROGATION' : theme.eyebrowLabel}
           {current.struggling && theme.strugglingLabel && (
             <span className="struggling-tag">{theme.strugglingLabel}</span>
           )}
         </div>
         <div className="term-word">
-          {current.term}
-          <button
-            className="term-speak-btn"
-            onClick={() => {
-              speakTerm(current.term, theme.sourceLanguageCode)
-              getSetting('soundscapeEnabled', true).then((enabled) => {
-                if (enabled) playPronunciationSting(theme.id)
-              })
-            }}
-            title="Listen to pronunciation again"
-          >
-            🔊
-          </button>
+          {reverseMode ? current.translation || '(no translation)' : current.term}
+          {(!reverseMode || isAnswered) && (
+            <button
+              className="term-speak-btn"
+              onClick={() => {
+                speakTerm(current.term, theme.sourceLanguageCode)
+                getSetting('soundscapeEnabled', true).then((enabled) => {
+                  if (enabled) playPronunciationSting(theme.id)
+                })
+              }}
+              title="Listen to pronunciation again"
+            >
+              🔊
+            </button>
+          )}
         </div>
-        {current.transliteration && <div className="term-translit">[ {current.transliteration} ]</div>}
+        {current.transliteration && (!reverseMode || isAnswered) && (
+          <div className="term-translit">[ {current.transliteration} ]</div>
+        )}
         {theme.id === 'italian' && (combo > 0 || legionScatter) && (
           <div className={`legion-column ${legionScatter ? 'scatter' : ''}`} aria-hidden="true">
             {Array.from({ length: Math.min(legionScatter ? scatterCount : combo, 10) }).map((_, i) => (
@@ -374,6 +597,7 @@ export function ReviewScreen() {
           </span>
           <div className="level-up-text">LEVEL {levelUpInfo.level}!</div>
           <div className="level-up-rank">{levelUpInfo.rank}</div>
+          {levelUpInfo.stageName && <div className="level-up-stage">A new era dawns: {levelUpInfo.stageName}</div>}
         </div>
       )}
 
@@ -422,10 +646,33 @@ export function ReviewScreen() {
         </div>
       )}
 
-      {isAnswered && (
+      {isAnswered && !doubleAgentChoice && (
         <button className="next-btn" onClick={nextWord}>
           {theme.nextButtonLabel}
         </button>
+      )}
+
+      {doubleAgentChoice && (
+        <div className="double-agent-overlay">
+          <div className="double-agent-card">
+            <div className="double-agent-label">⚠ DOUBLE AGENT</div>
+            <p className="double-agent-copy">
+              "{doubleAgentChoice.term}" serves two masters. Who gets the report?
+            </p>
+            <div className="double-agent-options">
+              {doubleAgentChoice.factions.map((faction) => (
+                <button
+                  key={faction.factionId}
+                  className="double-agent-btn"
+                  onClick={() => resolveDoubleAgent(faction)}
+                >
+                  <span className="double-agent-emblem">{faction.emblem}</span>
+                  <span className="double-agent-name">{faction.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

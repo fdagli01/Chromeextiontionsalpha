@@ -1,7 +1,9 @@
 import { getSetting } from '../db/settingsRepo.js'
 import { getDueWords } from '../db/wordsRepo.js'
+import { getProgress } from '../db/progressRepo.js'
 import { getLastCrisisForTheme, logCrisisTriggered } from '../db/crisesRepo.js'
 import { getTheme, DEFAULT_THEME_ID } from '../themes/index.js'
+import { isUnlocked } from '../progression/unlocks.js'
 
 export const CRISIS_ALARM_NAME = 'polyglot-chronicle-crisis-check'
 const CHECK_INTERVAL_MINUTES = 30
@@ -23,6 +25,9 @@ export async function checkForCrisis() {
   const themeId = (await getSetting('activeThemeId', DEFAULT_THEME_ID)) ?? DEFAULT_THEME_ID
   const theme = getTheme(themeId)
   if (!theme.crises || theme.crises.length === 0) return
+
+  const progress = await getProgress(themeId)
+  if (!isUnlocked('crises', progress.level)) return
 
   const { pendingCrisis } = await chrome.storage.local.get('pendingCrisis')
   if (pendingCrisis) return

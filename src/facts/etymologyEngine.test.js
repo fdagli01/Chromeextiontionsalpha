@@ -27,8 +27,9 @@ describe('generateEtymologyEntry', () => {
     expect(result).toEqual(JSON.parse(VALID_JSON))
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('https://generativelanguage.googleapis.com/v1beta/models/'),
-      expect.objectContaining({ method: 'POST' })
+      expect.objectContaining({ method: 'POST', headers: expect.objectContaining({ 'x-goog-api-key': 'gemini-test-key' }) })
     )
+    expect(fetch.mock.calls[0][0]).not.toContain('gemini-test-key')
   })
 
   it('strips markdown code fences before parsing', async () => {

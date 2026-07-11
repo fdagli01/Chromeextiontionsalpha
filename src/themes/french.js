@@ -1,13 +1,18 @@
 import { defineTheme } from './base.js'
 
 /**
- * "La Terreur" — the French theme's signature mechanic is orthogonal to
- * Italian's level-gated stages: it's an ephemeral, session-local tension
- * dial (see `tensionLevels`) driven by consecutive review misses within the
- * current sitting, not by player level. A review session opens calm
- * ("Versailles") and escalates toward "La Terreur" as wrong answers pile
- * up, cooling back down with correct ones. Resolved via
- * resolveTensionVisuals and applied only within ReviewScreen.
+ * "La Terreur" — the French theme layers two orthogonal visual systems:
+ *
+ * 1. `stages` — level-gated palette evolution tracing the Revolution's
+ *    arc as the player's rank rises: Ancien Régime (royal cream & blue) →
+ *    La République (tricolor clarity) → Le Comité (ink and wax-seal red) →
+ *    L'Empire (Napoleonic green & gold). Applied everywhere via
+ *    resolveThemeVisuals, exactly like the Italian theme's stages.
+ * 2. `tensionLevels` — an ephemeral, session-local tension dial driven by
+ *    consecutive review misses within the current sitting, not by player
+ *    level. A session opens calm ("Versailles") and escalates toward
+ *    "La Terreur" as wrong answers pile up, cooling back down with correct
+ *    ones. Resolved via resolveTensionVisuals, ReviewScreen only.
  */
 export const frenchTheme = defineTheme({
   id: 'french',
@@ -63,6 +68,61 @@ export const frenchTheme = defineTheme({
     'Juré du Tribunal',
     'Membre du Comité',
     "L'Incorruptible",
+  ],
+  stages: [
+    {
+      id: 'ancien-regime',
+      name: 'Ancien Régime',
+      minLevel: 1,
+      colors: {},
+      emblem: '⚜',
+    },
+    {
+      id: 'republique',
+      name: 'La République',
+      minLevel: 4,
+      colors: {
+        background: '#f6f1e2',
+        surface: '#fcf8ec',
+        surfaceStrong: '#17356b',
+        primary: '#1f4f9e',
+        accent: '#b02330',
+        border: '#c9c0a6',
+        textMuted: '#55503e',
+      },
+      emblem: '⚑',
+    },
+    {
+      id: 'comite',
+      name: 'Le Comité',
+      minLevel: 8,
+      colors: {
+        background: '#ece0c2',
+        surface: '#f4ead0',
+        surfaceStrong: '#101b36',
+        primary: '#26365c',
+        accent: '#8f1d26',
+        text: '#2c2415',
+        textMuted: '#5a4a2e',
+        border: '#b39b6d',
+      },
+      emblem: '⚖',
+    },
+    {
+      id: 'empire',
+      name: "L'Empire",
+      minLevel: 14,
+      colors: {
+        background: '#eee7d0',
+        surface: '#f5efdb',
+        surfaceStrong: '#1e3a26',
+        primary: '#2f5d3a',
+        accent: '#a8862a',
+        border: '#c2b284',
+        success: '#4c7a3d',
+      },
+      emblem: '🐝',
+    },
   ],
   tensionLevels: [
     {

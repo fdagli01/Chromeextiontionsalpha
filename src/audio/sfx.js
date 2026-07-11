@@ -215,6 +215,70 @@ export function playLevelUpFanfare() {
 }
 
 /**
+ * A short metallic clang — two gladii striking, filtered through a
+ * highpass to keep it bright rather than boomy. The Italian theme's stand-in
+ * for the KGB stamp thunk. Pitches up slightly with a consecutive-correct
+ * combo, so a streak audibly climbs.
+ * @param {number} [comboLevel]
+ */
+export function playSwordClash(comboLevel = 0) {
+  const context = getAudioContext()
+  const now = context.currentTime
+  const pitch = comboPitchMultiplier(comboLevel)
+
+  const clang = context.createBufferSource()
+  clang.buffer = createNoiseBuffer(context, 0.12)
+
+  const filter = context.createBiquadFilter()
+  filter.type = 'highpass'
+  filter.frequency.setValueAtTime(1800 * pitch, now)
+
+  const gain = context.createGain()
+  gain.gain.setValueAtTime(0.28, now)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14)
+
+  clang.connect(filter).connect(gain).connect(context.destination)
+  clang.start(now)
+
+  const ring = context.createOscillator()
+  ring.type = 'triangle'
+  ring.frequency.setValueAtTime(2200 * pitch, now)
+  const ringGain = context.createGain()
+  ringGain.gain.setValueAtTime(0.08, now)
+  ringGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18)
+  ring.connect(ringGain).connect(context.destination)
+  ring.start(now)
+  ring.stop(now + 0.18)
+}
+
+/**
+ * A low, descending brass tone — a legion's retreat horn — the Italian
+ * theme's deliberately non-punishing miss sound.
+ */
+export function playRetreatHorn() {
+  const context = getAudioContext()
+  const now = context.currentTime
+
+  const osc = context.createOscillator()
+  osc.type = 'sawtooth'
+  osc.frequency.setValueAtTime(196, now)
+  osc.frequency.linearRampToValueAtTime(147, now + 0.35)
+
+  const filter = context.createBiquadFilter()
+  filter.type = 'lowpass'
+  filter.frequency.setValueAtTime(500, now)
+
+  const gain = context.createGain()
+  gain.gain.setValueAtTime(0.001, now)
+  gain.gain.linearRampToValueAtTime(0.18, now + 0.05)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4)
+
+  osc.connect(filter).connect(gain).connect(context.destination)
+  osc.start(now)
+  osc.stop(now + 0.4)
+}
+
+/**
  * Dispatches to a theme's success SFX by variant, so callers don't need to
  * branch on theme.id directly. `comboLevel` (consecutive correct answers)
  * pitches the sound up, giving an audible sense of a streak building.
@@ -223,6 +287,7 @@ export function playLevelUpFanfare() {
  */
 export function playSuccessSfx(variant, comboLevel = 0) {
   if (variant === 'nautical') return playShipBell(comboLevel)
+  if (variant === 'legion') return playSwordClash(comboLevel)
   return playStamp(comboLevel)
 }
 
@@ -234,12 +299,195 @@ export function playSuccessSfx(variant, comboLevel = 0) {
  */
 export function playMissSfx(variant, tier = 0) {
   if (variant === 'nautical') return playDistantWave()
+  if (variant === 'legion') return playRetreatHorn()
   if (variant === 'revolution') {
     if (tier >= 3) return playGuillotineSweep()
     if (tier >= 1) return playRevolutionDrum(tier)
     return playSoftMiss()
   }
   return playSoftMiss()
+}
+
+/**
+ * A bright bell chime + shimmering overtone sparkle — played once when a
+ * badge is unlocked. Theme-agnostic, like the level-up fanfare, since
+ * earning a badge is a progress-system event rather than an in-world one.
+ */
+export function playBadgeUnlock() {
+  const context = getAudioContext()
+  const now = context.currentTime
+  const chimeNotes = [784, 987.77, 1174.66] // G5, B5, D6
+
+  chimeNotes.forEach((freq, i) => {
+    const t = now + i * 0.06
+    const osc = context.createOscillator()
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(freq, t)
+    const gain = context.createGain()
+    gain.gain.setValueAtTime(0.001, t)
+    gain.gain.linearRampToValueAtTime(0.16, t + 0.02)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6)
+    osc.connect(gain).connect(context.destination)
+    osc.start(t)
+    osc.stop(t + 0.62)
+  })
+
+  const sparkle = context.createBufferSource()
+  sparkle.buffer = createNoiseBuffer(context, 0.5)
+  const sparkleFilter = context.createBiquadFilter()
+  sparkleFilter.type = 'highpass'
+  sparkleFilter.frequency.setValueAtTime(6000, now)
+  const sparkleGain = context.createGain()
+  sparkleGain.gain.setValueAtTime(0.05, now)
+  sparkleGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5)
+  sparkle.connect(sparkleFilter).connect(sparkleGain).connect(context.destination)
+  sparkle.start(now)
+}
+
+/**
+ * A short two-note upward chirp — played when a daily quest is completed.
+ * Lighter and quicker than the badge chime, since quests are a routine
+ * daily win rather than a milestone.
+ */
+export function playQuestComplete() {
+  const context = getAudioContext()
+  const now = context.currentTime
+  const notes = [880, 1318.51] // A5, E6
+
+  notes.forEach((freq, i) => {
+    const t = now + i * 0.09
+    const osc = context.createOscillator()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(freq, t)
+    const gain = context.createGain()
+    gain.gain.setValueAtTime(0.001, t)
+    gain.gain.linearRampToValueAtTime(0.14, t + 0.015)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28)
+    osc.connect(gain).connect(context.destination)
+    osc.start(t)
+    osc.stop(t + 0.3)
+  })
+}
+
+/**
+ * A crackling noise burst under a rising oscillator sweep — played once when
+ * the streak flame grows into a new tier (3/7/14 days). Evokes a fire
+ * catching and climbing, distinct from the level-up fanfare's clean notes.
+ */
+export function playStreakTierUp() {
+  const context = getAudioContext()
+  const now = context.currentTime
+
+  const crackle = context.createBufferSource()
+  crackle.buffer = createNoiseBuffer(context, 0.35)
+  const crackleFilter = context.createBiquadFilter()
+  crackleFilter.type = 'highpass'
+  crackleFilter.frequency.setValueAtTime(2500, now)
+  const crackleGain = context.createGain()
+  crackleGain.gain.setValueAtTime(0.001, now)
+  crackleGain.gain.linearRampToValueAtTime(0.1, now + 0.05)
+  crackleGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35)
+  crackle.connect(crackleFilter).connect(crackleGain).connect(context.destination)
+  crackle.start(now)
+
+  const rise = context.createOscillator()
+  rise.type = 'sawtooth'
+  rise.frequency.setValueAtTime(160, now)
+  rise.frequency.exponentialRampToValueAtTime(640, now + 0.4)
+  const riseFilter = context.createBiquadFilter()
+  riseFilter.type = 'lowpass'
+  riseFilter.frequency.setValueAtTime(1200, now)
+  const riseGain = context.createGain()
+  riseGain.gain.setValueAtTime(0.001, now)
+  riseGain.gain.linearRampToValueAtTime(0.14, now + 0.1)
+  riseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.45)
+  rise.connect(riseFilter).connect(riseGain).connect(context.destination)
+  rise.start(now)
+  rise.stop(now + 0.45)
+}
+
+/**
+ * A bright ascending sweep — played when a consecutive-correct combo hits a
+ * milestone (every 5). Quicker and punchier than the streak/badge sounds,
+ * since it fires mid-session without breaking review flow.
+ */
+export function playComboMilestone() {
+  const context = getAudioContext()
+  const now = context.currentTime
+
+  const sweep = context.createOscillator()
+  sweep.type = 'square'
+  sweep.frequency.setValueAtTime(440, now)
+  sweep.frequency.exponentialRampToValueAtTime(1760, now + 0.18)
+  const filter = context.createBiquadFilter()
+  filter.type = 'lowpass'
+  filter.frequency.setValueAtTime(3000, now)
+  const gain = context.createGain()
+  gain.gain.setValueAtTime(0.001, now)
+  gain.gain.linearRampToValueAtTime(0.12, now + 0.02)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2)
+  sweep.connect(filter).connect(gain).connect(context.destination)
+  sweep.start(now)
+  sweep.stop(now + 0.2)
+}
+
+/**
+ * A deep thud followed by a low metallic ring — like an official seal being
+ * pressed — played when a faction reputation rank is promoted. Lower and
+ * weightier than playBadgeUnlock, since a promotion is an in-world honor
+ * rather than a progress-system milestone.
+ */
+export function playFactionPromotion() {
+  const context = getAudioContext()
+  const now = context.currentTime
+
+  const thud = context.createOscillator()
+  thud.type = 'sine'
+  thud.frequency.setValueAtTime(90, now)
+  thud.frequency.exponentialRampToValueAtTime(45, now + 0.2)
+  const thudGain = context.createGain()
+  thudGain.gain.setValueAtTime(0.4, now)
+  thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25)
+  thud.connect(thudGain).connect(context.destination)
+  thud.start(now)
+  thud.stop(now + 0.25)
+
+  const ring = context.createOscillator()
+  ring.type = 'triangle'
+  ring.frequency.setValueAtTime(220, now + 0.05)
+  const ringGain = context.createGain()
+  ringGain.gain.setValueAtTime(0.001, now + 0.05)
+  ringGain.gain.linearRampToValueAtTime(0.15, now + 0.09)
+  ringGain.gain.exponentialRampToValueAtTime(0.001, now + 0.7)
+  ring.connect(ringGain).connect(context.destination)
+  ring.start(now + 0.05)
+  ring.stop(now + 0.72)
+}
+
+/**
+ * A short three-note descending-then-resolving cadence — played once when
+ * a review session's due queue empties out. Deliberately calmer and more
+ * "closing" than the level-up fanfare, since finishing a session is a
+ * satisfying wind-down rather than a sudden reward spike.
+ */
+export function playSessionComplete() {
+  const context = getAudioContext()
+  const now = context.currentTime
+  const notes = [659.25, 587.33, 783.99] // E5, D5, G5 — dip then resolve up
+
+  notes.forEach((freq, i) => {
+    const t = now + i * 0.16
+    const osc = context.createOscillator()
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(freq, t)
+    const gain = context.createGain()
+    gain.gain.setValueAtTime(0.001, t)
+    gain.gain.linearRampToValueAtTime(0.15, t + 0.03)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55)
+    osc.connect(gain).connect(context.destination)
+    osc.start(t)
+    osc.stop(t + 0.58)
+  })
 }
 
 /**

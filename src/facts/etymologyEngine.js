@@ -1,3 +1,5 @@
+import { requestGemini } from './geminiClient.js'
+
 const ETYMOLOGY_SYSTEM_PROMPT = `You are the "Etymological Detective"—a rigorous historical linguist embedded in the "Polyglot Chronicle" archive. Your task is to trace the origin of a foreign vocabulary word and tie it to a specific historical/philosophical epoch ("Mainframe").
 
 CRITICAL INSTRUCTIONS:
@@ -44,24 +46,19 @@ export async function generateEtymologyEntry(themeId, term, apiKey, model = DEFA
   const mainframe = MAINFRAMES[themeId]
   if (!mainframe || !apiKey) return null
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
+
+  const data = await requestGemini(endpoint, apiKey, JSON.stringify({
+    systemInstruction: { parts: [{ text: ETYMOLOGY_SYSTEM_PROMPT }] },
+    contents: [{ role: 'user', parts: [{ text: `Word: "${term}"\nMainframe: ${mainframe}` }] }],
+    generationConfig: { responseMimeType: 'application/json' },
+  }))
+  if (!data) return null
+
+  const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text
+  if (!raw) return null
 
   try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: ETYMOLOGY_SYSTEM_PROMPT }] },
-        contents: [{ role: 'user', parts: [{ text: `Word: "${term}"\nMainframe: ${mainframe}` }] }],
-        generationConfig: { responseMimeType: 'application/json' },
-      }),
-    })
-    if (!response.ok) return null
-
-    const data = await response.json()
-    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text
-    if (!raw) return null
-
     return parseEtymologyJson(raw)
   } catch (error) {
     console.warn('Polyglot Chronicle: Etymological Detective generation failed', error)

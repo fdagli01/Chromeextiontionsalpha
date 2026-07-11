@@ -26,12 +26,10 @@ describe('generateChronicleEntry', () => {
     expect(result).toEqual(JSON.parse(VALID_JSON))
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining('https://generativelanguage.googleapis.com/v1beta/models/'),
-      expect.objectContaining({ method: 'POST' })
+      expect.objectContaining({ method: 'POST', headers: expect.objectContaining({ 'x-goog-api-key': 'gemini-test-key' }) })
     )
-    expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining('key=gemini-test-key'),
-      expect.anything()
-    )
+    // The key must never appear in the URL — it would leak into browser history/logs.
+    expect(fetch.mock.calls[0][0]).not.toContain('gemini-test-key')
   })
 
   it('strips markdown code fences before parsing', async () => {

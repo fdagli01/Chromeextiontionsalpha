@@ -1,7 +1,3 @@
-import track1 from '../assets/audio/russian/track1.mp3'
-import track2 from '../assets/audio/russian/track2.mp3'
-import track3 from '../assets/audio/russian/track3.mp3'
-import track4 from '../assets/audio/russian/track4.mp3'
 import { playStaticBurst } from './sfx.js'
 
 /**
@@ -9,13 +5,24 @@ import { playStaticBurst } from './sfx.js'
  * through, with a static burst on start/switch for that "tuning in" feel.
  * Only usable from a DOM context (the popup), not the background service
  * worker, since it drives an HTMLAudioElement.
+ *
+ * The tracks (~12MB combined) are loaded via dynamic import so they're
+ * split into their own chunks and only fetched the first time the Russian
+ * theme's radio is actually opened, instead of bloating every install with
+ * music most players may never hear.
  */
-const PLAYLIST = [track1, track2, track3, track4]
+const TRACK_LOADERS = [
+  () => import('../assets/audio/russian/track1.mp3'),
+  () => import('../assets/audio/russian/track2.mp3'),
+  () => import('../assets/audio/russian/track3.mp3'),
+  () => import('../assets/audio/russian/track4.mp3'),
+]
 const TARGET_VOLUME = 0.3
 
 let audioEl = null
 let currentIndex = 0
 let playing = false
+let loadToken = 0
 
 function ensureAudioEl() {
   if (!audioEl) {
@@ -28,10 +35,18 @@ function ensureAudioEl() {
   return audioEl
 }
 
-function loadChannel(index, autoplay) {
+async function loadChannel(index, autoplay) {
   const el = ensureAudioEl()
-  currentIndex = ((index % PLAYLIST.length) + PLAYLIST.length) % PLAYLIST.length
-  el.src = PLAYLIST[currentIndex]
+  currentIndex = ((index % TRACK_LOADERS.length) + TRACK_LOADERS.length) % TRACK_LOADERS.length
+  const requestedIndex = currentIndex
+  const token = ++loadToken
+
+  const { default: src } = await TRACK_LOADERS[requestedIndex]()
+  // Bail if paused, or another channel switch/track load started, while the
+  // dynamic import was in flight.
+  if (token !== loadToken || !playing) return
+
+  el.src = src
   el.volume = 0
   if (autoplay) {
     playStaticBurst()
@@ -54,6 +69,7 @@ export function playRadio(startChannel = currentIndex) {
 
 export function pauseRadio() {
   playing = false
+  loadToken += 1
   if (audioEl) audioEl.pause()
 }
 
@@ -70,5 +86,5 @@ export function getCurrentChannel() {
 }
 
 export function getChannelCount() {
-  return PLAYLIST.length
+  return TRACK_LOADERS.length
 }

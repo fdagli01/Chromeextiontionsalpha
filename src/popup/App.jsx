@@ -2,11 +2,16 @@ import { useEffect, useState } from 'react'
 import { ThemeProvider, useThemeConfig } from '../components/ThemeProvider.jsx'
 import { DEFAULT_THEME_ID } from '../themes/index.js'
 import { getSetting } from '../db/settingsRepo.js'
+import { getProgress } from '../db/progressRepo.js'
+import { onProgressChanged } from '../xp/progressEvents.js'
+import { isUnlocked, UNLOCK_LEVELS } from '../progression/unlocks.js'
+import { getWeeklySummary } from '../db/activityLog.js'
 import { ReviewScreen } from '../review/ReviewScreen.jsx'
 import { ArchiveScreen } from '../archive/ArchiveScreen.jsx'
 import { FactionsScreen } from '../factions/FactionsScreen.jsx'
 import { SettingsScreen } from '../settings/SettingsScreen.jsx'
 import { CrisisScreen } from '../crisis/CrisisScreen.jsx'
+import { WeeklyReportOverlay } from './WeeklyReportOverlay.jsx'
 import {
   getThemeAudioChannelLabel,
   hasThemeAudio,
@@ -18,6 +23,16 @@ import {
 import './App.css'
 
 const isDetachedWindow = new URLSearchParams(window.location.search).has('window')
+const WEEKLY_REPORT_SHOWN_KEY = 'weeklyReportShownWeek'
+
+/** Monday-of-the-current-week as a YYYY-MM-DD key, used to show the intel report once per week. */
+function currentWeekKey(now = new Date()) {
+  const monday = new Date(now)
+  const day = monday.getDay()
+  const diffToMonday = day === 0 ? -6 : 1 - day
+  monday.setDate(monday.getDate() + diffToMonday)
+  return monday.toISOString().slice(0, 10)
+}
 
 /**
  * Opens this same popup UI in a real, separate browser window instead of
@@ -28,8 +43,8 @@ function openInWindow() {
   chrome.windows.create({
     url: chrome.runtime.getURL('src/popup/index.html?window=1'),
     type: 'popup',
-    width: 420,
-    height: 680,
+    width: 760,
+    height: 720,
   })
 }
 
@@ -40,8 +55,25 @@ function AppShell({ activeThemeId, onThemeChange }) {
   const [audioLabel, setAudioLabel] = useState(getThemeAudioChannelLabel(theme.id))
   const [pendingCrisis, setPendingCrisis] = useState(null)
   const [activeCrisis, setActiveCrisis] = useState(null)
+  const [level, setLevel] = useState(1)
+  const [weeklyReport, setWeeklyReport] = useState(null)
 
   const hasAudio = hasThemeAudio(theme.id)
+
+  // Monday-first-open intel report: shows at most once per calendar week,
+  // and only if there's a full week's history to summarize.
+  useEffect(() => {
+    const weekKey = currentWeekKey()
+    if (new Date().getDay() !== 1) return
+    chrome.storage.local.get(WEEKLY_REPORT_SHOWN_KEY).then(({ [WEEKLY_REPORT_SHOWN_KEY]: lastShown }) => {
+      if (lastShown === weekKey) return
+      getWeeklySummary().then((summary) => {
+        if (summary.reviewed === 0) return
+        setWeeklyReport(summary)
+        chrome.storage.local.set({ [WEEKLY_REPORT_SHOWN_KEY]: weekKey })
+      })
+    })
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -50,6 +82,22 @@ function AppShell({ activeThemeId, onThemeChange }) {
     })
     return () => {
       cancelled = true
+    }
+  }, [theme.id])
+
+  // Drives the progressive-unlock tab gating below — level starts at 1 on
+  // theme switch and stays live via progress-changed events, so a level-up
+  // mid-review unlocks a tab immediately instead of waiting for a reopen.
+  useEffect(() => {
+    let cancelled = false
+    setLevel(1)
+    getProgress(theme.id).then((progress) => {
+      if (!cancelled) setLevel(progress.level)
+    })
+    const unsubscribe = onProgressChanged(theme.id, (progress) => setLevel(progress.level))
+    return () => {
+      cancelled = true
+      unsubscribe()
     }
   }, [theme.id])
 
@@ -78,7 +126,14 @@ function AppShell({ activeThemeId, onThemeChange }) {
   const TABS = [
     { id: 'review', icon: '⚑', label: 'INTERROGATE', node: <ReviewScreen /> },
     { id: 'archive', icon: '📁', label: 'ARCHIVE', node: <ArchiveScreen /> },
-    { id: 'factions', icon: '🎖', label: 'FACTIONS', node: <FactionsScreen /> },
+    {
+      id: 'factions',
+      icon: '🎖',
+      label: 'FACTIONS',
+      node: <FactionsScreen />,
+      locked: !isUnlocked('factions', level),
+      unlockLevel: UNLOCK_LEVELS.factions,
+    },
     {
       id: 'settings',
       icon: '⚙',
@@ -86,7 +141,8 @@ function AppShell({ activeThemeId, onThemeChange }) {
       node: <SettingsScreen activeThemeId={activeThemeId} onThemeChange={onThemeChange} />,
     },
   ]
-  const active = TABS.find((t) => t.id === activeTab)
+  const rawActive = TABS.find((t) => t.id === activeTab)
+  const active = rawActive && !rawActive.locked ? rawActive : TABS[0]
 
   return (
     <div className="app">
@@ -122,11 +178,13 @@ function AppShell({ activeThemeId, onThemeChange }) {
         {TABS.map((tab) => (
           <button
             key={tab.id}
-            className={tab.id === activeTab ? 'active' : ''}
-            onClick={() => setActiveTab(tab.id)}
+            className={`${tab.id === active.id ? 'active' : ''} ${tab.locked ? 'locked' : ''}`}
+            onClick={() => !tab.locked && setActiveTab(tab.id)}
+            disabled={tab.locked}
+            title={tab.locked ? `Unlocks at level ${tab.unlockLevel}` : undefined}
           >
-            <span className="tab-icon">{tab.icon}</span>
-            <span className="tab-label">{tab.label}</span>
+            <span className="tab-icon">{tab.locked ? '🔒' : tab.icon}</span>
+            <span className="tab-label">{tab.locked ? `LVL ${tab.unlockLevel}` : tab.label}</span>
           </button>
         ))}
         {hasAudio && (
@@ -146,6 +204,10 @@ function AppShell({ activeThemeId, onThemeChange }) {
           </>
         )}
       </nav>
+
+      {weeklyReport && (
+        <WeeklyReportOverlay summary={weeklyReport} onDismiss={() => setWeeklyReport(null)} />
+      )}
     </div>
   )
 }

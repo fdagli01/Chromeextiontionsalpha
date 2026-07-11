@@ -1,10 +1,5 @@
 /**
  * @typedef {Object} ThemeAudio
- * @property {string} [radioTrack] - Path to the looping ambient/radio theme audio
- * @property {string} [stampSound] - Played when a word is filed/archived
- * @property {string} [correctSound] - Played on a correct review answer
- * @property {string} [incorrectSound] - Played on an incorrect review answer
- * @property {string} [startupSound] - Played once when the theme is first activated
  * @property {string} [sfxVariant] - which procedural SFX set audio/sfx.js should use, e.g. "nautical"
  */
 
