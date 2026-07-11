@@ -19,6 +19,7 @@ import {
   nextThemeAudioChannel,
   pauseThemeAudio,
   playThemeAudio,
+  stopAllThemeAudio,
 } from '../audio/themeAudioControl.js'
 import './App.css'
 
@@ -60,6 +61,16 @@ function AppShell({ activeThemeId, onThemeChange }) {
   const [weeklyReport, setWeeklyReport] = useState(null)
 
   const hasAudio = hasThemeAudio(theme.id)
+
+  // On theme switch, silence whatever the previous theme left playing —
+  // otherwise its soundscape (e.g. ocean waves) keeps running under the new
+  // theme's audio, since the toggle only controls the new theme's engine.
+  // Harmless on first mount: stopping idle audio is a no-op.
+  useEffect(() => {
+    stopAllThemeAudio()
+    setAudioPlaying(false)
+    setAudioLabel(getThemeAudioChannelLabel(theme.id))
+  }, [theme.id])
 
   // Monday-first-open intel report: shows at most once per calendar week,
   // and only if there's a full week's history to summarize.

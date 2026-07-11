@@ -35,6 +35,17 @@ export function pauseThemeAudio(themeId) {
   else ambient.pauseAmbient()
 }
 
+/**
+ * Stops every theme audio source, whichever engine it came from. Used on
+ * theme switch: the per-theme pause above only reaches the *new* theme's
+ * engine, so without this the old theme's soundscape (e.g. Portuguese
+ * ocean waves) would keep playing underneath the new theme's radio.
+ */
+export function stopAllThemeAudio() {
+  radio.pauseRadio()
+  ambient.pauseAmbient()
+}
+
 /** @param {string} themeId */
 export function nextThemeAudioChannel(themeId) {
   if (themeId === 'russian') radio.nextChannel()
