@@ -23,6 +23,7 @@ import {
 import './App.css'
 
 const isDetachedWindow = new URLSearchParams(window.location.search).has('window')
+if (isDetachedWindow) document.body.classList.add('is-windowed')
 const WEEKLY_REPORT_SHOWN_KEY = 'weeklyReportShownWeek'
 
 /** Monday-of-the-current-week as a YYYY-MM-DD key, used to show the intel report once per week. */
