@@ -45,6 +45,9 @@ const THEME_FLAGS = {
   italian: { stripes: ['#5c1a1a', '#8a1f1f', '#5c1a1a'], symbol: '🦅', symbolColor: '#d4af37' },
   portuguese: { stripes: ['#046a38', '#046a38', '#c8102e', '#c8102e'], symbol: '⚓', symbolColor: '#f4c430' },
   french: { stripes: ['#0055a4', '#ffffff', '#ef4135'], symbol: '⚜', symbolColor: '#0a0a0a' },
+  // The Second Republic's tricolor (purple/yellow/red) rather than modern
+  // Spain's flag — this era is the 1936–39 Civil War, not present-day Spain.
+  spanish: { stripes: ['#6b3fa0', '#f4c430', '#7a1f1f'], symbol: '★', symbolColor: '#f4c430' },
 }
 
 function themeFlagStyle(themeId) {

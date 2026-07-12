@@ -110,6 +110,30 @@ export const SECRETS = [
     anecdote:
       "In 2014, marine archaeologists recovered a bronze disc from a Portuguese shipwreck off the coast of Oman, sunk in 1503. Faint engravings later confirmed it as the oldest known mariner's astrolabe — a single object bridging a five-century gap in navigational history.",
   },
+  {
+    themeId: 'spanish',
+    term: 'no pasarán',
+    title: 'A Slogan Outlives the War',
+    icon: '✊',
+    anecdote:
+      'Dolores Ibárruri delivered "¡No pasarán!" in a radio address in July 1936, days after the war began. Madrid did fall in 1939 — but the phrase itself never died: it resurfaced in anti-fascist and pro-democracy movements from Mexico to France for the rest of the century.',
+  },
+  {
+    themeId: 'spanish',
+    term: 'bombardeo',
+    title: 'A Painting as a Witness Statement',
+    icon: '🎨',
+    anecdote:
+      "Picasso, then living in Paris, read newspaper reports of the Guernica bombing and finished a 3.5-by-7.7-meter mural in under a month. He refused to let it hang in Spain while Franco lived — it only arrived in Madrid in 1981, six years after Franco's death.",
+  },
+  {
+    themeId: 'spanish',
+    term: 'exilio',
+    title: 'A Library That Crossed the Ocean',
+    icon: '📚',
+    anecdote:
+      'Mexico\'s government under Lázaro Cárdenas accepted tens of thousands of Republican exiles after 1939 — among them publishers, professors, and scientists who founded institutions like Mexico\'s Casa de España, reshaping Mexican academic life for generations.',
+  },
 ]
 
 /**

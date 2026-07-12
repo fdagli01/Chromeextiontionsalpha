@@ -89,6 +89,24 @@ export const FACTIONS = [
     keywords: ['гласность', 'перестройка', 'реформа', 'свобода', 'открытость'],
     rankNames: ['Sympathizer', 'Dissident', 'Organizer', 'Delegate', 'Architect'],
   },
+  {
+    factionId: 'republicanos',
+    themeId: 'spanish',
+    name: 'Frente Popular',
+    ideology: 'A coalition of the elected Republic — unions, socialists, and republicans holding the line together.',
+    emblem: '★',
+    keywords: ['milicia', 'republicano', 'frente', 'brigada', 'sindicato', 'no pasarán'],
+    rankNames: ['Simpatizante', 'Voluntario', 'Miliciano', 'Delegado', 'Comisario'],
+  },
+  {
+    factionId: 'exiliados',
+    themeId: 'spanish',
+    name: 'Los Exiliados',
+    ideology: 'Those the war scattered — refugees, writers, and dissidents rebuilding a life outside Spain.',
+    emblem: '🕊',
+    keywords: ['exilio', 'censura', 'refugiado', 'frontera', 'destierro'],
+    rankNames: ['Refugiado', 'Corresponsal', 'Escritor', 'Cronista', 'Testigo'],
+  },
 ]
 
 /**

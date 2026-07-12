@@ -2,6 +2,7 @@ import { getRussianExample, getRussianFact, getRussianPhilosophy } from './russi
 import { getItalianExample, getItalianFact, getItalianPhilosophy } from './italian.js'
 import { getPortugueseExample, getPortugueseFact, getPortuguesePhilosophy } from './portuguese.js'
 import { getFrenchExample, getFrenchFact, getFrenchPhilosophy } from './french.js'
+import { getSpanishExample, getSpanishFact, getSpanishPhilosophy } from './spanish.js'
 
 /** @type {Record<string, (term: string) => string>} */
 const FACT_PROVIDERS = {
@@ -9,6 +10,7 @@ const FACT_PROVIDERS = {
   italian: getItalianFact,
   portuguese: getPortugueseFact,
   french: getFrenchFact,
+  spanish: getSpanishFact,
 }
 
 /** @type {Record<string, (term: string) => {sentence: string, translation: string} | null>} */
@@ -17,6 +19,7 @@ const EXAMPLE_PROVIDERS = {
   italian: getItalianExample,
   portuguese: getPortugueseExample,
   french: getFrenchExample,
+  spanish: getSpanishExample,
 }
 
 /** @type {Record<string, (term: string) => string>} */
@@ -25,6 +28,7 @@ const PHILOSOPHY_PROVIDERS = {
   italian: getItalianPhilosophy,
   portuguese: getPortuguesePhilosophy,
   french: getFrenchPhilosophy,
+  spanish: getSpanishPhilosophy,
 }
 
 /**

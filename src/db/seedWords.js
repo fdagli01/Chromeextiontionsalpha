@@ -59,6 +59,18 @@ const SEED_WORDS = {
     { term: 'leme', translation: 'rudder' },
     { term: 'marinheiro', translation: 'sailor' },
   ],
+  spanish: [
+    { term: 'milicia', translation: 'militia' },
+    { term: 'frente', translation: 'front' },
+    { term: 'censura', translation: 'censorship' },
+    { term: 'republicano', translation: 'republican' },
+    { term: 'sublevación', translation: 'uprising' },
+    { term: 'trinchera', translation: 'trench' },
+    { term: 'exilio', translation: 'exile' },
+    { term: 'brigada', translation: 'brigade' },
+    { term: 'bombardeo', translation: 'bombing' },
+    { term: 'no pasarán', translation: 'they shall not pass' },
+  ],
 }
 
 /**
