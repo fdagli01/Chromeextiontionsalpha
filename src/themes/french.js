@@ -49,7 +49,7 @@ export const frenchTheme = defineTheme({
   nextButtonLabel: 'AU SUIVANT [ENTER] →',
   intelLabel: '⚖ DOSSIER',
   archiveStampLabel: "ARCHIVES D'ÉTAT",
-  contextMenuTitle: 'File before the tribunal: "%s"',
+  contextMenuTitle: 'French — File before the tribunal: "%s"',
   effects: {
     paperTexture: false,
     vignette: true,

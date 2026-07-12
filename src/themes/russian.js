@@ -33,7 +33,7 @@ export const russianTheme = defineTheme({
   nextButtonLabel: 'ДАЛЕЕ [ENTER] →',
   intelLabel: '★ ДОСЬЕ',
   archiveStampLabel: 'СЕКРЕТНО',
-  contextMenuTitle: 'Decrypt intercept: "%s"',
+  contextMenuTitle: 'Russian — Decrypt intercept: "%s"',
   effects: {
     paperTexture: true,
     vignette: true,

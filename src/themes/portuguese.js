@@ -44,7 +44,7 @@ export const portugueseTheme = defineTheme({
   nextButtonLabel: 'PRÓXIMO RUMO →',
   intelLabel: '⚓ DIÁRIO DE BORDO',
   archiveStampLabel: 'ARQUIVO REAL',
-  contextMenuTitle: 'Log to the ship\'s journal: "%s"',
+  contextMenuTitle: 'Portuguese — Log to the ship\'s journal: "%s"',
   effects: {
     paperTexture: true,
     vignette: true,

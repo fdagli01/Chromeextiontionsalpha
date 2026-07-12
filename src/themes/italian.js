@@ -43,7 +43,7 @@ export const italianTheme = defineTheme({
   nextButtonLabel: 'PERGE [ENTER] →',
   intelLabel: '⚔ COMMENTARII',
   archiveStampLabel: 'SIGNATVM',
-  contextMenuTitle: 'Inscribe in the commentarii: "%s"',
+  contextMenuTitle: 'Italian/Latin — Inscribe in the commentarii: "%s"',
   effects: {
     paperTexture: false,
     vignette: true,
