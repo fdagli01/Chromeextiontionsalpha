@@ -678,6 +678,68 @@ const THEME_AMBIENT_PRESETS = {
       },
     },
   ],
+  spanish: [
+    {
+      // A square rally: a real crowd packed in close, and one orator's
+      // voice rising over them mid-speech — La Pasionaria at the balcony.
+      // A fist on the podium punctuates the loudest lines. Mood: fervent.
+      name: 'MITIN',
+      config: {
+        reverb: { seconds: 2.5, decay: 2.8, wet: 0.6, dry: 0.5 },
+        droneFreqs: [98],
+        droneType: 'sine',
+        droneGain: 0.014,
+        noise: { type: 'room', freq: 300, gain: 0.024 },
+        crowd: { count: 7, gain: 0.05, pace: 1.3, lead: { freq: 108, gain: 0.11, pace: 0.65 } },
+        drum: { pattern: 'sparse', freq: 130, gain: 0.2, decay: 0.2, minDelay: 5, maxDelay: 12 },
+      },
+    },
+    {
+      // A marching revolutionary song: a synthetic choir carries the tune
+      // in unison over a steady marching drum — the crowd chatter drops
+      // out entirely so the singing reads as the point. Mood: rousing.
+      name: 'CANCIÓN',
+      config: {
+        reverb: { seconds: 3, decay: 2.6, wet: 0.65, dry: 0.45 },
+        droneFreqs: [110],
+        droneType: 'sine',
+        droneGain: 0.012,
+        noise: { type: 'room', freq: 260, gain: 0.016 },
+        chant: { notes: [146.83, 174.61, 196.0, 220.0], type: 'triangle', gain: 0.02, darkness: 950, vibratoRate: 0.22, vibratoDepth: 1.6 },
+        drum: { pattern: 'march', freq: 88, gain: 0.16, interval: 0.62 },
+      },
+    },
+    {
+      // The front line: wind over open ground, a grinding clashed drone,
+      // soldiers murmuring low between strikes, and distant artillery —
+      // irregular, not a marching beat. Mood: exposed tension.
+      name: 'FRENTE',
+      config: {
+        reverb: { seconds: 3.2, decay: 2.8, wet: 0.55, dry: 0.5 },
+        droneFreqs: [73.42, 77.78], // clashing semitone
+        droneType: 'sine',
+        droneGain: 0.024,
+        noise: { type: 'wind', freq: 500, gain: 0.03, rate: 0.11 },
+        crowd: { count: 2, gain: 0.022, pace: 0.85, darkness: 1300 },
+        drum: { pattern: 'sparse', freq: 65, gain: 0.28, decay: 0.9, minDelay: 4, maxDelay: 10 },
+      },
+    },
+    {
+      // La Retirada: the road to the border. No crowd, no drum — just wind,
+      // a long reverb like open country, and one far-off voice singing a
+      // lament under its breath. Mood: hushed grief.
+      name: 'ÉXODO',
+      config: {
+        reverb: { seconds: 5, decay: 2, wet: 0.85, dry: 0.3 },
+        droneFreqs: [82.41],
+        droneType: 'sine',
+        droneGain: 0.016,
+        noise: { type: 'wind', freq: 340, gain: 0.02, rate: 0.06 },
+        chant: { notes: [130.81, 155.56], type: 'triangle', gain: 0.011, darkness: 700, vibratoRate: 0.14, vibratoDepth: 1 },
+        pluck: { notes: [392.0, 466.16], type: 'sine', minDelay: 16, maxDelay: 30, gain: 0.022, decay: 3 },
+      },
+    },
+  ],
 }
 
 let currentThemeId = null
