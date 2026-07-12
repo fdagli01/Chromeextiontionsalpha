@@ -60,6 +60,83 @@ export const ITALIAN_ENTRIES = {
     example: 'Il centurione comandava ottanta soldati.',
     exampleTranslation: 'The centurion commanded eighty soldiers.',
   },
+  'patrizio': {
+    fact: 'Patrician families claimed descent from Rome\'s founding senators; for centuries only patricians could hold priesthoods and the highest magistracies, until plebeian pressure forced those offices open.',
+    example: 'Il patrizio apparteneva a una famiglia antica.',
+    exampleTranslation: 'The patrician belonged to an ancient family.',
+  },
+  'plebe': {
+    fact: 'The plebeians — everyone outside the patrician families — twice seceded from the city entirely (the secessio plebis) to force political concessions, inventing one of history\'s earliest recorded general strikes.',
+    example: 'La plebe chiedeva più diritti politici.',
+    exampleTranslation: 'The plebeians demanded more political rights.',
+    philosophy: 'The Struggle of the Orders reads as an early precedent for what later republican theory calls "mixed government" — Polybius argued Rome\'s stability came precisely from patrician and plebeian power checking each other.',
+  },
+  'foro': {
+    fact: 'The Roman Forum was the civic heart of the city — courts, temples, markets, and political speeches all shared the same open square for a thousand years.',
+    example: 'Il Foro era il centro della vita pubblica.',
+    exampleTranslation: 'The Forum was the center of public life.',
+  },
+  'toga': {
+    fact: 'Only Roman citizens were legally permitted to wear the toga; a candidate for office wore a specially whitened version called the toga candida — the origin of the word "candidate".',
+    example: 'Indossava la toga per l\'occasione ufficiale.',
+    exampleTranslation: 'He wore the toga for the official occasion.',
+  },
+  'tribuno': {
+    fact: 'The Tribune of the Plebs held a unique power: sacrosanctity meant harming one was a capital offense, and a single tribune\'s veto could halt any act of the Senate.',
+    example: 'Il tribuno difendeva gli interessi del popolo.',
+    exampleTranslation: 'The tribune defended the people\'s interests.',
+  },
+  'legato': {
+    fact: 'A legatus was a senator delegated to command a legion or govern a province on the emperor\'s behalf — the origin of the modern word "legate" for a papal or diplomatic envoy.',
+    example: 'Il legato guidava le truppe in battaglia.',
+    exampleTranslation: 'The legate led the troops into battle.',
+  },
+  'pretorio': {
+    fact: 'The Praetorian Guard, created by Augustus to protect the emperor, grew powerful enough to auction the throne itself in AD 193 — selling it to the highest bidder, Didius Julianus.',
+    example: 'La guardia pretoria proteggeva l\'imperatore.',
+    exampleTranslation: 'The Praetorian Guard protected the emperor.',
+  },
+  'barbaro': {
+    fact: 'Rome borrowed "barbarus" from the Greek barbaros, an onomatopoeic jab at foreign speech sounding like meaningless "bar-bar" babble — the word was always about language, not violence, first.',
+    example: 'I barbari attaccarono i confini dell\'impero.',
+    exampleTranslation: 'The barbarians attacked the empire\'s borders.',
+  },
+  'gloria': {
+    fact: 'Public gloria — recognition through visible achievement — was one of the most powerful motivators in Roman politics; triumphal parades through the city existed specifically to put it on display.',
+    example: 'Il generale tornò a Roma per la gloria della vittoria.',
+    exampleTranslation: 'The general returned to Rome for the glory of victory.',
+  },
+  'virtù': {
+    fact: 'Latin virtus (from vir, "man") originally meant something closer to "manly courage in battle" before broadening toward the general sense of moral excellence the modern word carries.',
+    example: 'La virtù era considerata la qualità più importante di un cittadino.',
+    exampleTranslation: 'Virtue was considered a citizen\'s most important quality.',
+    philosophy: 'Machiavelli\'s virtù in The Prince deliberately revives this older, harder Roman sense — decisive strength and mastery of fortune — against the softer Christian meaning "virtue" had acquired by his own time.',
+  },
+  'patria': {
+    fact: '"Patria" derives from pater ("father") — the fatherland was conceived as an extended family the citizen owed the same loyalty to as his own household.',
+    example: 'Molti soldati morirono per la patria.',
+    exampleTranslation: 'Many soldiers died for their homeland.',
+  },
+  'legge': {
+    fact: 'The Twelve Tables (451–450 BC), Rome\'s first written law code, were reportedly posted in the Forum specifically so plebeians could see the law was no longer whatever patrician judges said it was.',
+    example: 'La legge era uguale per tutti i cittadini.',
+    exampleTranslation: 'The law was the same for all citizens.',
+  },
+  'oracolo': {
+    fact: 'Romans consulted the Sibylline Books — a collection of oracular verses — only in moments of state emergency, kept locked away and guarded by a dedicated college of priests.',
+    example: 'L\'oracolo predisse eventi importanti.',
+    exampleTranslation: 'The oracle foretold important events.',
+  },
+  'tempio': {
+    fact: 'A Roman temple\'s consecrated ground (templum) was defined by a priest\'s ritual observation of the sky — the same augural practice used to read omens from bird flight before any major state decision.',
+    example: 'Il tempio era dedicato agli dei.',
+    exampleTranslation: 'The temple was dedicated to the gods.',
+  },
+  'senatore': {
+    fact: 'A senator needed property worth at least one million sesterces under Augustus\'s reforms — the Senate was a wealth-gated body from the very start of the Empire, not just the Republic.',
+    example: 'Il senatore parlò davanti all\'assemblea.',
+    exampleTranslation: 'The senator spoke before the assembly.',
+  },
 }
 
 /**

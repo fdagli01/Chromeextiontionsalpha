@@ -84,6 +84,77 @@ export const RUSSIAN_ENTRIES = {
     exampleTranslation: 'He joined the Communist Party.',
     philosophy: "Lenin's \"vanguard party\" theory transforms Rousseau's concept of the \"general will\", arguing that a disciplined cadre — not the masses themselves — can represent it.",
   },
+  'холодная война': {
+    fact: 'The term "Cold War" was popularized by journalist Walter Lippmann in 1947, describing a conflict fought through proxies, propaganda, and arms races rather than direct combat between the superpowers.',
+    example: 'Холодная война длилась почти полвека.',
+    exampleTranslation: 'The Cold War lasted almost half a century.',
+  },
+  'железный занавес': {
+    fact: 'Winston Churchill\'s 1946 "Iron Curtain" speech in Missouri gave the era its defining metaphor before the Berlin Wall — the physical version of that curtain — even existed.',
+    example: 'Железный занавес разделил Европу на два лагеря.',
+    exampleTranslation: 'The Iron Curtain divided Europe into two camps.',
+  },
+  'пятилетка': {
+    fact: "The first Five-Year Plan (1928–32) rapidly industrialized the USSR through forced collectivization and heavy-industry targets — at enormous human cost, including the Ukrainian famine (Holodomor).",
+    example: 'Первая пятилетка изменила советскую экономику.',
+    exampleTranslation: 'The first five-year plan changed the Soviet economy.',
+  },
+  'колхоз': {
+    fact: 'Collective farms replaced private peasant landholding starting in 1929; resistance to collectivization was met with deportation, and the disruption contributed directly to the famines of the early 1930s.',
+    example: 'Крестьяне работали в колхозе.',
+    exampleTranslation: 'The peasants worked on the collective farm.',
+  },
+  'диссидент': {
+    fact: 'Soviet dissidents like Andrei Sakharov and Aleksandr Solzhenitsyn faced surveillance, exile, or imprisonment for publicly criticizing the state — often for simply insisting the government follow its own constitution.',
+    example: 'Диссидента отправили в ссылку за его убеждения.',
+    exampleTranslation: 'The dissident was sent into exile for his beliefs.',
+  },
+  'самиздат': {
+    fact: 'Literally "self-published" — banned literature was retyped by hand or typewriter and passed reader to reader, since owning a printing press without state approval was itself illegal.',
+    example: 'Книгу распространяли через самиздат.',
+    exampleTranslation: 'The book was circulated through samizdat.',
+    philosophy: 'Samizdat is a real-world case of what economists call a "black market of ideas" — when a state monopolizes legitimate distribution, an informal one emerges to meet the demand it suppresses.',
+  },
+  'гулаг': {
+    fact: 'GULAG (Главное управление лагерей — "Main Camp Administration") ran the Soviet forced-labor camp system; Solzhenitsyn\'s "The Gulag Archipelago" brought its scale to Western readers in 1973.',
+    example: 'Миллионы людей прошли через гулаг.',
+    exampleTranslation: 'Millions of people passed through the gulag.',
+  },
+  'номенклатура': {
+    fact: 'The nomenklatura was the list of key posts the Party controlled appointments to — and, by extension, the privileged class of officials who held them, with access to special stores and housing ordinary citizens couldn\'t reach.',
+    example: 'Номенклатура пользовалась особыми привилегиями.',
+    exampleTranslation: 'The nomenklatura enjoyed special privileges.',
+  },
+  'оттепель': {
+    fact: 'The "Khrushchev Thaw" following Stalin\'s 1953 death briefly loosened censorship and freed many Gulag prisoners — named after Ilya Ehrenburg\'s 1954 novel of the same title.',
+    example: 'Оттепель принесла надежду многим людям.',
+    exampleTranslation: 'The Thaw brought hope to many people.',
+  },
+  'застой': {
+    fact: 'The "Era of Stagnation" under Brezhnev (roughly 1964–82) saw economic growth slow to a crawl while the leadership aged in place — the word itself became the era\'s own diagnosis.',
+    example: 'Период застоя длился почти два десятилетия.',
+    exampleTranslation: 'The period of stagnation lasted almost two decades.',
+  },
+  'пропаганда': {
+    fact: 'Soviet propaganda posters were a genre in their own right — bold constructivist graphics urging industrial output, literacy, and vigilance against foreign spies, plastered across factories and public squares.',
+    example: 'Плакат был частью государственной пропаганды.',
+    exampleTranslation: 'The poster was part of state propaganda.',
+  },
+  'коммунизм': {
+    fact: 'Marx described communism as the classless, stateless end-stage of history; Soviet leaders instead called their own system "socialism" — communism proper was always officially still to come.',
+    example: 'Коммунизм обещал равенство для всех.',
+    exampleTranslation: 'Communism promised equality for everyone.',
+  },
+  'капитализм': {
+    fact: 'Soviet textbooks taught capitalism as an inevitably collapsing stage of history — Cold War state radio and cinema treated it as a stock villain rather than a rival economic system to be studied on its own terms.',
+    example: 'Советская пропаганда критиковала капитализм.',
+    exampleTranslation: 'Soviet propaganda criticized capitalism.',
+  },
+  'бункер': {
+    fact: 'Deep beneath Moscow, a network of Cold War bunkers (including the still-partially-classified Metro-2) was built to keep the leadership running through a nuclear strike.',
+    example: 'Бункер был построен на случай войны.',
+    exampleTranslation: 'The bunker was built in case of war.',
+  },
 }
 
 /**

@@ -59,6 +59,71 @@ export const PORTUGUESE_ENTRIES = {
     exampleTranslation: 'The sailor spent years at sea.',
     philosophy: "Camões's epic Os Lusíadas portrays the sailor as a new kind of figure, fusing the classical heroic ideal (Homer's Odysseus) with Christian Renaissance humanism.",
   },
+  'navegador': {
+    fact: 'Prince Henry "the Navigator" (Henrique o Navegador) himself rarely sailed — the epithet, coined by later English historians, honors the school of navigation and cartography he sponsored at Sagres.',
+    example: 'O navegador estudava as estrelas para se orientar.',
+    exampleTranslation: 'The navigator studied the stars to find his bearings.',
+  },
+  'feitoria': {
+    fact: 'A feitoria was a fortified trading post, not a colony to settle — Portugal\'s early empire was built as a chain of these coastal outposts along Africa and Asia rather than large inland territories.',
+    example: 'A feitoria controlava o comércio de especiarias na região.',
+    exampleTranslation: 'The trading post controlled the region\'s spice trade.',
+  },
+  'colônia': {
+    fact: 'Brazil, claimed in 1500, only became Portugal\'s dominant colony from the 1690s onward, once gold was discovered inland in Minas Gerais — before that, Asian trade mattered more to the crown.',
+    example: 'A colônia enviava ouro para Portugal.',
+    exampleTranslation: 'The colony sent gold to Portugal.',
+  },
+  'ouro': {
+    fact: 'The Brazilian gold rush of the 18th century made Portugal, briefly, one of the wealthiest states in Europe — much of that gold flowed straight through to England to pay for manufactured goods.',
+    example: 'Encontraram ouro nas montanhas do Brasil.',
+    exampleTranslation: 'They found gold in the mountains of Brazil.',
+  },
+  'mapa': {
+    fact: 'Portuguese crown policy classified accurate nautical charts as state secrets (segredo de estado) — sharing one with a foreign power could carry the death penalty.',
+    example: 'O mapa mostrava rotas desconhecidas.',
+    exampleTranslation: 'The map showed unknown routes.',
+  },
+  'bússola': {
+    fact: 'The magnetic compass reached Europe via Arab and Chinese intermediaries centuries before the Age of Discovery, but Portuguese pilots were among the first to combine it systematically with celestial navigation.',
+    example: 'A bússola indicava sempre o norte.',
+    exampleTranslation: 'The compass always pointed north.',
+  },
+  'vento': {
+    fact: 'Portuguese pilots discovered the volta do mar ("turn of the sea") — sailing far out into the Atlantic to catch favorable winds home — a technique that made round-trip African voyages practical.',
+    example: 'O vento soprava forte no oceano.',
+    exampleTranslation: 'The wind blew strong over the ocean.',
+  },
+  'porto': {
+    fact: 'Lisbon\'s harbor became the busiest spice-trading port in Europe by the early 1500s, briefly eclipsing Venice, whose overland trade routes the sea passage to India was designed to bypass entirely.',
+    example: 'Os navios partiam do porto de Lisboa.',
+    exampleTranslation: 'The ships departed from the port of Lisbon.',
+  },
+  'rei': {
+    fact: 'King João II earned the nickname "the Perfect Prince" for personally overseeing the navigation program — and for turning down Columbus\'s proposal before Spain funded it instead.',
+    example: 'O rei financiou várias expedições marítimas.',
+    exampleTranslation: 'The king financed several maritime expeditions.',
+  },
+  'coroa': {
+    fact: 'The Portuguese crown held a legal monopoly (the "Mina and Guinea trade") over African and Asian commerce — private merchants could sail only with royal license and a cut owed to the treasury.',
+    example: 'A coroa controlava todo o comércio ultramarino.',
+    exampleTranslation: 'The crown controlled all overseas trade.',
+  },
+  'tesouro': {
+    fact: 'The Casa da Índia in Lisbon functioned as the royal treasury\'s clearinghouse for all goods arriving from Asia and Africa — a customs house, warehouse, and trading company rolled into one institution.',
+    example: 'O tesouro real cresceu com o comércio das Índias.',
+    exampleTranslation: 'The royal treasury grew with the trade from the Indies.',
+  },
+  'viagem': {
+    fact: "Vasco da Gama's 1497–99 voyage to India took over two years round trip and cost roughly two-thirds of his crew their lives — mostly to scurvy — yet the spices aboard still returned a vast profit.",
+    example: 'A viagem para a Índia durou mais de um ano.',
+    exampleTranslation: 'The voyage to India lasted more than a year.',
+  },
+  'naufrágio': {
+    fact: 'Shipwreck narratives (Histórias Trágico-Marítimas) became a popular literary genre in 16th-century Portugal — first-person survivor accounts of disaster on the India route, printed and widely read at home.',
+    example: 'O naufrágio deixou poucos sobreviventes.',
+    exampleTranslation: 'The shipwreck left few survivors.',
+  },
 }
 
 /**
