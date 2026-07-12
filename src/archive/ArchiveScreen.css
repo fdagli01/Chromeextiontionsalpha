@@ -150,8 +150,8 @@
 .archive-fact {
   font-size: 12px;
   font-family: var(--font-body);
-  color: var(--color-success);
-  background: rgba(0, 0, 0, 0.4);
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text) 10%, var(--color-surface));
   border-left: 3px solid var(--color-accent);
   padding: 5px 8px;
   margin-top: 6px;
