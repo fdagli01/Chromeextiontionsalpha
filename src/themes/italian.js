@@ -7,6 +7,11 @@ import { defineTheme } from './base.js'
  * Russian theme. Captured vocabulary is modern Italian; the curated trivia
  * ties each word back to its Roman-history root, mirroring how the Russian
  * theme pairs modern words with Cold War facts.
+ *
+ * Palette: a sunlit fresco/marble villa rather than a dim night camp —
+ * warm travertine background, Pompeian-red chrome, bronze borders, laurel
+ * green for success. The stages still darken toward "Late Period" at
+ * level 14+ as a deliberate narrative turn (decline), not the baseline.
  */
 export const italianTheme = defineTheme({
   id: 'italian',
@@ -16,16 +21,16 @@ export const italianTheme = defineTheme({
   fontHeading: '"Cinzel", "Georgia", serif',
   fontBody: '"Alegreya Sans SC", "Georgia", serif',
   colors: {
-    background: '#151210',
-    surface: '#241d16',
-    surfaceStrong: '#0f0b08',
-    primary: '#8a1c1c',
-    accent: '#8a6a3a',
-    text: '#e8dcc8',
-    textMuted: '#a68a6d',
-    border: '#3a2c1e',
+    background: '#e6d2a0',
+    surface: '#f2e6c4',
+    surfaceStrong: '#6b1512',
+    primary: '#a8341f',
+    accent: '#d4a72c',
+    text: '#2a1810',
+    textMuted: '#6b4a30',
+    border: '#b8905a',
     danger: '#c23a2a',
-    success: '#8a7230',
+    success: '#3d6b2f',
   },
   audio: {
     sfxVariant: 'legion',
@@ -76,10 +81,11 @@ export const italianTheme = defineTheme({
       name: 'Republic',
       minLevel: 4,
       colors: {
-        primary: '#9e1b1b',
-        accent: '#c9922f',
-        surface: '#2a2118',
-        border: '#4a3a28',
+        primary: '#9e2418',
+        accent: '#d4a72c',
+        background: '#ecdaad',
+        surface: '#f5ecd2',
+        border: '#a67c3d',
       },
       emblem: '⚔',
     },
@@ -88,12 +94,15 @@ export const italianTheme = defineTheme({
       name: 'Empire',
       minLevel: 8,
       colors: {
+        // Peak of the arc: whiter marble, imperial Tyrian purple alongside
+        // gold — emperors alone wore purple, so it reads as a status jump.
         primary: '#9e1b1b',
-        accent: '#d4af37',
-        background: '#1c1108',
-        surface: '#2e2013',
-        border: '#5a4520',
-        success: '#c9a227',
+        accent: '#7a3d8c',
+        background: '#f0e6cc',
+        surface: '#f7f0dc',
+        surfaceStrong: '#3a1530',
+        border: '#c9a227',
+        success: '#3d6b2f',
       },
       emblem: '🦅',
     },
