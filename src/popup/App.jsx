@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ThemeProvider, useThemeConfig } from '../components/ThemeProvider.jsx'
-import { DEFAULT_THEME_ID } from '../themes/index.js'
-import { getSetting } from '../db/settingsRepo.js'
+import { DEFAULT_THEME_ID, listThemes } from '../themes/index.js'
+import { getSetting, setSetting } from '../db/settingsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { onProgressChanged } from '../xp/progressEvents.js'
 import { isUnlocked, UNLOCK_LEVELS } from '../progression/unlocks.js'
@@ -34,6 +34,25 @@ function currentWeekKey(now = new Date()) {
   const diffToMonday = day === 0 ? -6 : 1 - day
   monday.setDate(monday.getDate() + diffToMonday)
   return monday.toISOString().slice(0, 10)
+}
+
+// Hand-designed per-theme flag glyphs for the header switcher — evoking each
+// era rather than a literal modern national flag (there's no "Roman Empire"
+// or "Revolutionary France" emoji flag to borrow). `stripes` builds a CSS
+// gradient background, `symbol` sits centered on top.
+const THEME_FLAGS = {
+  russian: { stripes: ['#8b0d0d', '#8b0d0d'], symbol: '☭', symbolColor: '#f4c430' },
+  italian: { stripes: ['#5c1a1a', '#8a1f1f', '#5c1a1a'], symbol: '🦅', symbolColor: '#d4af37' },
+  portuguese: { stripes: ['#046a38', '#046a38', '#c8102e', '#c8102e'], symbol: '⚓', symbolColor: '#f4c430' },
+  french: { stripes: ['#0055a4', '#ffffff', '#ef4135'], symbol: '⚜', symbolColor: '#0a0a0a' },
+}
+
+function themeFlagStyle(themeId) {
+  const flag = THEME_FLAGS[themeId]
+  if (!flag) return {}
+  const stop = 100 / flag.stripes.length
+  const stops = flag.stripes.map((color, i) => `${color} ${i * stop}%, ${color} ${(i + 1) * stop}%`).join(', ')
+  return { background: `linear-gradient(90deg, ${stops})` }
 }
 
 /**
@@ -135,6 +154,17 @@ function AppShell({ activeThemeId, onThemeChange }) {
     setAudioPlaying(true)
   }
 
+  // Header flag button: cycles straight to the next era without a trip
+  // through Mainframe settings — same switch logic as the settings dropdown
+  // (pause outgoing audio, persist, notify parent), just one click away.
+  async function cycleTheme() {
+    const ids = listThemes().map((t) => t.id)
+    const nextId = ids[(ids.indexOf(theme.id) + 1) % ids.length]
+    pauseThemeAudio(theme.id)
+    await setSetting('activeThemeId', nextId)
+    onThemeChange(nextId)
+  }
+
   const TABS = [
     { id: 'review', icon: '⚑', label: 'INTERROGATE', node: <ReviewScreen /> },
     { id: 'archive', icon: '📁', label: 'ARCHIVE', node: <ArchiveScreen /> },
@@ -166,6 +196,16 @@ function AppShell({ activeThemeId, onThemeChange }) {
           </h1>
           <p className="era">{theme.tagline.replace('{level}', theme.level)}</p>
         </div>
+        <button
+          className="theme-flag-btn"
+          style={themeFlagStyle(theme.id)}
+          onClick={cycleTheme}
+          title="Switch era"
+        >
+          <span className="theme-flag-symbol" style={{ color: THEME_FLAGS[theme.id]?.symbolColor }}>
+            {THEME_FLAGS[theme.id]?.symbol}
+          </span>
+        </button>
         {!isDetachedWindow && (
           <button className="pin-window-btn" onClick={openInWindow} title="Open in a window that stays open">
             📌
