@@ -33,7 +33,7 @@ export default [
   {
     // Test files intentionally stub the global `indexedDB` with
     // fake-indexeddb, which is a legitimate reassignment, not a bug.
-    files: ['**/*.test.js'],
+    files: ['**/*.test.js', '**/*.test.jsx'],
     rules: {
       'no-global-assign': 'off',
     },

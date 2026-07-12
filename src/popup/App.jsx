@@ -12,6 +12,7 @@ import { FactionsScreen } from '../factions/FactionsScreen.jsx'
 import { SettingsScreen } from '../settings/SettingsScreen.jsx'
 import { CrisisScreen } from '../crisis/CrisisScreen.jsx'
 import { WeeklyReportOverlay } from './WeeklyReportOverlay.jsx'
+import { OnboardingOverlay } from './OnboardingOverlay.jsx'
 import {
   getThemeAudioChannelLabel,
   hasThemeAudio,
@@ -26,6 +27,7 @@ import './App.css'
 const isDetachedWindow = new URLSearchParams(window.location.search).has('window')
 if (isDetachedWindow) document.body.classList.add('is-windowed')
 const WEEKLY_REPORT_SHOWN_KEY = 'weeklyReportShownWeek'
+const ONBOARDING_SEEN_KEY = 'onboardingSeenV1'
 
 /** Monday-of-the-current-week as a YYYY-MM-DD key, used to show the intel report once per week. */
 function currentWeekKey(now = new Date()) {
@@ -81,8 +83,23 @@ function AppShell({ activeThemeId, onThemeChange }) {
   const [activeCrisis, setActiveCrisis] = useState(null)
   const [level, setLevel] = useState(1)
   const [weeklyReport, setWeeklyReport] = useState(null)
+  const [showOnboarding, setShowOnboarding] = useState(false)
 
   const hasAudio = hasThemeAudio(theme.id)
+
+  // First-ever launch only: this app front-loads a lot of systems (FSRS
+  // review, factions, crises, secrets) a brand-new user has no way to
+  // discover from an empty "no words due" screen alone.
+  useEffect(() => {
+    chrome.storage.local.get(ONBOARDING_SEEN_KEY).then(({ [ONBOARDING_SEEN_KEY]: seen }) => {
+      if (!seen) setShowOnboarding(true)
+    })
+  }, [])
+
+  function dismissOnboarding() {
+    setShowOnboarding(false)
+    chrome.storage.local.set({ [ONBOARDING_SEEN_KEY]: true })
+  }
 
   // On theme switch, silence whatever the previous theme left playing —
   // otherwise its soundscape (e.g. ocean waves) keeps running under the new
@@ -263,6 +280,7 @@ function AppShell({ activeThemeId, onThemeChange }) {
       {weeklyReport && (
         <WeeklyReportOverlay summary={weeklyReport} onDismiss={() => setWeeklyReport(null)} />
       )}
+      {showOnboarding && <OnboardingOverlay onDismiss={dismissOnboarding} />}
     </div>
   )
 }
