@@ -130,8 +130,8 @@ export function ReviewScreen() {
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
       const opts = reverseMode
         ? shuffle([
-            { label: current.term, isCorrect: true },
-            ...distractors.map((d) => ({ label: d.term, isCorrect: false })),
+            { label: current.term, translit: current.transliteration, isCorrect: true },
+            ...distractors.map((d) => ({ label: d.term, translit: d.transliteration, isCorrect: false })),
           ])
         : shuffle([
             { label: current.translation || '(no translation)', isCorrect: true },
@@ -582,7 +582,10 @@ export function ReviewScreen() {
           return (
             <button key={i} className={cls} onClick={() => pick(i)}>
               <span className="option-num">[{i + 1}]</span>
-              <span className="option-label">{opt.label}</span>
+              <span className="option-label">
+                {opt.label}
+                {reverseMode && opt.translit && <span className="option-translit"> [ {opt.translit} ]</span>}
+              </span>
             </button>
           )
         })}

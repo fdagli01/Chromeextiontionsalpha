@@ -711,6 +711,18 @@
   font-weight: 600;
 }
 
+/* Reverse-mode choices show a Cyrillic (or other non-Latin) term as the
+   answer — without a transliteration hint alongside each option, picking
+   between three unfamiliar scripts by sound/shape alone is much harder
+   than picking between three familiar translations. */
+.option-translit {
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
 /* Unified result panel: everything that used to be four stacked boxes
    (feedback / badge toast / quest toast / intel) is now one state
    transition, so answering never pushes the Next button off-screen. */
