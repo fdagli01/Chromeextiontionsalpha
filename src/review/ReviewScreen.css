@@ -26,6 +26,26 @@
   background: rgba(255, 204, 0, 0.08);
 }
 
+/* Free drill: user-initiated practice ignoring dueDate entirely, for
+   whenever they want a round without waiting on the SRS schedule. */
+.free-drill-btn {
+  margin-top: 10px;
+  background: transparent;
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  padding: 10px 14px;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.free-drill-btn:hover {
+  background: rgba(255, 204, 0, 0.06);
+}
+
 /* Promotion ceremony: a full-screen beat for a faction rank-up, distinct
    from the routine small faction toast — mirrors the secret-reveal overlay's
    drama but themed gold/danger like a formal commendation. */

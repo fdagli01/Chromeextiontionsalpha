@@ -169,6 +169,24 @@ export async function getRandomWords(themeId, excludeId, count) {
 }
 
 /**
+ * Returns up to `limit` shuffled words for a theme regardless of dueDate —
+ * for an on-demand practice session the user starts themselves rather than
+ * one driven by the SRS schedule.
+ * @param {string} themeId
+ * @param {number} [limit]
+ * @returns {Promise<WordEntry[]>}
+ */
+export async function getFreePracticeWords(themeId, limit = 15) {
+  const all = await getWordsByTheme(themeId)
+  const pool = [...all]
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[pool[i], pool[j]] = [pool[j], pool[i]]
+  }
+  return pool.slice(0, limit)
+}
+
+/**
  * Grades a review for a word using FSRS and persists the resulting
  * scheduling state. A failed recall (AGAIN) makes the word immediately due
  * again, prioritizing it in the current session, and marks it `struggling`

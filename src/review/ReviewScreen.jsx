@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useThemeConfig } from '../components/ThemeProvider.jsx'
 import { useAnimatedNumber } from '../components/useAnimatedNumber.js'
-import { getColdCaseWords, getDueWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
+import { getColdCaseWords, getDueWords, getFreePracticeWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
 import { getProgress, saveProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
 import { awardReputation, getFactionProgress } from '../db/factionsRepo.js'
@@ -113,6 +113,17 @@ export function ReviewScreen() {
     setCombo(0)
     setSessionStats({ reviewed: 0, correct: 0, xpGained: 0, bestCombo: 0, badgesEarned: 0, questCompleted: false })
     sessionCompleteAnnouncedRef.current = false
+  }
+
+  /** Starts an on-demand practice session over any words, ignoring dueDate entirely. */
+  function startFreePractice() {
+    getFreePracticeWords(theme.id).then((words) => {
+      setQueue(words)
+      setColdCaseSession(false)
+      setCombo(0)
+      setSessionStats({ reviewed: 0, correct: 0, xpGained: 0, bestCombo: 0, badgesEarned: 0, questCompleted: false })
+      sessionCompleteAnnouncedRef.current = false
+    })
   }
 
   const current = queue?.[0]
@@ -388,6 +399,12 @@ export function ReviewScreen() {
       </button>
     ) : null
 
+  const freeDrillCta = (
+    <button className="free-drill-btn" onClick={startFreePractice}>
+      🎯 FREE DRILL — PRACTICE NOW
+    </button>
+  )
+
   if (queue.length === 0) {
     if (sessionStats.reviewed === 0) {
       return (
@@ -396,6 +413,7 @@ export function ReviewScreen() {
             No words due for review. Select a word on any page and right-click to archive it.
           </p>
           {coldCaseCta}
+          {freeDrillCta}
         </div>
       )
     }
@@ -431,6 +449,7 @@ export function ReviewScreen() {
         )}
         <p className="empty-state">No more words due. Come back later, or archive new ones from any page.</p>
         {coldCaseCta}
+        {freeDrillCta}
       </div>
     )
   }
