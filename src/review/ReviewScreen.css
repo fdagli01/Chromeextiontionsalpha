@@ -557,6 +557,35 @@
   50% { filter: grayscale(1) brightness(0.6); }
 }
 
+/* Spanish theme, Bombardeo tier only: a stark red flash and a hard jolt on
+   a miss — the card takes the hit like a near strike, distinct from the
+   softer universal shake-glitch every theme already gets on any miss. */
+.term-card.air-raid {
+  animation: air-raid-jolt 0.4s ease;
+}
+
+.term-card.air-raid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--color-danger) 55%, transparent);
+  animation: air-raid-flash 0.4s ease-out forwards;
+}
+
+@keyframes air-raid-flash {
+  0% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+@keyframes air-raid-jolt {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-3px, 2px); }
+  40% { transform: translate(3px, -1px); }
+  60% { transform: translate(-2px, 1px); }
+  80% { transform: translate(2px, 0); }
+}
+
 /* Portuguese theme: the card sways gently like a ship at anchor instead
    of the default idle breathing. */
 .review-wrap[data-theme='portuguese'] .term-card {
@@ -625,31 +654,32 @@
   100% { transform: rotate(32deg); }
 }
 
-/* Roman theme: a marching column of shields tracks the current streak,
-   breaking formation and scattering the instant it's lost. */
-.legion-column {
+/* Roman theme: a marching column of shields, Spanish: a row of raised
+   fists — either way, a row of glyphs tracks the current streak and
+   breaks formation into a scattered "retreat" the instant it's lost. */
+.streak-column {
   display: flex;
   gap: 4px;
   justify-content: center;
   margin-top: 10px;
 }
 
-.legion-glyph {
+.streak-glyph {
   display: inline-block;
   font-size: 13px;
-  animation: legion-march-in 0.3s ease-out both;
+  animation: streak-march-in 0.3s ease-out both;
 }
 
-@keyframes legion-march-in {
+@keyframes streak-march-in {
   from { transform: translateX(-16px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
 
-.legion-column.scatter .legion-glyph {
-  animation: legion-scatter 0.6s ease-in forwards;
+.streak-column.scatter .streak-glyph {
+  animation: streak-scatter 0.6s ease-in forwards;
 }
 
-@keyframes legion-scatter {
+@keyframes streak-scatter {
   0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
   100% { transform: translate(var(--scatter-x, 20px), 26px) rotate(50deg); opacity: 0; }
 }

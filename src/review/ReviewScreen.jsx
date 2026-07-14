@@ -40,6 +40,18 @@ const SLOW_ANSWER_MS = 8000
 /** Consecutive-correct combo count that triggers a milestone sting. */
 const COMBO_MILESTONE_STEP = 5
 
+/**
+ * Per-theme glyph for the marching streak column: it tracks the current
+ * combo as a row of icons that break formation and scatter the instant the
+ * streak is lost. Only themes listed here get the column at all — the
+ * other themes already have their own distinct card-level motif (Russian's
+ * redaction bars, Portuguese's candle/compass, French's tribunal sweep).
+ */
+const STREAK_GLYPHS = {
+  italian: '🛡',
+  spanish: '✊',
+}
+
 function shuffle(arr) {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -67,7 +79,7 @@ export function ReviewScreen() {
   const [promotionCeremony, setPromotionCeremony] = useState(null)
   const [doubleAgentChoice, setDoubleAgentChoice] = useState(null)
   const [secretReveal, setSecretReveal] = useState(null)
-  const [legionScatter, setLegionScatter] = useState(false)
+  const [streakScatter, setStreakScatter] = useState(false)
   const [scatterCount, setScatterCount] = useState(0)
   const [eraWipe, setEraWipe] = useState(false)
   const [sessionStats, setSessionStats] = useState({
@@ -263,13 +275,13 @@ export function ReviewScreen() {
     }
     if (hasTension) setTension(nextTension)
 
-    if (theme.id === 'italian') {
+    if (STREAK_GLYPHS[theme.id]) {
       if (!correct && combo > 0) {
         setScatterCount(combo)
-        setLegionScatter(true)
-        setTimeout(() => setLegionScatter(false), 650)
+        setStreakScatter(true)
+        setTimeout(() => setStreakScatter(false), 650)
       } else {
-        setLegionScatter(false)
+        setStreakScatter(false)
       }
     }
     setCombo(nextCombo)
@@ -529,7 +541,9 @@ export function ReviewScreen() {
       <div
         className={`term-card ${flickerKey > 0 ? 'fx-error-flicker' : ''} ${isAnswered ? 'is-answered' : ''} ${
           isAnswered && !isCorrect && theme.id === 'russian' ? 'redact' : ''
-        } ${isAnswered && !isCorrect && theme.id === 'french' && tension >= 3 ? 'tribunal-sweep' : ''}`}
+        } ${isAnswered && !isCorrect && theme.id === 'french' && tension >= 3 ? 'tribunal-sweep' : ''} ${
+          isAnswered && !isCorrect && theme.id === 'spanish' && tension >= 3 ? 'air-raid' : ''
+        }`}
         key={`${current.id}-${flickerKey}`}
       >
         {theme.id === 'portuguese' && (
@@ -576,18 +590,18 @@ export function ReviewScreen() {
         {current.transliteration && (!reverseMode || isAnswered) && (
           <div className="term-translit">[ {current.transliteration} ]</div>
         )}
-        {theme.id === 'italian' && (combo > 0 || legionScatter) && (
-          <div className={`legion-column ${legionScatter ? 'scatter' : ''}`} aria-hidden="true">
-            {Array.from({ length: Math.min(legionScatter ? scatterCount : combo, 10) }).map((_, i) => (
+        {STREAK_GLYPHS[theme.id] && (combo > 0 || streakScatter) && (
+          <div className={`streak-column ${streakScatter ? 'scatter' : ''}`} aria-hidden="true">
+            {Array.from({ length: Math.min(streakScatter ? scatterCount : combo, 10) }).map((_, i) => (
               <span
                 key={i}
-                className="legion-glyph"
+                className="streak-glyph"
                 style={{
                   animationDelay: `${i * 55}ms`,
                   '--scatter-x': `${(i % 2 === 0 ? 1 : -1) * (18 + i * 5)}px`,
                 }}
               >
-                🛡
+                {STREAK_GLYPHS[theme.id]}
               </span>
             ))}
           </div>
