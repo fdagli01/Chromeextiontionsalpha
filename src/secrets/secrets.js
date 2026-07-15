@@ -61,6 +61,14 @@ export const SECRETS = [
       'Between 1982 and 1985 the USSR buried three General Secretaries in a row — Brezhnev, Andropov, Chernenko. Soviet state television reportedly kept a standard funeral broadcast format on file, since another one always seemed imminent.',
   },
   {
+    themeId: 'russian',
+    term: 'коммунизм',
+    title: 'Homo Sovieticus',
+    icon: '🧬',
+    anecdote:
+      'Soviet ideology functioned as a substitute religion: Marxism-Leninism replaced faith with dogma, and the state pursued a doctrine of dissolving every ethnic and national identity into a single "Homo Sovieticus" — a citizen defined by class consciousness and loyalty to the "Socialist Motherland" rather than by nationality.',
+  },
+  {
     themeId: 'italian',
     term: 'pretorio',
     title: 'An Empire Sold at Auction',
