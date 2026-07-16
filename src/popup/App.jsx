@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ThemeProvider, useThemeConfig } from '../components/ThemeProvider.jsx'
 import { DEFAULT_THEME_ID, listThemes } from '../themes/index.js'
 import { getSetting, setSetting } from '../db/settingsRepo.js'
@@ -14,7 +14,9 @@ import { CrisisScreen } from '../crisis/CrisisScreen.jsx'
 import { WeeklyReportOverlay } from './WeeklyReportOverlay.jsx'
 import { OnboardingOverlay } from './OnboardingOverlay.jsx'
 import { DailyBriefingOverlay } from './DailyBriefingOverlay.jsx'
+import { BootSequence } from './BootSequence.jsx'
 import { computeDailyObjectives } from '../progression/briefing.js'
+import { playStaticBurst } from '../audio/sfx.js'
 import {
   getThemeAudioChannelLabel,
   hasThemeAudio,
@@ -88,8 +90,25 @@ function AppShell({ activeThemeId, onThemeChange }) {
   const [weeklyReport, setWeeklyReport] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [dailyBriefing, setDailyBriefing] = useState(null)
+  const [showBoot, setShowBoot] = useState(false)
+  const bootFirstMountRef = useRef(true)
 
   const hasAudio = hasThemeAudio(theme.id)
+
+  // Boot-up sequence on mainframe switch: the first mount is the initial
+  // load (no boot animation), but every subsequent theme change plays a
+  // short CRT boot overlay so moving between eras feels like re-tuning a
+  // terminal rather than a silent palette swap.
+  useEffect(() => {
+    if (bootFirstMountRef.current) {
+      bootFirstMountRef.current = false
+      return
+    }
+    setShowBoot(true)
+    getSetting('sfxEnabled', true).then((sfxOn) => {
+      if (sfxOn) playStaticBurst()
+    })
+  }, [theme.id])
 
   // First-ever launch only: this app front-loads a lot of systems (FSRS
   // review, factions, crises, secrets) a brand-new user has no way to
@@ -243,6 +262,7 @@ function AppShell({ activeThemeId, onThemeChange }) {
 
   return (
     <div className="app">
+      {showBoot && <BootSequence terminalName={theme.terminalName} onDone={() => setShowBoot(false)} />}
       <header className="app-header">
         <div className="app-header-emblem">{theme.emblem}</div>
         <div className="app-header-text">

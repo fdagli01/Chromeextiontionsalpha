@@ -30,6 +30,7 @@ body.is-windowed {
    380px column in a sea of empty background — and should fill the
    window's full height instead of leaving a blank strip below the nav. */
 .app {
+  position: relative;
   width: 380px;
   min-height: 560px;
   display: flex;
