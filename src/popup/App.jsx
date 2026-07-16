@@ -89,16 +89,20 @@ function AppShell({ activeThemeId, onThemeChange }) {
 
   // First-ever launch only: this app front-loads a lot of systems (FSRS
   // review, factions, crises, secrets) a brand-new user has no way to
-  // discover from an empty "no words due" screen alone.
+  // discover from an empty "no words due" screen alone. Uses sync storage
+  // (not local) since "have I seen the intro" is a fact about the person,
+  // not about a device — the word archive itself stays IndexedDB/per-device
+  // regardless, so this doesn't promise cross-device progress, just avoids
+  // re-showing the intro on every machine the user opens the extension on.
   useEffect(() => {
-    chrome.storage.local.get(ONBOARDING_SEEN_KEY).then(({ [ONBOARDING_SEEN_KEY]: seen }) => {
+    chrome.storage.sync.get(ONBOARDING_SEEN_KEY).then(({ [ONBOARDING_SEEN_KEY]: seen }) => {
       if (!seen) setShowOnboarding(true)
     })
   }, [])
 
   function dismissOnboarding() {
     setShowOnboarding(false)
-    chrome.storage.local.set({ [ONBOARDING_SEEN_KEY]: true })
+    chrome.storage.sync.set({ [ONBOARDING_SEEN_KEY]: true })
   }
 
   // On theme switch, silence whatever the previous theme left playing —
@@ -112,16 +116,20 @@ function AppShell({ activeThemeId, onThemeChange }) {
   }, [theme.id])
 
   // Monday-first-open intel report: shows at most once per calendar week,
-  // and only if there's a full week's history to summarize.
+  // and only if there's a full week's history to summarize. Also sync
+  // storage — "seen this week's report" is per-person, not per-device.
+  // getWeeklySummary itself still only reflects *this* device's activity
+  // log (see db/activityLog.js), so the report's numbers stay local; only
+  // the "already shown" flag travels with the account.
   useEffect(() => {
     const weekKey = currentWeekKey()
     if (new Date().getDay() !== 1) return
-    chrome.storage.local.get(WEEKLY_REPORT_SHOWN_KEY).then(({ [WEEKLY_REPORT_SHOWN_KEY]: lastShown }) => {
+    chrome.storage.sync.get(WEEKLY_REPORT_SHOWN_KEY).then(({ [WEEKLY_REPORT_SHOWN_KEY]: lastShown }) => {
       if (lastShown === weekKey) return
       getWeeklySummary().then((summary) => {
         if (summary.reviewed === 0) return
         setWeeklyReport(summary)
-        chrome.storage.local.set({ [WEEKLY_REPORT_SHOWN_KEY]: weekKey })
+        chrome.storage.sync.set({ [WEEKLY_REPORT_SHOWN_KEY]: weekKey })
       })
     })
   }, [])

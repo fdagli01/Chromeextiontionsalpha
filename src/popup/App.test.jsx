@@ -12,18 +12,24 @@ import App from './App.jsx'
  * actually clickable, an overlay that never dismisses, etc.
  */
 
+// Onboarding/weekly-report flags live in chrome.storage.sync (per-account,
+// not per-device); pendingCrisis and friends stay in .local. Tests share one
+// backing object across both namespaces since nothing here writes the same
+// key to both.
 function mockChromeStorage(initial = {}) {
   const store = { ...initial }
+  const namespace = () => ({
+    get: vi.fn((key) => Promise.resolve(typeof key === 'string' ? { [key]: store[key] } : { ...store })),
+    set: vi.fn((values) => {
+      Object.assign(store, values)
+      return Promise.resolve()
+    }),
+    remove: vi.fn(() => Promise.resolve()),
+  })
   global.chrome = {
     storage: {
-      local: {
-        get: vi.fn((key) => Promise.resolve(typeof key === 'string' ? { [key]: store[key] } : { ...store })),
-        set: vi.fn((values) => {
-          Object.assign(store, values)
-          return Promise.resolve()
-        }),
-        remove: vi.fn(() => Promise.resolve()),
-      },
+      local: namespace(),
+      sync: namespace(),
     },
     windows: { create: vi.fn() },
     runtime: { getURL: vi.fn((path) => path) },
