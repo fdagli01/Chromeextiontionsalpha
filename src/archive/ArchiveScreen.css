@@ -53,8 +53,9 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-left: 5px solid var(--color-primary);
+  border-radius: var(--radius-md);
   padding: 11px 13px 10px;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Theme-specific dossier stamp (e.g. "TOP SECRET" for Russian) */
@@ -130,7 +131,7 @@
 
 .archive-struggling {
   font-family: var(--font-heading);
-  font-size: 9px;
+  font-size: var(--type-xs);
   font-weight: 700;
   letter-spacing: 0.12em;
   padding: 1px 6px;
@@ -175,14 +176,14 @@
 
 .archive-example-translation {
   font-family: var(--font-body);
-  font-size: 10px;
+  font-size: var(--type-xs);
   color: var(--color-text-muted);
 }
 
 .archive-philosophy {
   font-family: var(--font-body);
   font-style: italic;
-  font-size: 10px;
+  font-size: var(--type-xs);
   color: var(--color-accent);
   line-height: 1.5;
   margin-top: 6px;
@@ -191,7 +192,7 @@
 
 .archive-etymology {
   font-family: var(--font-body);
-  font-size: 10px;
+  font-size: var(--type-xs);
   color: var(--color-text-muted);
   line-height: 1.5;
   margin-top: 6px;
@@ -201,7 +202,7 @@
 
 .archive-etymology-head {
   font-family: var(--font-heading);
-  font-size: 9px;
+  font-size: var(--type-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -217,7 +218,7 @@
 .archive-meta {
   display: flex;
   gap: 12px;
-  font-size: 9px;
+  font-size: var(--type-xs);
   color: var(--color-text-muted);
   margin-top: 7px;
   text-transform: uppercase;

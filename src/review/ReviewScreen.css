@@ -43,7 +43,7 @@
 }
 
 .free-drill-btn:hover {
-  background: rgba(255, 204, 0, 0.06);
+  background: rgba(255, 204, 0, 0.12);
 }
 
 /* Promotion ceremony: a full-screen beat for a faction rank-up, distinct
@@ -64,7 +64,7 @@
 .promotion-ceremony-card {
   background: linear-gradient(135deg, #4a3200 0%, #1a1200 100%);
   border: 2px solid #ffcc00;
-  box-shadow: 0 0 24px rgba(0, 0, 0, 0.7), 0 0 40px rgba(255, 204, 0, 0.35);
+  box-shadow: var(--shadow-md), 0 0 40px rgba(255, 204, 0, 0.35);
   padding: 24px 20px;
   text-align: center;
   max-width: 320px;
@@ -139,7 +139,7 @@
 .double-agent-card {
   background: var(--color-surface);
   border: 2px solid var(--color-danger);
-  box-shadow: 0 0 24px rgba(0, 0, 0, 0.7), 0 0 40px color-mix(in srgb, var(--color-danger) 30%, transparent);
+  box-shadow: var(--shadow-md), 0 0 40px color-mix(in srgb, var(--color-danger) 30%, transparent);
   padding: 20px 18px;
   text-align: center;
   max-width: 320px;
@@ -194,7 +194,7 @@
 
 .double-agent-name {
   font-family: var(--font-heading);
-  font-size: 10px;
+  font-size: var(--type-xs);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-align: center;
@@ -410,9 +410,10 @@
   background: var(--color-surface);
   padding: 20px 16px;
   text-align: center;
+  border-radius: var(--radius-md);
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--color-accent) 15%, transparent),
-    4px 4px 0 rgba(0, 0, 0, 0.7);
+    var(--shadow-md);
   position: relative;
   transform-style: preserve-3d;
   animation: card-flip-in 0.35s ease-out, card-breathe 4s ease-in-out 0.4s infinite;
@@ -450,7 +451,7 @@
 
 .term-eyebrow {
   font-family: var(--font-heading);
-  font-size: 9px;
+  font-size: var(--type-xs);
   letter-spacing: 0.25em;
   color: var(--color-text-muted);
   text-transform: uppercase;
@@ -716,16 +717,17 @@
   padding: 10px 14px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   color: var(--color-text);
   cursor: pointer;
   text-align: left;
   transition: border-color 0.12s, background 0.12s, color 0.12s;
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-sm);
 }
 
 .option-btn:hover:not(.correct):not(.wrong) {
   border-color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 6%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
   color: var(--color-text);
 }
 
@@ -778,14 +780,15 @@
    transition, so answering never pushes the Next button off-screen. */
 .result-panel {
   border: 2px solid var(--color-success);
-  background: color-mix(in srgb, var(--color-success) 6%, transparent);
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
   padding: 10px 12px;
   text-align: center;
+  border-radius: var(--radius-sm);
 }
 
 .result-panel.wrong {
   border-color: var(--color-danger);
-  background: color-mix(in srgb, var(--color-danger) 6%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
 }
 
 .result-stamp {
@@ -885,7 +888,7 @@
   padding: 8px 4px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .session-stat-value {
@@ -896,7 +899,7 @@
 }
 
 .session-stat-label {
-  font-size: 10px;
+  font-size: var(--type-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-muted);
@@ -1020,7 +1023,7 @@
 
 .result-chip {
   font-family: var(--font-heading);
-  font-size: 10px;
+  font-size: var(--type-xs);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1045,7 +1048,7 @@
 
 .result-intel-label {
   font-family: var(--font-heading);
-  font-size: 9px;
+  font-size: var(--type-xs);
   font-weight: 700;
   letter-spacing: 0.2em;
   color: var(--color-accent);
@@ -1115,17 +1118,18 @@
   background: var(--color-primary);
   color: #fff;
   border: 2px solid var(--color-accent);
+  border-radius: var(--radius-sm);
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   cursor: pointer;
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-md);
   transition: transform 0.1s, box-shadow 0.1s;
 }
 
 .next-btn:hover {
   transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-md);
 }

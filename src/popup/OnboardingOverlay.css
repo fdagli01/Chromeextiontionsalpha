@@ -18,7 +18,8 @@
 .onboarding-card {
   background: var(--color-surface);
   border: 2px solid var(--color-accent);
-  box-shadow: 0 0 24px rgba(0, 0, 0, 0.7), 0 0 40px color-mix(in srgb, var(--color-accent) 30%, transparent);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), 0 0 30px color-mix(in srgb, var(--color-accent) 25%, transparent);
   padding: 20px 18px;
   max-width: 340px;
   width: 100%;
@@ -86,6 +87,7 @@
   background: var(--color-primary);
   color: var(--color-text);
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   padding: 10px 18px;
   font-family: var(--font-heading);
   font-size: 12px;
