@@ -20,7 +20,12 @@ export function FactionsScreen() {
 
   if (factions === null) return <p className="empty-state">Loading...</p>
   if (factions.length === 0) {
-    return <p className="empty-state">This mainframe has no rival factions to court — yet.</p>
+    return (
+      <div className="empty-state-wrap">
+        <span className="empty-state-icon" aria-hidden="true">🏳️</span>
+        <p className="empty-state">This mainframe has no rival factions to court — yet.</p>
+      </div>
+    )
   }
 
   return (

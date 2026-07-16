@@ -421,6 +421,7 @@ export function ReviewScreen() {
     if (sessionStats.reviewed === 0) {
       return (
         <div className="empty-state-wrap">
+          <span className="empty-state-icon" aria-hidden="true">📭</span>
           <p className="empty-state">
             No words due for review. Select a word on any page and right-click to archive it.
           </p>

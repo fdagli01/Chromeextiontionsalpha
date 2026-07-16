@@ -272,3 +272,15 @@ body.is-windowed .app {
   flex-direction: column;
   align-items: center;
 }
+
+.empty-state-icon {
+  font-size: 26px;
+  line-height: 1;
+  margin-top: 40px;
+  opacity: 0.5;
+}
+
+.empty-state-icon + .empty-state,
+.empty-state-wrap .empty-state-icon + .empty-state {
+  margin-top: 10px;
+}

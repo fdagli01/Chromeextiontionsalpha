@@ -63,9 +63,12 @@ export function ArchiveScreen() {
     return (
       <>
         {secretsSection}
-        <p className="empty-state">
-          Your archive is still empty. Select a word on any page and right-click to add it.
-        </p>
+        <div className="empty-state-wrap">
+          <span className="empty-state-icon" aria-hidden="true">🗃️</span>
+          <p className="empty-state">
+            Your archive is still empty. Select a word on any page and right-click to add it.
+          </p>
+        </div>
       </>
     )
 
