@@ -22,6 +22,8 @@ export const MAX_STREAK_SHIELDS = 3
  * @param {Object} [opts]
  * @param {number} [opts.multiplier] - momentum/event XP multiplier applied to the
  *   per-review XP (not the one-time daily-quest bonus). Defaults to 1.
+ * @param {number} [opts.combo] - consecutive-correct count after this review, for
+ *   tracking the day's best combo (a daily-briefing objective). Defaults to 0.
  * @param {Date} [opts.now]
  * @returns {Promise<{
  *   progress: import('../db/progressRepo.js').ThemeProgress,
@@ -33,7 +35,7 @@ export const MAX_STREAK_SHIELDS = 3
  * }>}
  */
 export async function awardReviewXp(themeId, quality, opts = {}) {
-  const { multiplier = 1, now = new Date() } = opts
+  const { multiplier = 1, combo = 0, now = new Date() } = opts
   const current = await getProgress(themeId)
   const today = now.toISOString().slice(0, 10)
 
@@ -63,6 +65,10 @@ export async function awardReviewXp(themeId, quality, opts = {}) {
   // supply is earned through play rather than bought.
   const nextShields = Math.min(MAX_STREAK_SHIELDS, shieldsAfterUse + (leveledUp ? 1 : 0))
 
+  // Daily-briefing objective tracking, reset when the quest day rolls over.
+  const dailyBestCombo = Math.max(isNewQuestDay ? 0 : current.dailyBestCombo, combo)
+  const dailyXp = (isNewQuestDay ? 0 : current.dailyXp) + xpGained
+
   const { badges, newlyEarned } = evaluateBadges({
     streak: nextStreak,
     level: nextLevel,
@@ -80,6 +86,8 @@ export async function awardReviewXp(themeId, quality, opts = {}) {
     dailyQuestDate: today,
     dailyReviewCount,
     dailyQuestClaimed: alreadyClaimed || questJustCompleted,
+    dailyBestCombo,
+    dailyXp,
   })
 
   emitProgressChanged(themeId, progress)

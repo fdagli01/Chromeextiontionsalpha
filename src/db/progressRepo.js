@@ -13,6 +13,8 @@ import { STORE_PROGRESS, withStore } from './connection.js'
  * @property {boolean} dailyQuestClaimed - whether today's quest bonus XP has been awarded
  * @property {string[]} secretsUnlocked - lowercased terms whose one-time secret anecdote has been revealed
  * @property {number} streakShields - streak-insurance tokens; one is auto-spent to forgive a single missed day
+ * @property {number} dailyBestCombo - best consecutive-correct combo reached on dailyQuestDate
+ * @property {number} dailyXp - XP earned on dailyQuestDate (for daily-briefing objectives)
  */
 
 /**
@@ -32,6 +34,8 @@ function emptyProgress(themeId) {
     dailyQuestClaimed: false,
     secretsUnlocked: [],
     streakShields: 0,
+    dailyBestCombo: 0,
+    dailyXp: 0,
   }
 }
 
@@ -49,6 +53,8 @@ export async function getProgress(themeId) {
     dailyQuestClaimed: false,
     secretsUnlocked: [],
     streakShields: 0,
+    dailyBestCombo: 0,
+    dailyXp: 0,
     ...existing,
   }
 }

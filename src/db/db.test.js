@@ -86,6 +86,8 @@ describe('progressRepo', () => {
       dailyQuestClaimed: false,
       secretsUnlocked: [],
       streakShields: 0,
+      dailyBestCombo: 0,
+      dailyXp: 0,
     })
   })
 
@@ -104,6 +106,8 @@ describe('progressRepo', () => {
       dailyQuestClaimed: false,
       secretsUnlocked: [],
       streakShields: 0,
+      dailyBestCombo: 0,
+      dailyXp: 0,
     })
   })
 })

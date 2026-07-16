@@ -201,7 +201,7 @@ export function ReviewScreen() {
     await reviewWord(current.id, quality)
     logReviewActivity(current.term, correct)
     let { progress: nextProgress, xpGained, leveledUp, streakShieldUsed, newBadges, dailyQuest } =
-      await awardReviewXp(theme.id, quality, { multiplier: momentumMultiplier })
+      await awardReviewXp(theme.id, quality, { multiplier: momentumMultiplier, combo: nextCombo })
 
     // Cold case sessions run at double XP — the whole point is to make
     // rescuing a near-forgotten word worth more than a routine review.

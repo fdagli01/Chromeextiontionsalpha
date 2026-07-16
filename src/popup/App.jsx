@@ -13,6 +13,8 @@ import { SettingsScreen } from '../settings/SettingsScreen.jsx'
 import { CrisisScreen } from '../crisis/CrisisScreen.jsx'
 import { WeeklyReportOverlay } from './WeeklyReportOverlay.jsx'
 import { OnboardingOverlay } from './OnboardingOverlay.jsx'
+import { DailyBriefingOverlay } from './DailyBriefingOverlay.jsx'
+import { computeDailyObjectives } from '../progression/briefing.js'
 import {
   getThemeAudioChannelLabel,
   hasThemeAudio,
@@ -28,6 +30,7 @@ const isDetachedWindow = new URLSearchParams(window.location.search).has('window
 if (isDetachedWindow) document.body.classList.add('is-windowed')
 const WEEKLY_REPORT_SHOWN_KEY = 'weeklyReportShownWeek'
 const ONBOARDING_SEEN_KEY = 'onboardingSeenV1'
+const BRIEFING_SHOWN_KEY = 'dailyBriefingShownDate'
 
 /** Monday-of-the-current-week as a YYYY-MM-DD key, used to show the intel report once per week. */
 function currentWeekKey(now = new Date()) {
@@ -84,6 +87,7 @@ function AppShell({ activeThemeId, onThemeChange }) {
   const [level, setLevel] = useState(1)
   const [weeklyReport, setWeeklyReport] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [dailyBriefing, setDailyBriefing] = useState(null)
 
   const hasAudio = hasThemeAudio(theme.id)
 
@@ -139,6 +143,29 @@ function AppShell({ activeThemeId, onThemeChange }) {
     chrome.storage.local.get('pendingCrisis').then(({ pendingCrisis: stored }) => {
       if (!cancelled && stored?.themeId === theme.id) setPendingCrisis(stored)
     })
+    return () => {
+      cancelled = true
+    }
+  }, [theme.id])
+
+  // Daily briefing: the first open each day surfaces a "mission envelope"
+  // with the day's three objectives. Shown at most once per calendar day
+  // (sync flag, so it's per-person not per-device) and never on the very
+  // first launch, where the onboarding card takes precedence. Objectives are
+  // computed for the active theme's tracked daily metrics.
+  useEffect(() => {
+    let cancelled = false
+    const today = new Date().toISOString().slice(0, 10)
+    chrome.storage.sync
+      .get([BRIEFING_SHOWN_KEY, ONBOARDING_SEEN_KEY])
+      .then(({ [BRIEFING_SHOWN_KEY]: lastShown, [ONBOARDING_SEEN_KEY]: onboardingSeen }) => {
+        if (cancelled || lastShown === today || !onboardingSeen) return
+        getProgress(theme.id).then((progress) => {
+          if (cancelled) return
+          setDailyBriefing(computeDailyObjectives(progress, today))
+          chrome.storage.sync.set({ [BRIEFING_SHOWN_KEY]: today })
+        })
+      })
     return () => {
       cancelled = true
     }
@@ -289,6 +316,13 @@ function AppShell({ activeThemeId, onThemeChange }) {
         <WeeklyReportOverlay summary={weeklyReport} onDismiss={() => setWeeklyReport(null)} />
       )}
       {showOnboarding && <OnboardingOverlay onDismiss={dismissOnboarding} />}
+      {!showOnboarding && dailyBriefing && (
+        <DailyBriefingOverlay
+          terminalName={theme.terminalName}
+          objectives={dailyBriefing}
+          onDismiss={() => setDailyBriefing(null)}
+        />
+      )}
     </div>
   )
 }

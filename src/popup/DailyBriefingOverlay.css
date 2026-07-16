@@ -1,0 +1,162 @@
+.briefing-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.86);
+  animation: briefing-fade-in 0.3s ease;
+}
+
+@keyframes briefing-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.briefing-card {
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), 0 0 30px color-mix(in srgb, var(--color-accent) 25%, transparent);
+  padding: 22px 20px;
+  max-width: 340px;
+  width: 100%;
+}
+
+.briefing-card.opened {
+  animation: briefing-unseal 0.4s ease;
+}
+
+@keyframes briefing-unseal {
+  from { transform: scale(0.94) rotateX(8deg); opacity: 0.4; }
+  to { transform: scale(1) rotateX(0); opacity: 1; }
+}
+
+/* Sealed state: the whole card is a button styled like a wax-sealed envelope. */
+.briefing-envelope {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 18px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.briefing-wax {
+  font-size: 34px;
+  color: var(--color-danger);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--color-danger) 60%, transparent);
+  animation: briefing-wax-throb 1.8s ease-in-out infinite;
+}
+
+@keyframes briefing-wax-throb {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.briefing-envelope-label {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--color-accent);
+}
+
+.briefing-envelope-hint {
+  font-family: var(--font-body);
+  font-size: var(--type-xs);
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.briefing-label {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.briefing-objectives {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.briefing-objective {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-strong);
+}
+
+.briefing-objective.done {
+  border-color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+}
+
+.briefing-check {
+  font-size: 15px;
+  line-height: 1;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.briefing-objective.done .briefing-check {
+  color: var(--color-success);
+}
+
+.briefing-objective-label {
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: var(--type-sm);
+  color: var(--color-text);
+}
+
+.briefing-objective-count {
+  font-family: var(--font-heading);
+  font-size: var(--type-xs);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.briefing-objective.done .briefing-objective-count {
+  color: var(--color-success);
+}
+
+.briefing-complete {
+  font-family: var(--font-body);
+  font-size: var(--type-sm);
+  color: var(--color-success);
+  text-align: center;
+  margin: 0 0 12px;
+}
+
+.briefing-dismiss {
+  display: block;
+  width: 100%;
+  background: var(--color-primary);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
