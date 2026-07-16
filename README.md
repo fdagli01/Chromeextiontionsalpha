@@ -42,6 +42,8 @@ Every theme features **custom UI motifs, ambient soundscapes, and thematic trivi
 
 ---
 Development Log
+v0.3.1: Major "game feel" pass — combo momentum multiplier with a live signal-strength meter, streak-insurance shields, a once-a-day mission briefing envelope, calendar world events (weekend double XP), a CRT boot-up sequence on mainframe switch, random intercept bonus events, a shareable weekly report card, and a session-closing cliffhanger.
+
 v0.2.2: Improved shell readability and contrast (header, tabs, buttons) based on user feedback about the color/UI design; introduced shared radius/shadow/type tokens for consistency across themes.
 
 v0.2.1: Added ambient soundscapes for the Portuguese crew-murmur theme, resolved minor UI rendering bugs.
