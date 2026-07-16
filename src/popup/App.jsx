@@ -333,7 +333,11 @@ function AppShell({ activeThemeId, onThemeChange }) {
       </nav>
 
       {weeklyReport && (
-        <WeeklyReportOverlay summary={weeklyReport} onDismiss={() => setWeeklyReport(null)} />
+        <WeeklyReportOverlay
+          summary={weeklyReport}
+          terminalName={theme.terminalName}
+          onDismiss={() => setWeeklyReport(null)}
+        />
       )}
       {showOnboarding && <OnboardingOverlay onDismiss={dismissOnboarding} />}
       {!showOnboarding && dailyBriefing && (

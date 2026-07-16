@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { buildShareCard, copyToClipboard } from '../progression/shareCard.js'
 import './WeeklyReportOverlay.css'
 
 /**
@@ -5,9 +7,29 @@ import './WeeklyReportOverlay.css'
  * themes — reviewed count, accuracy, and the terms missed most often, framed
  * as an "intel report" to fit the dossier aesthetic. Purely informational,
  * dismissible, never blocks anything.
- * @param {{summary: {reviewed: number, correct: number, accuracyPct: number, topMissed: string[]}, onDismiss: () => void}} props
+ * @param {{summary: {reviewed: number, correct: number, accuracyPct: number, topMissed: string[]}, terminalName?: string, onDismiss: () => void}} props
  */
-export function WeeklyReportOverlay({ summary, onDismiss }) {
+export function WeeklyReportOverlay({ summary, terminalName, onDismiss }) {
+  const [copied, setCopied] = useState(false)
+
+  async function share() {
+    const card = buildShareCard({
+      title: terminalName || 'POLYGLOT CHRONICLE',
+      subtitle: 'Weekly Intel Report',
+      rows: [
+        ['Reviewed', summary.reviewed],
+        ['Accuracy', `${summary.accuracyPct}%`],
+        ...(summary.topMissed.length > 0 ? [['At large', summary.topMissed.slice(0, 3).join(', ')]] : []),
+      ],
+      footer: 'via Polyglot Chronicle',
+    })
+    const ok = await copyToClipboard(card)
+    if (ok) {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   return (
     <div className="weekly-report-overlay">
       <div className="weekly-report-card">
@@ -34,9 +56,14 @@ export function WeeklyReportOverlay({ summary, onDismiss }) {
         ) : (
           <p className="weekly-report-clean">No repeat offenders this week — clean record.</p>
         )}
-        <button className="weekly-report-dismiss" onClick={onDismiss}>
-          FILE REPORT →
-        </button>
+        <div className="weekly-report-actions">
+          <button className="weekly-report-share" onClick={share}>
+            {copied ? '✓ COPIED' : '⧉ SHARE CARD'}
+          </button>
+          <button className="weekly-report-dismiss" onClick={onDismiss}>
+            FILE REPORT →
+          </button>
+        </div>
       </div>
     </div>
   )
