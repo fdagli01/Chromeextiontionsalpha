@@ -8,6 +8,7 @@ import { awardReputation, getFactionProgress } from '../db/factionsRepo.js'
 import { logReviewActivity } from '../db/activityLog.js'
 import { awardBonusXp, awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
 import { isUnlocked, nextFeatureUnlock } from '../progression/unlocks.js'
+import { getActiveWorldEvent, worldEventMultiplier } from '../progression/worldEvents.js'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -98,6 +99,7 @@ export function ReviewScreen() {
   const hasTension = theme.tensionLevels.length > 0
   const tensionVisuals = useMemo(() => resolveTensionVisuals(theme, tension), [theme, tension])
   const reverseMode = useMemo(() => isReverseDay(), [])
+  const worldEvent = useMemo(() => getActiveWorldEvent(), [])
 
   useEffect(() => {
     let cancelled = false
@@ -197,11 +199,14 @@ export function ReviewScreen() {
     // more per correct answer. A miss resets the combo and the bonus.
     const nextCombo = correct ? combo + 1 : 0
     const momentumMultiplier = correct ? comboMultiplier(nextCombo) : 1
+    // A world event's XP boost stacks on top of the momentum multiplier, so a
+    // hot combo on a Double Dispatch weekend pays out especially well.
+    const totalMultiplier = momentumMultiplier * worldEventMultiplier(worldEvent)
 
     await reviewWord(current.id, quality)
     logReviewActivity(current.term, correct)
     let { progress: nextProgress, xpGained, leveledUp, streakShieldUsed, newBadges, dailyQuest } =
-      await awardReviewXp(theme.id, quality, { multiplier: momentumMultiplier, combo: nextCombo })
+      await awardReviewXp(theme.id, quality, { multiplier: totalMultiplier, combo: nextCombo })
 
     // Cold case sessions run at double XP — the whole point is to make
     // rescuing a near-forgotten word worth more than a routine review.
@@ -301,9 +306,10 @@ export function ReviewScreen() {
 
     setProgress(finalProgress)
     const momentumTag = momentumMultiplier > 1 ? ` (×${momentumMultiplier} MOMENTUM)` : ''
+    const eventTag = worldEvent ? ` (${worldEvent.label} ×${worldEvent.xpMultiplier})` : ''
     setXpToast(
       xpGained > 0
-        ? `+${xpGained} XP${coldCaseSession ? ' (COLD CASE ×2)' : ''}${momentumTag}`
+        ? `+${xpGained} XP${coldCaseSession ? ' (COLD CASE ×2)' : ''}${momentumTag}${eventTag}`
         : ''
     )
     setBadgeToast(newBadges.length > 0 ? newBadges[0] : null)
@@ -552,6 +558,14 @@ export function ReviewScreen() {
         </div>
       )}
       {eraWipe && <div className="era-wipe" aria-hidden="true" />}
+
+      {worldEvent && (
+        <div className="world-event-banner" title={worldEvent.blurb}>
+          <span className="world-event-icon" aria-hidden="true">{worldEvent.icon}</span>
+          <span className="world-event-label">{worldEvent.label}</span>
+          <span className="world-event-mult">×{worldEvent.xpMultiplier} XP</span>
+        </div>
+      )}
 
       <div className="review-stats">
         <span className="stat-rank">⚑ {rank}</span>
