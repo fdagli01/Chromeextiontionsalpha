@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  comboMeterFill,
+  comboMultiplier,
   computeStreak,
   levelForXp,
   levelProgress,
@@ -93,5 +95,33 @@ describe('streakTier', () => {
     expect(streakTier(13)).toBe(2)
     expect(streakTier(14)).toBe(3)
     expect(streakTier(100)).toBe(3)
+  })
+})
+
+describe('comboMultiplier', () => {
+  it('stays at 1x below the first threshold', () => {
+    expect(comboMultiplier(0)).toBe(1)
+    expect(comboMultiplier(2)).toBe(1)
+  })
+
+  it('steps up through combo tiers', () => {
+    expect(comboMultiplier(3)).toBe(1.5)
+    expect(comboMultiplier(5)).toBe(2)
+    expect(comboMultiplier(8)).toBe(2.5)
+    expect(comboMultiplier(12)).toBe(3)
+    expect(comboMultiplier(50)).toBe(3)
+  })
+})
+
+describe('comboMeterFill', () => {
+  it('fills from 0 toward the next tier', () => {
+    expect(comboMeterFill(0)).toBe(0)
+    expect(comboMeterFill(3)).toBeCloseTo(0)
+    expect(comboMeterFill(4)).toBeCloseTo(0.5)
+  })
+
+  it('reads as full at the top tier', () => {
+    expect(comboMeterFill(12)).toBe(1)
+    expect(comboMeterFill(99)).toBe(1)
   })
 })

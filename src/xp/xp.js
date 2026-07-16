@@ -113,3 +113,38 @@ export function streakTier(streak) {
   if (streak >= 3) return 1
   return 0
 }
+
+/**
+ * Momentum multiplier tiers for a consecutive-correct combo. Answering
+ * several in a row builds "momentum" that boosts XP, giving the review loop
+ * a risk/reward rhythm — a wrong answer resets the combo (and the bonus) to
+ * zero. Tiers are stepwise (not continuous) so the payoff is legible: the
+ * player can feel each new multiplier land.
+ * @param {number} combo - consecutive-correct count (0 = no combo yet)
+ * @returns {number} XP multiplier (1 when there's no meaningful combo)
+ */
+export function comboMultiplier(combo) {
+  if (combo >= 12) return 3
+  if (combo >= 8) return 2.5
+  if (combo >= 5) return 2
+  if (combo >= 3) return 1.5
+  return 1
+}
+
+/**
+ * Fraction (0-1) of the way from the current combo multiplier tier to the
+ * next, for a filling "momentum meter". Returns 1 at the top tier so the bar
+ * reads as maxed out rather than empty.
+ * @param {number} combo
+ * @returns {number}
+ */
+export function comboMeterFill(combo) {
+  const thresholds = [3, 5, 8, 12]
+  if (combo >= thresholds[thresholds.length - 1]) return 1
+  let lower = 0
+  for (const t of thresholds) {
+    if (combo < t) return (combo - lower) / (t - lower)
+    lower = t
+  }
+  return 1
+}

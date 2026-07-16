@@ -22,7 +22,7 @@ import {
 } from '../audio/sfx.js'
 import { speakTerm } from '../audio/speak.js'
 import { playPronunciationSting } from '../audio/themeAudioControl.js'
-import { levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
+import { comboMeterFill, comboMultiplier, levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
 import { resolveTensionVisuals, resolveThemeStage } from '../themes/index.js'
 import { findFactionsForTerm, rankForReputation } from '../factions/factions.js'
 import { findSecretForTerm } from '../secrets/secrets.js'
@@ -190,11 +190,18 @@ export function ReviewScreen() {
           ? QUALITY.HARD
           : QUALITY.GOOD
 
+    // Momentum: the answer that lands on (or extends past) a combo tier is
+    // rewarded at that tier's multiplier, so a running streak visibly pays
+    // more per correct answer. A miss resets the combo and the bonus.
+    const nextCombo = correct ? combo + 1 : 0
+    const momentumMultiplier = correct ? comboMultiplier(nextCombo) : 1
+
     await reviewWord(current.id, quality)
     logReviewActivity(current.term, correct)
-    let { progress: nextProgress, xpGained, leveledUp, newBadges, dailyQuest } = await awardReviewXp(
+    let { progress: nextProgress, xpGained, baseXp, leveledUp, newBadges, dailyQuest } = await awardReviewXp(
       theme.id,
-      quality
+      quality,
+      { multiplier: momentumMultiplier }
     )
 
     // Cold case sessions run at double XP — the whole point is to make
@@ -255,7 +262,6 @@ export function ReviewScreen() {
         ? Math.max(0, tension - 1)
         : Math.min(3, tension + 1)
       : 0
-    const nextCombo = correct ? combo + 1 : 0
 
     const sfxOn = await getSetting('sfxEnabled', true)
     const streakTierUp = streakTier(nextProgress.streak) > streakTier(progress?.streak ?? 0)
@@ -295,7 +301,12 @@ export function ReviewScreen() {
     }))
 
     setProgress(finalProgress)
-    setXpToast(xpGained > 0 ? `+${xpGained} XP${coldCaseSession ? ' (COLD CASE ×2)' : ''}` : '')
+    const momentumTag = momentumMultiplier > 1 ? ` (×${momentumMultiplier} MOMENTUM)` : ''
+    setXpToast(
+      xpGained > 0
+        ? `+${xpGained} XP${coldCaseSession ? ' (COLD CASE ×2)' : ''}${momentumTag}`
+        : ''
+    )
     setBadgeToast(newBadges.length > 0 ? newBadges[0] : null)
     setQuestToast(dailyQuest.justCompleted)
     if (sfxOn) {
@@ -467,6 +478,10 @@ export function ReviewScreen() {
     )
   }
 
+  const currentMultiplier = comboMultiplier(combo)
+  const momentumFill = comboMeterFill(combo)
+  const momentumTier = combo >= 12 ? 4 : combo >= 8 ? 3 : combo >= 5 ? 2 : combo >= 3 ? 1 : 0
+
   const { level, xpIntoLevel, xpToNextLevel } = levelProgress(progress.xp)
   const rank = rankForLevel(theme.rankNames, level)
   const barPct = xpToNextLevel > 0 ? Math.round((xpIntoLevel / xpToNextLevel) * 100) : 100
@@ -537,6 +552,17 @@ export function ReviewScreen() {
             <span key={i} className={`pip ${i < dailyQuestCount ? 'filled' : ''}`} />
           ))}
         </div>
+      </div>
+
+      <div
+        className={`momentum-meter tier-${momentumTier} ${combo > 0 ? 'active' : ''}`}
+        title={`Momentum: answer in a row to raise your XP multiplier (currently ×${currentMultiplier})`}
+      >
+        <span className="momentum-label">MOMENTUM</span>
+        <div className="momentum-track">
+          <div className="momentum-fill" style={{ width: `${Math.round(momentumFill * 100)}%` }} />
+        </div>
+        <span className="momentum-mult">×{currentMultiplier}</span>
       </div>
 
       <div

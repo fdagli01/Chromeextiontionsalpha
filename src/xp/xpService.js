@@ -16,16 +16,21 @@ export const DAILY_QUEST_BONUS_XP = 25
  * bonus the moment the target is reached). Called once per graded review.
  * @param {string} themeId
  * @param {number} quality - 1-4, see srs/fsrs.js QUALITY
- * @param {Date} [now]
+ * @param {Object} [opts]
+ * @param {number} [opts.multiplier] - momentum/event XP multiplier applied to the
+ *   per-review XP (not the one-time daily-quest bonus). Defaults to 1.
+ * @param {Date} [opts.now]
  * @returns {Promise<{
  *   progress: import('../db/progressRepo.js').ThemeProgress,
  *   xpGained: number,
+ *   baseXp: number,
  *   leveledUp: boolean,
  *   newBadges: import('../badges/badges.js').BadgeDef[],
  *   dailyQuest: {current: number, target: number, justCompleted: boolean, bonusXp: number},
  * }>}
  */
-export async function awardReviewXp(themeId, quality, now = new Date()) {
+export async function awardReviewXp(themeId, quality, opts = {}) {
+  const { multiplier = 1, now = new Date() } = opts
   const current = await getProgress(themeId)
   const today = now.toISOString().slice(0, 10)
 
@@ -35,7 +40,10 @@ export async function awardReviewXp(themeId, quality, now = new Date()) {
   const questJustCompleted = !alreadyClaimed && dailyReviewCount >= DAILY_QUEST_TARGET
   const bonusXp = questJustCompleted ? DAILY_QUEST_BONUS_XP : 0
 
-  const xpGained = xpForQuality(quality) + bonusXp
+  // The momentum multiplier scales the earned-per-review XP but not the
+  // flat daily-quest bonus, so a combo can't inflate the fixed quest reward.
+  const baseXp = Math.round(xpForQuality(quality) * multiplier)
+  const xpGained = baseXp + bonusXp
   const nextXp = current.xp + xpGained
   const nextLevel = levelForXp(nextXp)
   const nextStreak = computeStreak(current.lastActiveDate, today, current.streak)
@@ -63,6 +71,7 @@ export async function awardReviewXp(themeId, quality, now = new Date()) {
   return {
     progress,
     xpGained,
+    baseXp,
     leveledUp: nextLevel > current.level,
     newBadges: newlyEarned,
     dailyQuest: {
