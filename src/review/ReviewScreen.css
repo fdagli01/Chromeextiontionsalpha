@@ -1188,6 +1188,35 @@
   border-color: #3dff9e !important;
 }
 
+/* Mentor NPC line: a short in-character reaction, visually distinct from
+   the historical-fact intel box below it (italic, no border box) so it
+   reads as a spoken aside rather than another document. */
+.mentor-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 0 2px;
+  font-family: var(--font-body);
+  font-size: var(--type-xs);
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.mentor-icon {
+  font-style: normal;
+  flex-shrink: 0;
+}
+
+.mentor-name {
+  font-family: var(--font-heading);
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
 /* Combo glow: as the streak crosses the ×2 and ×2.5 tiers, the term card
    picks up a pulsing accent halo so a hot streak is felt on the card
    itself, not just in the meter. */

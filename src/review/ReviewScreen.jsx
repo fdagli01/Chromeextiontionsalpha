@@ -10,6 +10,7 @@ import { awardBonusXp, awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET }
 import { isUnlocked, nextFeatureUnlock } from '../progression/unlocks.js'
 import { getActiveWorldEvent, worldEventMultiplier } from '../progression/worldEvents.js'
 import { rollInterceptEvent } from '../progression/randomEvents.js'
+import { getMentor, pickMentorLine } from '../progression/mentors.js'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -74,6 +75,8 @@ export function ReviewScreen() {
   const [questToast, setQuestToast] = useState(false)
   const [shieldToast, setShieldToast] = useState(false)
   const [interceptToast, setInterceptToast] = useState(null)
+  const [mentorLine, setMentorLine] = useState(null)
+  const [sessionMentorLine, setSessionMentorLine] = useState(null)
   const [levelUpInfo, setLevelUpInfo] = useState(null)
   const [flickerKey, setFlickerKey] = useState(0)
   const [shake, setShake] = useState(false)
@@ -153,6 +156,7 @@ export function ReviewScreen() {
     setQuestToast(false)
     setShieldToast(false)
     setInterceptToast(null)
+    setMentorLine(null)
     setLevelUpInfo(null)
     setFactionToast(null)
     setSecretReveal(null)
@@ -329,6 +333,18 @@ export function ReviewScreen() {
     setBadgeToast(newBadges.length > 0 ? newBadges[0] : null)
     setQuestToast(dailyQuest.justCompleted)
     setShieldToast(streakShieldUsed)
+    // Mentor voice: at most one line per answer, prioritizing the rarest,
+    // most significant moment so it never reads as noisy chatter.
+    const mentorMoment = leveledUp
+      ? 'levelUp'
+      : streakTierUp
+        ? 'streakUp'
+        : comboMilestoneHit
+          ? 'comboMilestone'
+          : !correct
+            ? 'miss'
+            : null
+    setMentorLine(mentorMoment ? pickMentorLine(theme.id, mentorMoment) : null)
     if (sfxOn) {
       if (newBadges.length > 0) playBadgeUnlock()
       else if (dailyQuest.justCompleted) playQuestComplete()
@@ -385,6 +401,7 @@ export function ReviewScreen() {
     setQuestToast(false)
     setShieldToast(false)
     setInterceptToast(null)
+    setMentorLine(null)
     setLevelUpInfo(null)
     setFactionToast(null)
     setPromotionCeremony(null)
@@ -425,6 +442,7 @@ export function ReviewScreen() {
   useEffect(() => {
     if (!queue || queue.length !== 0 || sessionStats.reviewed === 0 || sessionCompleteAnnouncedRef.current) return
     sessionCompleteAnnouncedRef.current = true
+    setSessionMentorLine(pickMentorLine(theme.id, 'sessionComplete'))
     getSetting('sfxEnabled', true).then((sfxOn) => {
       if (sfxOn) playSessionComplete()
     })
@@ -510,6 +528,13 @@ export function ReviewScreen() {
           <span className="cliffhanger-icon" aria-hidden="true">{cliffhanger.icon}</span>
           <span className="cliffhanger-text">{cliffhanger.text}</span>
         </div>
+        {sessionMentorLine && (
+          <div className="mentor-line">
+            <span className="mentor-icon" aria-hidden="true">{getMentor(theme.id)?.icon}</span>
+            <span className="mentor-name">{getMentor(theme.id)?.name}:</span>
+            <span className="mentor-quote">"{sessionMentorLine}"</span>
+          </div>
+        )}
         <p className="empty-state">No more words due. Come back later, or archive new ones from any page.</p>
         {coldCaseCta}
         {freeDrillCta}
@@ -749,6 +774,14 @@ export function ReviewScreen() {
                   {factionToast.emblem} +{FACTION_REPUTATION_PER_CORRECT} {factionToast.name}
                 </span>
               )}
+            </div>
+          )}
+
+          {mentorLine && (
+            <div className="mentor-line">
+              <span className="mentor-icon" aria-hidden="true">{getMentor(theme.id)?.icon}</span>
+              <span className="mentor-name">{getMentor(theme.id)?.name}:</span>
+              <span className="mentor-quote">"{mentorLine}"</span>
             </div>
           )}
 
