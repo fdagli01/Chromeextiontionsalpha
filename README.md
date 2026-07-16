@@ -42,6 +42,8 @@ Every theme features **custom UI motifs, ambient soundscapes, and thematic trivi
 
 ---
 Development Log
+v0.2.2: Improved shell readability and contrast (header, tabs, buttons) based on user feedback about the color/UI design; introduced shared radius/shadow/type tokens for consistency across themes.
+
 v0.2.1: Added ambient soundscapes for the Portuguese crew-murmur theme, resolved minor UI rendering bugs.
 
 v0.2.0: Introduced versioning, improved content renewal for legacy words, added level-up notifications.
