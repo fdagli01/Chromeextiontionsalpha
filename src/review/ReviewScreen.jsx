@@ -9,6 +9,7 @@ import { logReviewActivity } from '../db/activityLog.js'
 import { awardBonusXp, awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
 import { isUnlocked, nextFeatureUnlock } from '../progression/unlocks.js'
 import { getActiveWorldEvent, worldEventMultiplier } from '../progression/worldEvents.js'
+import { rollInterceptEvent } from '../progression/randomEvents.js'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -72,6 +73,7 @@ export function ReviewScreen() {
   const [badgeToast, setBadgeToast] = useState(null)
   const [questToast, setQuestToast] = useState(false)
   const [shieldToast, setShieldToast] = useState(false)
+  const [interceptToast, setInterceptToast] = useState(null)
   const [levelUpInfo, setLevelUpInfo] = useState(null)
   const [flickerKey, setFlickerKey] = useState(0)
   const [shake, setShake] = useState(false)
@@ -150,6 +152,7 @@ export function ReviewScreen() {
     setBadgeToast(null)
     setQuestToast(false)
     setShieldToast(false)
+    setInterceptToast(null)
     setLevelUpInfo(null)
     setFactionToast(null)
     setSecretReveal(null)
@@ -258,6 +261,17 @@ export function ReviewScreen() {
           secretsUnlocked: [...nextProgress.secretsUnlocked, secret.term],
         })
         setSecretReveal(secret)
+      }
+
+      // Random intercept: a rare surprise bonus on a correct recall, awarded
+      // outside the normal per-review XP so it reads as a windfall.
+      const intercept = rollInterceptEvent()
+      if (intercept) {
+        const interceptResult = await awardBonusXp(theme.id, intercept.bonusXp)
+        finalProgress = interceptResult.progress
+        leveledUp = leveledUp || interceptResult.leveledUp
+        newBadges = [...newBadges, ...interceptResult.newBadges]
+        setInterceptToast(intercept)
       }
     }
 
@@ -370,6 +384,7 @@ export function ReviewScreen() {
     setBadgeToast(null)
     setQuestToast(false)
     setShieldToast(false)
+    setInterceptToast(null)
     setLevelUpInfo(null)
     setFactionToast(null)
     setPromotionCeremony(null)
@@ -606,7 +621,7 @@ export function ReviewScreen() {
       </div>
 
       <div
-        className={`term-card ${flickerKey > 0 ? 'fx-error-flicker' : ''} ${isAnswered ? 'is-answered' : ''} ${
+        className={`term-card ${combo >= 8 ? 'combo-glow-hot' : combo >= 5 ? 'combo-glow' : ''} ${flickerKey > 0 ? 'fx-error-flicker' : ''} ${isAnswered ? 'is-answered' : ''} ${
           isAnswered && !isCorrect && theme.id === 'russian' ? 'redact' : ''
         } ${isAnswered && !isCorrect && theme.id === 'french' && tension >= 3 ? 'tribunal-sweep' : ''} ${
           isAnswered && !isCorrect && theme.id === 'spanish' && tension >= 3 ? 'air-raid' : ''
@@ -714,9 +729,14 @@ export function ReviewScreen() {
             {xpToast && <span className="result-xp"> {xpToast}</span>}
           </div>
 
-          {(badgeToast || questToast || factionToast || shieldToast || (isCorrect && combo >= 3)) && (
+          {(badgeToast || questToast || factionToast || shieldToast || interceptToast || (isCorrect && combo >= 3)) && (
             <div className="result-extras">
               {isCorrect && combo >= 3 && <span className="result-chip combo-chip">🔥 Combo x{combo}</span>}
+              {interceptToast && (
+                <span className="result-chip intercept-chip">
+                  {interceptToast.icon} {interceptToast.label} +{interceptToast.bonusXp} XP
+                </span>
+              )}
               {shieldToast && <span className="result-chip shield-chip">🛡 Streak saved</span>}
               {badgeToast && (
                 <span className="result-chip">
