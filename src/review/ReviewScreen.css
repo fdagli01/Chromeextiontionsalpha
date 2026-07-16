@@ -330,6 +330,12 @@
 .stat-rank { color: var(--color-accent); }
 .stat-xp { color: var(--color-text-muted); }
 
+.stat-shields {
+  color: var(--color-accent);
+  font-size: var(--type-xs);
+  letter-spacing: 0.02em;
+}
+
 .stat-streak {
   color: #ff8a3d;
   display: inline-block;
@@ -995,6 +1001,32 @@
   margin: 0 0 8px;
 }
 
+/* Cliffhanger: a single concrete "next goal" line on the session-complete
+   screen, nudging the player back with a nearby unlock/level target. */
+.session-cliffhanger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 4px auto 10px;
+  padding: 7px 13px;
+  border: 1px dashed var(--color-accent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+.cliffhanger-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.cliffhanger-text {
+  font-family: var(--font-heading);
+  font-size: var(--type-xs);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--color-accent);
+}
+
 /* Level-up celebration: a distinct beat from the per-word result panel —
    this is a progress-system event, so it stays theme-neutral (gold/white)
    rather than pulling theme colors. */
@@ -1102,6 +1134,11 @@
 .combo-chip {
   color: #ff8a3d !important;
   border-color: #ff8a3d !important;
+}
+
+.shield-chip {
+  color: var(--color-accent) !important;
+  border-color: var(--color-accent) !important;
 }
 
 .result-chip {

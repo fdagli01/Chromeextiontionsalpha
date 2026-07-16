@@ -102,6 +102,40 @@ export function computeStreak(lastActiveDate, today, previousStreak) {
 }
 
 /**
+ * Resolves a streak update with "streak insurance": if the player skipped
+ * exactly one day (last active the day before yesterday) and holds at least
+ * one shield, a shield is spent to keep the streak alive at its current
+ * length instead of resetting to 1. Larger gaps can't be insured — a shield
+ * forgives a single missed day, not a lapse. Same-day and consecutive-day
+ * cases behave exactly like computeStreak and never spend a shield.
+ * @param {string|null} lastActiveDate
+ * @param {string} today - YYYY-MM-DD
+ * @param {number} previousStreak
+ * @param {number} shields - streak-insurance tokens available
+ * @returns {{streak: number, shields: number, shieldUsed: boolean}}
+ */
+export function resolveStreakWithInsurance(lastActiveDate, today, previousStreak, shields) {
+  if (lastActiveDate === today) {
+    return { streak: previousStreak, shields, shieldUsed: false }
+  }
+
+  if (lastActiveDate) {
+    const dayMs = 24 * 60 * 60 * 1000
+    const gapDays = Math.round((new Date(today) - new Date(lastActiveDate)) / dayMs)
+    if (gapDays === 1) {
+      return { streak: previousStreak + 1, shields, shieldUsed: false }
+    }
+    if (gapDays === 2 && shields > 0 && previousStreak > 0) {
+      // One missed day, and a shield to cover it: hold the streak where it
+      // was (the skipped day earns no increment) and consume the shield.
+      return { streak: previousStreak, shields: shields - 1, shieldUsed: true }
+    }
+  }
+
+  return { streak: 1, shields, shieldUsed: false }
+}
+
+/**
  * Maps a streak count to a visual growth tier (0-3), used to scale the
  * flame indicator so a long streak actually feels bigger, not just numeric.
  * @param {number} streak

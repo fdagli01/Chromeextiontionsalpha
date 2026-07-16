@@ -7,7 +7,7 @@ import { getSetting } from '../db/settingsRepo.js'
 import { awardReputation, getFactionProgress } from '../db/factionsRepo.js'
 import { logReviewActivity } from '../db/activityLog.js'
 import { awardBonusXp, awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from '../xp/xpService.js'
-import { isUnlocked } from '../progression/unlocks.js'
+import { isUnlocked, nextFeatureUnlock } from '../progression/unlocks.js'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -70,6 +70,7 @@ export function ReviewScreen() {
   const [xpToast, setXpToast] = useState('')
   const [badgeToast, setBadgeToast] = useState(null)
   const [questToast, setQuestToast] = useState(false)
+  const [shieldToast, setShieldToast] = useState(false)
   const [levelUpInfo, setLevelUpInfo] = useState(null)
   const [flickerKey, setFlickerKey] = useState(0)
   const [shake, setShake] = useState(false)
@@ -146,6 +147,7 @@ export function ReviewScreen() {
     setXpToast('')
     setBadgeToast(null)
     setQuestToast(false)
+    setShieldToast(false)
     setLevelUpInfo(null)
     setFactionToast(null)
     setSecretReveal(null)
@@ -198,11 +200,8 @@ export function ReviewScreen() {
 
     await reviewWord(current.id, quality)
     logReviewActivity(current.term, correct)
-    let { progress: nextProgress, xpGained, baseXp, leveledUp, newBadges, dailyQuest } = await awardReviewXp(
-      theme.id,
-      quality,
-      { multiplier: momentumMultiplier }
-    )
+    let { progress: nextProgress, xpGained, leveledUp, streakShieldUsed, newBadges, dailyQuest } =
+      await awardReviewXp(theme.id, quality, { multiplier: momentumMultiplier })
 
     // Cold case sessions run at double XP — the whole point is to make
     // rescuing a near-forgotten word worth more than a routine review.
@@ -309,6 +308,7 @@ export function ReviewScreen() {
     )
     setBadgeToast(newBadges.length > 0 ? newBadges[0] : null)
     setQuestToast(dailyQuest.justCompleted)
+    setShieldToast(streakShieldUsed)
     if (sfxOn) {
       if (newBadges.length > 0) playBadgeUnlock()
       else if (dailyQuest.justCompleted) playQuestComplete()
@@ -363,6 +363,7 @@ export function ReviewScreen() {
     setXpToast('')
     setBadgeToast(null)
     setQuestToast(false)
+    setShieldToast(false)
     setLevelUpInfo(null)
     setFactionToast(null)
     setPromotionCeremony(null)
@@ -442,6 +443,19 @@ export function ReviewScreen() {
       )
     }
     const accuracyPct = Math.round((sessionStats.correct / sessionStats.reviewed) * 100)
+    // Cliffhanger: leave the player one concrete, nearby goal on the way out —
+    // the next locked feature if there is one, otherwise XP to the next level.
+    const sc = levelProgress(progress.xp)
+    const upcomingFeature = nextFeatureUnlock(sc.level)
+    const cliffhanger = upcomingFeature
+      ? {
+          icon: '🔒',
+          text: `${upcomingFeature.label} unlocks at level ${upcomingFeature.unlockLevel} — ${upcomingFeature.levelsAway} level${upcomingFeature.levelsAway > 1 ? 's' : ''} to go`,
+        }
+      : {
+          icon: '⚑',
+          text: `${sc.xpToNextLevel - sc.xpIntoLevel} XP to level ${sc.level + 1}`,
+        }
     return (
       <div className="session-complete">
         <p className="session-complete-title">Session Complete</p>
@@ -471,6 +485,10 @@ export function ReviewScreen() {
             {sessionStats.questCompleted && 'Daily quest complete'}
           </p>
         )}
+        <div className="session-cliffhanger">
+          <span className="cliffhanger-icon" aria-hidden="true">{cliffhanger.icon}</span>
+          <span className="cliffhanger-text">{cliffhanger.text}</span>
+        </div>
         <p className="empty-state">No more words due. Come back later, or archive new ones from any page.</p>
         {coldCaseCta}
         {freeDrillCta}
@@ -540,6 +558,14 @@ export function ReviewScreen() {
         <span className={`stat-streak tier-${streakTier(progress.streak)}`}>
           🔥 <span key={progress.streak} className="streak-number">{progress.streak}</span>
         </span>
+        {progress.streakShields > 0 && (
+          <span
+            className="stat-shields"
+            title={`${progress.streakShields} streak shield${progress.streakShields > 1 ? 's' : ''} — each forgives one missed day`}
+          >
+            🛡 {progress.streakShields}
+          </span>
+        )}
         <span className="stat-xp">{animatedXp} XP</span>
       </div>
 
@@ -674,9 +700,10 @@ export function ReviewScreen() {
             {xpToast && <span className="result-xp"> {xpToast}</span>}
           </div>
 
-          {(badgeToast || questToast || factionToast || (isCorrect && combo >= 3)) && (
+          {(badgeToast || questToast || factionToast || shieldToast || (isCorrect && combo >= 3)) && (
             <div className="result-extras">
               {isCorrect && combo >= 3 && <span className="result-chip combo-chip">🔥 Combo x{combo}</span>}
+              {shieldToast && <span className="result-chip shield-chip">🛡 Streak saved</span>}
               {badgeToast && (
                 <span className="result-chip">
                   {badgeToast.icon} {badgeToast.name}

@@ -6,6 +6,7 @@ import {
   levelForXp,
   levelProgress,
   rankForLevel,
+  resolveStreakWithInsurance,
   streakTier,
   xpForQuality,
   xpRequiredForLevel,
@@ -95,6 +96,48 @@ describe('streakTier', () => {
     expect(streakTier(13)).toBe(2)
     expect(streakTier(14)).toBe(3)
     expect(streakTier(100)).toBe(3)
+  })
+})
+
+describe('resolveStreakWithInsurance', () => {
+  it('is a no-op on the same day and never spends a shield', () => {
+    expect(resolveStreakWithInsurance('2026-07-09', '2026-07-09', 5, 2)).toEqual({
+      streak: 5,
+      shields: 2,
+      shieldUsed: false,
+    })
+  })
+
+  it('increments on consecutive days without spending a shield', () => {
+    expect(resolveStreakWithInsurance('2026-07-08', '2026-07-09', 5, 2)).toEqual({
+      streak: 6,
+      shields: 2,
+      shieldUsed: false,
+    })
+  })
+
+  it('spends a shield to hold the streak across a single missed day', () => {
+    expect(resolveStreakWithInsurance('2026-07-07', '2026-07-09', 5, 2)).toEqual({
+      streak: 5,
+      shields: 1,
+      shieldUsed: true,
+    })
+  })
+
+  it('resets when a day is missed but no shield is held', () => {
+    expect(resolveStreakWithInsurance('2026-07-07', '2026-07-09', 5, 0)).toEqual({
+      streak: 1,
+      shields: 0,
+      shieldUsed: false,
+    })
+  })
+
+  it('cannot insure a gap longer than one day', () => {
+    expect(resolveStreakWithInsurance('2026-07-05', '2026-07-09', 5, 2)).toEqual({
+      streak: 1,
+      shields: 2,
+      shieldUsed: false,
+    })
   })
 })
 

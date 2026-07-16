@@ -12,6 +12,7 @@ import { STORE_PROGRESS, withStore } from './connection.js'
  * @property {number} dailyReviewCount - reviews graded on dailyQuestDate
  * @property {boolean} dailyQuestClaimed - whether today's quest bonus XP has been awarded
  * @property {string[]} secretsUnlocked - lowercased terms whose one-time secret anecdote has been revealed
+ * @property {number} streakShields - streak-insurance tokens; one is auto-spent to forgive a single missed day
  */
 
 /**
@@ -30,6 +31,7 @@ function emptyProgress(themeId) {
     dailyReviewCount: 0,
     dailyQuestClaimed: false,
     secretsUnlocked: [],
+    streakShields: 0,
   }
 }
 
@@ -46,6 +48,7 @@ export async function getProgress(themeId) {
     dailyReviewCount: 0,
     dailyQuestClaimed: false,
     secretsUnlocked: [],
+    streakShields: 0,
     ...existing,
   }
 }

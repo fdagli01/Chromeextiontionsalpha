@@ -1,13 +1,16 @@
 import { getProgress, saveProgress } from '../db/progressRepo.js'
 import { evaluateBadges } from '../badges/badges.js'
 import { emitProgressChanged } from './progressEvents.js'
-import { computeStreak, levelForXp, xpForQuality } from './xp.js'
+import { levelForXp, resolveStreakWithInsurance, xpForQuality } from './xp.js'
 
 /** Reviews needed in a single day to complete the daily quest. */
 export const DAILY_QUEST_TARGET = 5
 
 /** Bonus XP awarded once, the moment the daily quest target is reached. */
 export const DAILY_QUEST_BONUS_XP = 25
+
+/** Most streak-insurance tokens a player can bank at once. */
+export const MAX_STREAK_SHIELDS = 3
 
 /**
  * Records a review outcome against a theme's progress: adds XP, recomputes
@@ -46,7 +49,19 @@ export async function awardReviewXp(themeId, quality, opts = {}) {
   const xpGained = baseXp + bonusXp
   const nextXp = current.xp + xpGained
   const nextLevel = levelForXp(nextXp)
-  const nextStreak = computeStreak(current.lastActiveDate, today, current.streak)
+  const leveledUp = nextLevel > current.level
+
+  // Streak insurance: a single missed day is forgiven if a shield is banked.
+  const { streak: nextStreak, shields: shieldsAfterUse, shieldUsed } = resolveStreakWithInsurance(
+    current.lastActiveDate,
+    today,
+    current.streak,
+    current.streakShields
+  )
+
+  // Leveling up mints one streak-insurance token (capped), so the shield
+  // supply is earned through play rather than bought.
+  const nextShields = Math.min(MAX_STREAK_SHIELDS, shieldsAfterUse + (leveledUp ? 1 : 0))
 
   const { badges, newlyEarned } = evaluateBadges({
     streak: nextStreak,
@@ -59,6 +74,7 @@ export async function awardReviewXp(themeId, quality, opts = {}) {
     xp: nextXp,
     level: nextLevel,
     streak: nextStreak,
+    streakShields: nextShields,
     lastActiveDate: today,
     badges,
     dailyQuestDate: today,
@@ -72,7 +88,8 @@ export async function awardReviewXp(themeId, quality, opts = {}) {
     progress,
     xpGained,
     baseXp,
-    leveledUp: nextLevel > current.level,
+    leveledUp,
+    streakShieldUsed: shieldUsed,
     newBadges: newlyEarned,
     dailyQuest: {
       current: Math.min(dailyReviewCount, DAILY_QUEST_TARGET),
