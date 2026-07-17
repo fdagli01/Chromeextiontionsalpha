@@ -10,9 +10,11 @@ import { awardBonusXp, awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET }
 import { isUnlocked, nextFeatureUnlock } from '../progression/unlocks.js'
 import { getActiveWorldEvent, worldEventMultiplier } from '../progression/worldEvents.js'
 import { rollInterceptEvent } from '../progression/randomEvents.js'
-import { getBountyMentor, getMentor, pickBountyLine, pickMentorLine } from '../progression/mentors.js'
+import { getBountyMentor, getMentor, getPersonaById, pickBountyLine, pickMentorLine } from '../progression/mentors.js'
 import { getBountyState, markBountyCelebrated } from '../progression/bounties.js'
 import { recordRedemption, recordStreakTierReached } from '../progression/artifacts.js'
+import { addTrust, applyFactionTrustEvent, markAllyRewardClaimed, tierForTrust } from '../progression/affinity.js'
+import { grantAllyPack } from '../progression/allyPacks.js'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -81,6 +83,7 @@ export function ReviewScreen() {
   const [sessionMentorLine, setSessionMentorLine] = useState(null)
   const [bountyCelebration, setBountyCelebration] = useState(null)
   const [fragmentToast, setFragmentToast] = useState(null)
+  const [allyToast, setAllyToast] = useState(null)
   const [levelUpInfo, setLevelUpInfo] = useState(null)
   const [flickerKey, setFlickerKey] = useState(0)
   const [shake, setShake] = useState(false)
@@ -182,6 +185,7 @@ export function ReviewScreen() {
     setFactionToast(null)
     setSecretReveal(null)
     setFragmentToast(null)
+    setAllyToast(null)
     shownAtRef.current = performance.now()
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
       const opts = reverseMode
@@ -265,6 +269,11 @@ export function ReviewScreen() {
 
     let finalProgress = nextProgress
     let factionPromoted = false
+    // Set the moment a persona's trust crosses into Ally — handled once,
+    // after every trust-affecting branch below has had a chance to fire,
+    // since either the mentor-line trigger or the faction trigger could be
+    // the one that tips a persona over.
+    let allyUnlock = null
     if (correct) {
       const matchedFactions = findFactionsForTerm(theme.id, current.term)
       if (matchedFactions.length > 1 && isUnlocked('factions', nextProgress.level)) {
@@ -295,6 +304,14 @@ export function ReviewScreen() {
             setFactionToast(matchedFactions[0])
           }
         }
+
+        // Affinity: whichever faction just gained reputation nudges its
+        // aligned persona's trust up and any rival persona's trust down.
+        const factionTrustResults = await applyFactionTrustEvent(
+          theme.id,
+          matchedFactions.map((f) => f.factionId)
+        )
+        allyUnlock = factionTrustResults.find((r) => r.justBecameAlly) ?? allyUnlock
       }
 
       const secret = findSecretForTerm(theme.id, current.term)
@@ -384,10 +401,33 @@ export function ReviewScreen() {
           : !correct
             ? 'miss'
             : null
-    setMentorLine(mentorMoment ? { moment: mentorMoment, line: pickMentorLine(theme.id, mentorMoment) } : null)
     if (sfxOn) {
       if (newBadges.length > 0) playBadgeUnlock()
       else if (dailyQuest.justCompleted) playQuestComplete()
+    }
+
+    // Affinity: a persona who actually spoke this turn earns a little trust
+    // for it — more for a notable moment, a little even for delivering a
+    // miss (showing up for the bad news still counts for something). Trust
+    // is applied before the mentor line is set so the speech bubble's tier
+    // chip reflects the result of *this* turn, not the one before it.
+    let mentorTier = null
+    if (mentorMoment) {
+      const speakingPersona = getMentor(theme.id, mentorMoment)
+      const trustDelta = mentorMoment === 'miss' ? 1 : 2
+      const { record, justBecameAlly } = await addTrust(theme.id, speakingPersona.id, trustDelta)
+      mentorTier = tierForTrust(record.trust)
+      if (justBecameAlly) allyUnlock = { personaId: speakingPersona.id }
+    }
+    setMentorLine(
+      mentorMoment ? { moment: mentorMoment, line: pickMentorLine(theme.id, mentorMoment), tier: mentorTier } : null
+    )
+
+    if (allyUnlock) {
+      const persona = getPersonaById(theme.id, allyUnlock.personaId)
+      const pack = await grantAllyPack(theme.id, allyUnlock.personaId)
+      await markAllyRewardClaimed(theme.id, allyUnlock.personaId)
+      setAllyToast({ persona, pack })
     }
 
     if (leveledUp) {
@@ -445,6 +485,7 @@ export function ReviewScreen() {
     setLevelUpInfo(null)
     setFactionToast(null)
     setFragmentToast(null)
+    setAllyToast(null)
     setPromotionCeremony(null)
     setDoubleAgentChoice(null)
     setSecretReveal(null)
@@ -823,7 +864,7 @@ export function ReviewScreen() {
             {xpToast && <span className="result-xp"> {xpToast}</span>}
           </div>
 
-          {(badgeToast || questToast || factionToast || shieldToast || interceptToast || fragmentToast || (isCorrect && combo >= 3)) && (
+          {(badgeToast || questToast || factionToast || shieldToast || interceptToast || fragmentToast || allyToast || (isCorrect && combo >= 3)) && (
             <div className="result-extras">
               {isCorrect && combo >= 3 && <span className="result-chip combo-chip">🔥 Combo x{combo}</span>}
               {interceptToast && (
@@ -844,6 +885,7 @@ export function ReviewScreen() {
                 </span>
               )}
               {questToast && <span className="result-chip">🎯 +{DAILY_QUEST_BONUS_XP} XP</span>}
+              {allyToast && <span className="result-chip ally-chip">🤝 {allyToast.persona?.name} — ALLY</span>}
               {factionToast && (
                 <span className="result-chip">
                   {factionToast.emblem} +{FACTION_REPUTATION_PER_CORRECT} {factionToast.name}
@@ -852,11 +894,18 @@ export function ReviewScreen() {
             </div>
           )}
 
+          {allyToast && allyToast.pack.added > 0 && (
+            <p className="ally-reward-note">
+              {allyToast.persona?.name} now trusts you — {allyToast.pack.added} word
+              {allyToast.pack.added > 1 ? 's' : ''} from their own jargon filed to your archive.
+            </p>
+          )}
+
           {mentorLine && (
             <div className="mentor-line">
               {getMentor(theme.id, mentorLine.moment)?.portrait ? (
                 <img
-                  className="mentor-portrait"
+                  className={`mentor-portrait trust-${mentorLine.tier?.id}`}
                   src={getMentor(theme.id, mentorLine.moment).portrait}
                   alt=""
                   aria-hidden="true"
@@ -870,6 +919,7 @@ export function ReviewScreen() {
                 <span className="mentor-name" title={getMentor(theme.id, mentorLine.moment)?.backstory}>
                   {getMentor(theme.id, mentorLine.moment)?.name}
                 </span>
+                {mentorLine.tier && <span className="mentor-trust-tier">{mentorLine.tier.label}</span>}
                 <span className="mentor-quote">"{mentorLine.line}"</span>
               </div>
             </div>

@@ -3,6 +3,9 @@ import { useThemeConfig } from '../components/ThemeProvider.jsx'
 import { getDueWords, getRandomWords, getWordsByTheme, reviewWord } from '../db/wordsRepo.js'
 import { resolveCrisis } from '../db/crisesRepo.js'
 import { awardBonusXp } from '../xp/xpService.js'
+import { addTrust, markAllyRewardClaimed } from '../progression/affinity.js'
+import { getBountyMentor } from '../progression/mentors.js'
+import { grantAllyPack } from '../progression/allyPacks.js'
 import { QUALITY } from '../srs/fsrs.js'
 import './CrisisScreen.css'
 
@@ -32,6 +35,7 @@ export function CrisisScreen({ crisis, onResolve }) {
   const [score, setScore] = useState(0)
   const [remaining, setRemaining] = useState(template?.timeLimitSec ?? 0)
   const [outcome, setOutcome] = useState(null)
+  const [allyUnlocked, setAllyUnlocked] = useState(null)
 
   useEffect(() => {
     if (!template) {
@@ -93,6 +97,17 @@ export function CrisisScreen({ crisis, onResolve }) {
     await resolveCrisis(crisis.crisisRecordId, result, finalScore)
     if (result === 'won' && template) {
       await awardBonusXp(theme.id, template.rewardXp)
+      // Affinity: a won crisis is exactly the kind of rare, notable event
+      // the theme's rebel/wildcard persona (comboMilestone) respects.
+      const persona = getBountyMentor(theme.id)
+      if (persona) {
+        const { justBecameAlly } = await addTrust(theme.id, persona.id, 3)
+        if (justBecameAlly) {
+          const pack = await grantAllyPack(theme.id, persona.id)
+          await markAllyRewardClaimed(theme.id, persona.id)
+          setAllyUnlocked({ persona, pack })
+        }
+      }
     }
   }
 
@@ -128,6 +143,12 @@ export function CrisisScreen({ crisis, onResolve }) {
             ? `+${template.rewardXp} XP`
             : `Recalled ${score}/${template.wordCount} before it ended.`}
         </div>
+        {allyUnlocked && (
+          <p className="crisis-ally-note">
+            🤝 {allyUnlocked.persona.name} now trusts you — {allyUnlocked.pack.added} word
+            {allyUnlocked.pack.added === 1 ? '' : 's'} from their own jargon filed to your archive.
+          </p>
+        )}
         <button className="crisis-dismiss-btn" onClick={() => onResolve(outcome)}>
           RETURN TO ARCHIVE
         </button>

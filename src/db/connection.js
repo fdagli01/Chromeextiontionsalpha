@@ -1,5 +1,5 @@
 const DB_NAME = 'polyglot-chronicle'
-const DB_VERSION = 3
+const DB_VERSION = 4
 
 export const STORE_WORDS = 'words'
 export const STORE_PROGRESS = 'progress'
@@ -7,6 +7,7 @@ export const STORE_SETTINGS = 'settings'
 export const STORE_FACTIONS = 'factions'
 export const STORE_CRISES = 'crises'
 export const STORE_ARTIFACTS = 'artifacts'
+export const STORE_AFFINITY = 'affinity'
 
 /** @type {Promise<IDBDatabase> | null} */
 let dbPromise = null
@@ -56,6 +57,12 @@ export function openDB() {
         // records per theme.
         const artifacts = db.createObjectStore(STORE_ARTIFACTS, { keyPath: 'id' })
         artifacts.createIndex('byTheme', 'themeId', { unique: false })
+      }
+
+      if (!db.objectStoreNames.contains(STORE_AFFINITY)) {
+        // Same synthetic "themeId:personaId" keyPath pattern as artifacts.
+        const affinity = db.createObjectStore(STORE_AFFINITY, { keyPath: 'id' })
+        affinity.createIndex('byTheme', 'themeId', { unique: false })
       }
     }
 

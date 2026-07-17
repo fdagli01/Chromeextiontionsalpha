@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getBountyMentor, getMentor, pickBountyLine, pickMentorLine } from './mentors.js'
+import { getBountyMentor, getMentor, getPersonaById, pickBountyLine, pickMentorLine } from './mentors.js'
 
 const THEME_IDS = ['russian', 'italian', 'portuguese', 'french', 'spanish']
 const MOMENTS = ['levelUp', 'streakUp', 'comboMilestone', 'miss', 'sessionComplete']
@@ -48,5 +48,17 @@ describe('bounty mentor', () => {
 
   it('returns null for an unknown theme', () => {
     expect(pickBountyLine('klingon')).toBeNull()
+  })
+})
+
+describe('getPersonaById', () => {
+  it('finds a persona by id regardless of which moment it was fetched from', () => {
+    const viaMoment = getMentor('russian', 'levelUp')
+    const viaId = getPersonaById('russian', viaMoment.id)
+    expect(viaId).toEqual(viaMoment)
+  })
+
+  it('returns undefined for an unknown persona id', () => {
+    expect(getPersonaById('russian', 'nonexistent')).toBeUndefined()
   })
 })

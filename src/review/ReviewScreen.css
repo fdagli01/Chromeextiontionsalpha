@@ -1193,6 +1193,23 @@
   border-color: #c77dff !important;
 }
 
+.ally-chip {
+  color: var(--color-success) !important;
+  border-color: var(--color-success) !important;
+  font-weight: 700;
+}
+
+.ally-reward-note {
+  margin: 6px 2px 0;
+  padding: 6px 8px;
+  font-size: var(--type-xs);
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
+  border-left: 2px solid var(--color-success);
+  border-radius: var(--radius-sm, 4px);
+  line-height: 1.4;
+}
+
 /* Mentor NPC line: a portrait "steps into frame" from the side and a speech
    bubble pops open a beat after it lands, so this reads as a character
    actually turning up to react — not a caption quietly appearing next to a
@@ -1231,6 +1248,27 @@
   animation:
     mentor-portrait-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
     mentor-idle-bob 2.4s ease-in-out 0.4s infinite;
+}
+
+/* Affinity trust ring: the portrait's border color itself carries the
+   relationship state, so it reads at a glance without needing to parse the
+   tier label every time. */
+.mentor-portrait.trust-suspicious { border-color: #8a8a8a; }
+.mentor-portrait.trust-neutral { border-color: var(--color-accent); }
+.mentor-portrait.trust-warm { border-color: #ff8a3d; }
+.mentor-portrait.trust-ally {
+  border-color: var(--color-success);
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 8px color-mix(in srgb, var(--color-success) 60%, transparent);
+}
+
+.mentor-trust-tier {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 2px;
 }
 
 @keyframes mentor-portrait-in {

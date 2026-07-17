@@ -35,6 +35,10 @@ import spanishAbueloPortrait from '../assets/images/mentors/spanish-abuelo.png'
  * @property {string} portrait
  * @property {string} backstory - one line, shown as a tooltip on the name
  * @property {string[]} lines
+ * @property {string} [factionId] - the faction (see factions/factions.js) this
+ *   persona is aligned with, if any — correctly recalling a word tied to
+ *   this faction builds this persona's trust a little faster (see
+ *   progression/affinity.js); not every persona has an aligned faction.
  */
 
 /**
@@ -48,6 +52,7 @@ const CASTS = {
     personas: {
       levelUp: {
         id: 'handler',
+        factionId: 'nomenklatura',
         name: 'THE HANDLER',
         icon: '🕶',
         portrait: russianHandlerPortrait,
@@ -60,6 +65,7 @@ const CASTS = {
       },
       streakUp: {
         id: 'cipherClerk',
+        factionId: 'nomenklatura',
         name: 'THE CIPHER CLERK',
         icon: '🔍',
         portrait: russianCipherClerkPortrait,
@@ -72,6 +78,7 @@ const CASTS = {
       },
       comboMilestone: {
         id: 'defector',
+        factionId: 'reformers',
         name: 'THE DEFECTOR',
         icon: '🥷',
         portrait: russianDefectorPortrait,
@@ -87,6 +94,7 @@ const CASTS = {
       },
       miss: {
         id: 'zealot',
+        factionId: 'nomenklatura',
         name: 'THE ZEALOT',
         icon: '🚩',
         portrait: russianZealotPortrait,
@@ -98,6 +106,7 @@ const CASTS = {
       },
       sessionComplete: {
         id: 'handler',
+        factionId: 'nomenklatura',
         name: 'THE HANDLER',
         icon: '🕶',
         portrait: russianHandlerPortrait,
@@ -113,6 +122,7 @@ const CASTS = {
     personas: {
       levelUp: {
         id: 'centurio',
+        factionId: 'stoics',
         name: 'CENTVRIO AVLVS',
         icon: '⚔',
         portrait: italianCenturioPortrait,
@@ -151,6 +161,7 @@ const CASTS = {
       },
       miss: {
         id: 'gladiator',
+        factionId: 'populares',
         name: 'THE GLADIATOR',
         icon: '🛡',
         portrait: italianGladiatorPortrait,
@@ -162,6 +173,7 @@ const CASTS = {
       },
       sessionComplete: {
         id: 'centurio',
+        factionId: 'stoics',
         name: 'CENTVRIO AVLVS',
         icon: '⚔',
         portrait: italianCenturioPortrait,
@@ -177,6 +189,7 @@ const CASTS = {
     personas: {
       levelUp: {
         id: 'navigator',
+        factionId: 'navigators',
         name: 'MESTRE HENRIQUE',
         icon: '🧭',
         portrait: portugueseNavigatorPortrait,
@@ -189,6 +202,7 @@ const CASTS = {
       },
       streakUp: {
         id: 'cartographer',
+        factionId: 'navigators',
         name: 'THE CARTOGRAPHER',
         icon: '📐',
         portrait: portugueseCartographerPortrait,
@@ -226,6 +240,7 @@ const CASTS = {
       },
       sessionComplete: {
         id: 'navigator',
+        factionId: 'navigators',
         name: 'MESTRE HENRIQUE',
         icon: '🧭',
         portrait: portugueseNavigatorPortrait,
@@ -241,6 +256,7 @@ const CASTS = {
     personas: {
       levelUp: {
         id: 'tribunal',
+        factionId: 'jacobins',
         name: 'CITOYEN LAFORGE',
         icon: '⚖',
         portrait: frenchTribunalPortrait,
@@ -253,6 +269,7 @@ const CASTS = {
       },
       streakUp: {
         id: 'pamphletaire',
+        factionId: 'girondins',
         name: 'LE PAMPHLÉTAIRE',
         icon: '🖋',
         portrait: frenchPamphletairePortrait,
@@ -264,6 +281,7 @@ const CASTS = {
       },
       comboMilestone: {
         id: 'sansCulotte',
+        factionId: 'jacobins',
         name: 'LA SANS-CULOTTE',
         icon: '🚩',
         portrait: frenchSansCulottePortrait,
@@ -290,6 +308,7 @@ const CASTS = {
       },
       sessionComplete: {
         id: 'tribunal',
+        factionId: 'jacobins',
         name: 'CITOYEN LAFORGE',
         icon: '⚖',
         portrait: frenchTribunalPortrait,
@@ -305,6 +324,7 @@ const CASTS = {
     personas: {
       levelUp: {
         id: 'censor',
+        factionId: 'republicanos',
         name: 'EL CENSOR',
         icon: '✂',
         portrait: spanishCensorPortrait,
@@ -317,6 +337,7 @@ const CASTS = {
       },
       streakUp: {
         id: 'corresponsal',
+        factionId: 'exiliados',
         name: 'EL CORRESPONSAL EXTRANJERO',
         icon: '📷',
         portrait: spanishCorresponsalPortrait,
@@ -328,6 +349,7 @@ const CASTS = {
       },
       comboMilestone: {
         id: 'miliciana',
+        factionId: 'republicanos',
         name: 'LA MILICIANA',
         icon: '✊',
         portrait: spanishMilicianaPortrait,
@@ -343,6 +365,7 @@ const CASTS = {
       },
       miss: {
         id: 'abuelo',
+        factionId: 'exiliados',
         name: 'EL ABUELO',
         icon: '🕯',
         portrait: spanishAbueloPortrait,
@@ -354,6 +377,7 @@ const CASTS = {
       },
       sessionComplete: {
         id: 'censor',
+        factionId: 'republicanos',
         name: 'EL CENSOR',
         icon: '✂',
         portrait: spanishCensorPortrait,
@@ -412,4 +436,21 @@ export function pickBountyLine(themeId, random = Math.random) {
   if (!pool || pool.length === 0) return null
   const index = Math.min(pool.length - 1, Math.floor(random() * pool.length))
   return pool[index]
+}
+
+/**
+ * Looks up a persona by its stable id rather than by moment — needed
+ * wherever code only has a personaId on hand (e.g. an affinity record),
+ * not the specific moment that happens to be showing it right now.
+ * @param {string} themeId
+ * @param {string} personaId
+ * @returns {MentorPersona | undefined}
+ */
+export function getPersonaById(themeId, personaId) {
+  const moments = ['levelUp', 'streakUp', 'comboMilestone', 'miss', 'sessionComplete']
+  for (const moment of moments) {
+    const persona = getMentor(themeId, moment)
+    if (persona?.id === personaId) return persona
+  }
+  return undefined
 }

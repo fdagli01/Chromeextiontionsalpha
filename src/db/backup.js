@@ -2,9 +2,10 @@ import { STORE_WORDS, withStore } from './connection.js'
 import { getAllWords } from './wordsRepo.js'
 import { getProgress, saveProgress } from './progressRepo.js'
 import { getAllArtifactRecords, restoreArtifactRecords } from './artifactsRepo.js'
+import { getAllAffinityRecords, restoreAffinityRecords } from './affinityRepo.js'
 import { listThemes } from '../themes/index.js'
 
-const BACKUP_VERSION = 2
+const BACKUP_VERSION = 3
 
 /**
  * Serializes every word, every theme's progress, and every Vault artifact
@@ -18,6 +19,7 @@ export async function exportBackup() {
   const words = await getAllWords()
   const progress = await Promise.all(listThemes().map((theme) => getProgress(theme.id)))
   const artifacts = await getAllArtifactRecords()
+  const affinity = await getAllAffinityRecords()
 
   return {
     version: BACKUP_VERSION,
@@ -27,6 +29,7 @@ export async function exportBackup() {
     words: words.map(({ id, ...rest }) => rest),
     progress,
     artifacts,
+    affinity,
   }
 }
 
@@ -54,10 +57,13 @@ export async function importBackup(data) {
     await saveProgress(progress.themeId, progress)
   }
 
-  // Older backups (version 1) predate the Vault — absent on those, and
-  // simply skipped rather than treated as an error.
+  // Older backups (version 1/2) predate the Vault/Affinity systems — absent
+  // on those, and simply skipped rather than treated as an error.
   const artifactsList = Array.isArray(data.artifacts) ? data.artifacts : []
   await restoreArtifactRecords(artifactsList)
+
+  const affinityList = Array.isArray(data.affinity) ? data.affinity : []
+  await restoreAffinityRecords(affinityList)
 
   return { wordsImported: data.words.length, progressImported: progressList.length }
 }
