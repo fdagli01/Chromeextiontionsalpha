@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getMentor, pickMentorLine } from './mentors.js'
+import { getBountyMentor, getMentor, pickBountyLine, pickMentorLine } from './mentors.js'
 
 const THEME_IDS = ['russian', 'italian', 'portuguese', 'french', 'spanish']
 const MOMENTS = ['levelUp', 'streakUp', 'comboMilestone', 'miss', 'sessionComplete']
@@ -30,5 +30,23 @@ describe('pickMentorLine', () => {
 
   it('returns null for an unknown theme or moment', () => {
     expect(pickMentorLine('klingon', 'levelUp')).toBeNull()
+  })
+})
+
+describe('bounty mentor', () => {
+  it('every theme has bounty completion lines on its comboMilestone persona', () => {
+    for (const id of THEME_IDS) {
+      const mentor = getBountyMentor(id)
+      expect(mentor).toBeDefined()
+      expect(mentor.bountyLines.length).toBeGreaterThan(0)
+    }
+  })
+
+  it('pickBountyLine deterministically picks by the random function', () => {
+    expect(pickBountyLine('russian', () => 0)).toBe(getBountyMentor('russian').bountyLines[0])
+  })
+
+  it('returns null for an unknown theme', () => {
+    expect(pickBountyLine('klingon')).toBeNull()
   })
 })

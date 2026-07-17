@@ -133,3 +133,35 @@ export async function awardBonusXp(themeId, amount) {
 
   return { progress, leveledUp: nextLevel > current.level, newBadges: newlyEarned }
 }
+
+/**
+ * Awards a completed daily bounty: flat XP plus one streak-insurance shield
+ * (capped, same supply used by the level-up mint), in a single save so the
+ * two rewards can't race against a concurrent review's progress write.
+ * @param {string} themeId
+ * @param {number} amount
+ * @returns {Promise<{progress: import('../db/progressRepo.js').ThemeProgress, leveledUp: boolean, newBadges: import('../badges/badges.js').BadgeDef[]}>}
+ */
+export async function awardBounty(themeId, amount) {
+  const current = await getProgress(themeId)
+  const nextXp = current.xp + amount
+  const nextLevel = levelForXp(nextXp)
+  const nextShields = Math.min(MAX_STREAK_SHIELDS, current.streakShields + 1)
+
+  const { badges, newlyEarned } = evaluateBadges({
+    streak: current.streak,
+    level: nextLevel,
+    xp: nextXp,
+    badges: current.badges,
+  })
+
+  const progress = await saveProgress(themeId, {
+    xp: nextXp,
+    level: nextLevel,
+    streakShields: nextShields,
+    badges,
+  })
+  emitProgressChanged(themeId, progress)
+
+  return { progress, leveledUp: nextLevel > current.level, newBadges: newlyEarned }
+}

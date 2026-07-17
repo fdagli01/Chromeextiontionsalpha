@@ -10,7 +10,8 @@ import { awardBonusXp, awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET }
 import { isUnlocked, nextFeatureUnlock } from '../progression/unlocks.js'
 import { getActiveWorldEvent, worldEventMultiplier } from '../progression/worldEvents.js'
 import { rollInterceptEvent } from '../progression/randomEvents.js'
-import { getMentor, pickMentorLine } from '../progression/mentors.js'
+import { getBountyMentor, getMentor, pickBountyLine, pickMentorLine } from '../progression/mentors.js'
+import { getBountyState, markBountyCelebrated } from '../progression/bounties.js'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -77,6 +78,7 @@ export function ReviewScreen() {
   const [interceptToast, setInterceptToast] = useState(null)
   const [mentorLine, setMentorLine] = useState(null)
   const [sessionMentorLine, setSessionMentorLine] = useState(null)
+  const [bountyCelebration, setBountyCelebration] = useState(null)
   const [levelUpInfo, setLevelUpInfo] = useState(null)
   const [flickerKey, setFlickerKey] = useState(0)
   const [shake, setShake] = useState(false)
@@ -105,6 +107,23 @@ export function ReviewScreen() {
   const tensionVisuals = useMemo(() => resolveTensionVisuals(theme, tension), [theme, tension])
   const reverseMode = useMemo(() => isReverseDay(), [])
   const worldEvent = useMemo(() => getActiveWorldEvent(), [])
+
+  // One-time celebration for a bounty completed elsewhere (the background
+  // script awards the XP/shield the instant the capture completes it, so
+  // this is purely the popup catching up to show it). Runs once per mount
+  // of this screen; markBountyCelebrated is idempotent so revisiting the
+  // tab later the same day is silent.
+  useEffect(() => {
+    let cancelled = false
+    getBountyState().then((state) => {
+      if (cancelled || !state.claimed || state.celebrated) return
+      setBountyCelebration(pickBountyLine(theme.id))
+      markBountyCelebrated()
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [theme.id])
 
   useEffect(() => {
     let cancelled = false
@@ -478,6 +497,21 @@ export function ReviewScreen() {
           </p>
           {coldCaseCta}
           {freeDrillCta}
+          {bountyCelebration && (
+            <div className="mentor-line">
+              {getBountyMentor(theme.id)?.portrait ? (
+                <img className="mentor-portrait" src={getBountyMentor(theme.id).portrait} alt="" aria-hidden="true" />
+              ) : (
+                <span className="mentor-icon" aria-hidden="true">{getBountyMentor(theme.id)?.icon}</span>
+              )}
+              <div className="mentor-bubble">
+                <span className="mentor-name" title={getBountyMentor(theme.id)?.backstory}>
+                  {getBountyMentor(theme.id)?.name}
+                </span>
+                <span className="mentor-quote">"{bountyCelebration}"</span>
+              </div>
+            </div>
+          )}
         </div>
       )
     }

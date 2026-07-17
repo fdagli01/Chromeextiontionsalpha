@@ -16,6 +16,7 @@ import { OnboardingOverlay } from './OnboardingOverlay.jsx'
 import { DailyBriefingOverlay } from './DailyBriefingOverlay.jsx'
 import { BootSequence } from './BootSequence.jsx'
 import { computeDailyObjectives } from '../progression/briefing.js'
+import { getBountyState, getDailyBounty } from '../progression/bounties.js'
 import { playStaticBurst } from '../audio/sfx.js'
 import {
   getThemeAudioChannelLabel,
@@ -90,6 +91,8 @@ function AppShell({ activeThemeId, onThemeChange }) {
   const [weeklyReport, setWeeklyReport] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [dailyBriefing, setDailyBriefing] = useState(null)
+  const [dailyBounty, setDailyBounty] = useState(null)
+  const [dailyBountyState, setDailyBountyState] = useState(null)
   const [showBoot, setShowBoot] = useState(false)
   const bootFirstMountRef = useRef(true)
 
@@ -183,6 +186,10 @@ function AppShell({ activeThemeId, onThemeChange }) {
           if (cancelled) return
           setDailyBriefing(computeDailyObjectives(progress, today))
           chrome.storage.sync.set({ [BRIEFING_SHOWN_KEY]: today })
+        })
+        setDailyBounty(getDailyBounty(today))
+        getBountyState().then((state) => {
+          if (!cancelled) setDailyBountyState(state)
         })
       })
     return () => {
@@ -344,6 +351,8 @@ function AppShell({ activeThemeId, onThemeChange }) {
         <DailyBriefingOverlay
           terminalName={theme.terminalName}
           objectives={dailyBriefing}
+          bounty={dailyBounty}
+          bountyState={dailyBountyState}
           onDismiss={() => setDailyBriefing(null)}
         />
       )}

@@ -1,4 +1,4 @@
-import { addWord, getSetting, updateWord } from '../db/index.js'
+import { addWord, getSetting, getWordsByTheme, updateWord } from '../db/index.js'
 import { getTheme, listThemes } from '../themes/index.js'
 import { getExample, getFact, getPhilosophy } from '../facts/index.js'
 import { getTransliteration } from '../transliteration/index.js'
@@ -7,6 +7,8 @@ import { generateEtymologyEntry } from '../facts/etymologyEngine.js'
 import { translateToEnglish } from './translate.js'
 import { checkForCrisis, CRISIS_ALARM_NAME, scheduleCrisisChecks } from './crisisScheduler.js'
 import { checkStreakGuard, STREAK_GUARD_ALARM_NAME, scheduleStreakGuardChecks } from './streakGuardScheduler.js'
+import { getDailyBounty, recordBountyCapture } from '../progression/bounties.js'
+import { awardBounty } from '../xp/xpService.js'
 
 const MENU_ROOT_ID = 'polyglot-chronicle-root'
 
@@ -59,7 +61,7 @@ chrome.contextMenus.onClicked.addListener((info) => {
   const theme = listThemes().find((t) => menuIdForTheme(t.id) === info.menuItemId)
   if (!theme) return
   const term = info.selectionText?.trim()
-  if (term) captureWord(term, theme.id)
+  if (term) captureWord(term, theme.id, info.pageUrl)
 })
 
 /**
@@ -75,9 +77,17 @@ chrome.contextMenus.onClicked.addListener((info) => {
  * "nothing happened" popup.
  * @param {string} term
  * @param {string} themeId
+ * @param {string} [pageUrl] - the page the selection was captured from, used
+ *   only to check today's field bounty (e.g. "capture from a .es site")
  */
-async function captureWord(term, themeId) {
+async function captureWord(term, themeId, pageUrl) {
   const theme = getTheme(themeId)
+
+  // Only a genuinely new word advances the daily bounty — re-capturing an
+  // already-archived term (e.g. clicking it again on a different page)
+  // must not let the player farm bounty progress for free.
+  const existing = await getWordsByTheme(themeId)
+  const isNewWord = !existing.some((w) => w.term.trim().toLowerCase() === term.toLowerCase())
 
   const translation = await translateToEnglish(term, theme.sourceLanguageCode)
   const fact = getFact(themeId, term)
@@ -107,6 +117,34 @@ async function captureWord(term, themeId) {
   // attempting when the AI engine is on — enrichWordWithAi no-ops quickly
   // if it isn't.
   enrichWordWithAi(word.id, themeId, term, { needsFact: !fact, needsExample: !example })
+
+  if (isNewWord) checkBounty(term, themeId, pageUrl)
+}
+
+/** XP awarded once, the moment a daily field bounty is completed. */
+const BOUNTY_REWARD_XP = 40
+
+/**
+ * Checks a freshly-captured word against today's field bounty and, if it
+ * completes it, awards the reward and fires a second notification. Never
+ * blocks the capture flow — called fire-and-forget from captureWord.
+ * @param {string} term
+ * @param {string} themeId
+ * @param {string} [pageUrl]
+ */
+async function checkBounty(term, themeId, pageUrl) {
+  const { justCompleted } = await recordBountyCapture({ term, themeId, pageUrl: pageUrl ?? '' })
+  if (!justCompleted) return
+
+  await awardBounty(themeId, BOUNTY_REWARD_XP)
+
+  const bounty = getDailyBounty()
+  chrome.notifications.create({
+    type: 'basic',
+    iconUrl: 'src/assets/images/icon128.png',
+    title: '★ Critical intel complete',
+    message: `${bounty.directive} Reward filed: +${BOUNTY_REWARD_XP} XP, +1 streak shield.`,
+  })
 }
 
 /**

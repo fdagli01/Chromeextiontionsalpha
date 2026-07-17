@@ -80,6 +80,10 @@ const CASTS = {
           'Five in a row. Even I noticed, and I notice nothing officially.',
           'Your hand does not shake. Good — it should never shake.',
         ],
+        bountyLines: [
+          'The field assignment is closed. I\'ll make sure it never officially existed.',
+          'Intel delivered. Whoever asked for it will never know your name — that\'s the compliment.',
+        ],
       },
       miss: {
         id: 'zealot',
@@ -139,6 +143,10 @@ const CASTS = {
         lines: [
           'Five victories unbroken — the smoke curls favorably tonight.',
           'The omens agree with your hand today. Do not test them further.',
+        ],
+        bountyLines: [
+          'The assignment is fulfilled. The smoke saw it coming before you did.',
+          'Rome asked for intelligence from the frontier — you delivered it. The gods take note of such things.',
         ],
       },
       miss: {
@@ -200,6 +208,10 @@ const CASTS = {
           'Five true bearings running — even I noticed, and I notice everything.',
           'The stars themselves seem to favor you tonight.',
         ],
+        bountyLines: [
+          'Word from the far coast, delivered. I heard it through the hull before you even logged it.',
+          'The crown wanted intelligence from unfamiliar waters. Consider it quietly arranged.',
+        ],
       },
       miss: {
         id: 'priest',
@@ -259,6 +271,10 @@ const CASTS = {
         lines: [
           'Five in a row! The whole street would cheer if they could see this.',
           'The crowd outside cheers your verdicts, citoyen.',
+        ],
+        bountyLines: [
+          'The assignment is done, citoyen — I spread the word before the ink was even dry.',
+          'Intelligence from the field! This is how the Republic actually wins.',
         ],
       },
       miss: {
@@ -320,6 +336,10 @@ const CASTS = {
           'Five dispatches cleared without a mark! ¡Viva!',
           'The presses can barely keep up with you today.',
         ],
+        bountyLines: [
+          'Field assignment complete, compañera. ¡Viva! One less thing for the front to worry about.',
+          'You went looking for it instead of waiting — that\'s what the cause actually needs.',
+        ],
       },
       miss: {
         id: 'abuelo',
@@ -365,6 +385,30 @@ export function getMentor(themeId, moment) {
  */
 export function pickMentorLine(themeId, moment, random = Math.random) {
   const pool = getMentor(themeId, moment)?.lines
+  if (!pool || pool.length === 0) return null
+  const index = Math.min(pool.length - 1, Math.floor(random() * pool.length))
+  return pool[index]
+}
+
+/**
+ * The persona who reacts to a completed daily field bounty — reuses each
+ * theme's comboMilestone persona (the rare/mysterious one), since a
+ * completed bounty is the same kind of infrequent, notable event.
+ * @param {string} themeId
+ * @returns {MentorPersona | undefined}
+ */
+export function getBountyMentor(themeId) {
+  return getMentor(themeId, 'comboMilestone')
+}
+
+/**
+ * Picks a random bounty-completion line for a theme's bounty mentor.
+ * @param {string} themeId
+ * @param {() => number} [random]
+ * @returns {string | null}
+ */
+export function pickBountyLine(themeId, random = Math.random) {
+  const pool = getBountyMentor(themeId)?.bountyLines
   if (!pool || pool.length === 0) return null
   const index = Math.min(pool.length - 1, Math.floor(random() * pool.length))
   return pool[index]
