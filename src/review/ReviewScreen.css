@@ -1190,7 +1190,10 @@
 
 /* Mentor NPC line: a short in-character reaction, visually distinct from
    the historical-fact intel box below it (italic, no border box) so it
-   reads as a spoken aside rather than another document. */
+   reads as a spoken aside rather than another document. It pops/slides in
+   like every other reactive element on this screen (badge/quest/combo
+   chips) instead of snapping into place — a static appearance read as an
+   afterthought next to those, not a character actually reacting. */
 .mentor-line {
   display: flex;
   align-items: baseline;
@@ -1201,11 +1204,25 @@
   font-size: var(--type-xs);
   font-style: italic;
   color: var(--color-text-muted);
+  animation: mentor-line-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes mentor-line-in {
+  0% { transform: translateY(4px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
 }
 
 .mentor-icon {
   font-style: normal;
   flex-shrink: 0;
+  display: inline-block;
+  animation: mentor-icon-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes mentor-icon-pop {
+  0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+  60% { transform: scale(1.15) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); }
 }
 
 .mentor-name {
