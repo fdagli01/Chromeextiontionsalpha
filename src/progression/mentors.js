@@ -1,192 +1,370 @@
 import russianHandlerPortrait from '../assets/images/mentors/russian-handler.png'
+import russianZealotPortrait from '../assets/images/mentors/russian-zealot.png'
+import russianCipherClerkPortrait from '../assets/images/mentors/russian-cipherclerk.png'
+import russianDefectorPortrait from '../assets/images/mentors/russian-defector.png'
 import italianCenturioPortrait from '../assets/images/mentors/italian-centurio.png'
+import italianOraclePortrait from '../assets/images/mentors/italian-oracle.png'
+import italianSenatorPortrait from '../assets/images/mentors/italian-senator.png'
+import italianGladiatorPortrait from '../assets/images/mentors/italian-gladiator.png'
 import portugueseNavigatorPortrait from '../assets/images/mentors/portuguese-navigator.png'
+import portugueseCartographerPortrait from '../assets/images/mentors/portuguese-cartographer.png'
+import portuguesePriestPortrait from '../assets/images/mentors/portuguese-priest.png'
+import portugueseStowawayPortrait from '../assets/images/mentors/portuguese-stowaway.png'
 import frenchTribunalPortrait from '../assets/images/mentors/french-tribunal.png'
+import frenchSansCulottePortrait from '../assets/images/mentors/french-sansculotte.png'
+import frenchAristocratePortrait from '../assets/images/mentors/french-aristocrate.png'
+import frenchPamphletairePortrait from '../assets/images/mentors/french-pamphletaire.png'
 import spanishCensorPortrait from '../assets/images/mentors/spanish-censor.png'
+import spanishMilicianaPortrait from '../assets/images/mentors/spanish-miliciana.png'
+import spanishCorresponsalPortrait from '../assets/images/mentors/spanish-corresponsal.png'
+import spanishAbueloPortrait from '../assets/images/mentors/spanish-abuelo.png'
 
 /**
- * Per-theme mentor NPCs: a recurring in-world voice that reacts to review
- * moments (leveling up, a streak growing, a combo milestone, a miss, a
- * session wrapping up) with short in-character lines. Purely flavor — no
- * mechanical effect — but it's the single cheapest way to make a mainframe
- * feel inhabited rather than a bare stat screen.
- *
- * Each mentor also has a hand-picked `portrait` from a larger generated
- * roster (5 themes × 4 personas each, see the project's mentor art prompts)
- * — one persona per theme chosen for the closest personality fit to the
- * lines already written here; the other three per theme are unused for now
- * but sit in src/assets/images/mentors/ as a ready bank for a future
- * multi-persona version of this system.
- * @typedef {Object} MentorDef
+ * Per-theme mentor "cast": four recurring in-world personas per theme,
+ * each generated from the same character-roster art pass, each with their
+ * own one-line backstory and their own reaction to exactly one kind of
+ * review moment. Previously every theme had a single mentor voicing all
+ * five moments — this spreads that voice across a small ensemble instead,
+ * so a level-up, a hot streak, and a miss each get answered by a different
+ * character rather than the same one wearing every hat. Purely flavor, no
+ * mechanical effect.
+ * @typedef {Object} MentorPersona
+ * @property {string} id
  * @property {string} name
  * @property {string} icon
  * @property {string} portrait
- * @property {Record<'levelUp'|'streakUp'|'comboMilestone'|'miss'|'sessionComplete', string[]>} lines
+ * @property {string} backstory - one line, shown as a tooltip on the name
+ * @property {string[]} lines
  */
 
-/** @type {Record<string, MentorDef>} */
-export const MENTORS = {
+/**
+ * @typedef {Object} ThemeCast
+ * @property {Record<'levelUp'|'streakUp'|'comboMilestone'|'miss'|'sessionComplete', MentorPersona>} personas
+ */
+
+/** @type {Record<string, ThemeCast>} */
+const CASTS = {
   russian: {
-    name: 'THE HANDLER',
-    icon: '🕶',
-    portrait: russianHandlerPortrait,
-    lines: {
-      levelUp: [
-        'Moscow is watching. Your file grows heavier — good.',
-        'Promotion noted. Do not let it go to your head, agent.',
-        'Your clearance level rises. Ask no questions about why.',
-      ],
-      streakUp: [
-        'Consistency is the only virtue the Bureau rewards.',
-        'A pattern this regular — either discipline, or you\'re being watched too.',
-        'Keep this rhythm. Irregularity draws attention.',
-      ],
-      comboMilestone: [
-        'Five in a row. The Directorate is taking notes.',
-        'Your hand does not shake. Good — it should never shake.',
-      ],
-      miss: [
-        'A misstep. Happens even to the best of us. Recompose.',
-        'Erase it from the record. Try again.',
-      ],
-      sessionComplete: [
-        'Shift complete. File it and go home, agent.',
-        'Adequate work today. The Bureau expects more tomorrow.',
-      ],
+    personas: {
+      levelUp: {
+        id: 'handler',
+        name: 'THE HANDLER',
+        icon: '🕶',
+        portrait: russianHandlerPortrait,
+        backstory: 'A weary case officer three decades into a career that was supposed to last five years. Recruits everyone. Trusts no one. Secretly proud of the good ones.',
+        lines: [
+          'Moscow is watching. Your file grows heavier — good.',
+          'Promotion noted. Do not let it go to your head, agent.',
+          'Your clearance level rises. Ask no questions about why.',
+        ],
+      },
+      streakUp: {
+        id: 'cipherClerk',
+        name: 'THE CIPHER CLERK',
+        icon: '🔍',
+        portrait: russianCipherClerkPortrait,
+        backstory: 'Logs every transmission that passes through the office by hand, in triplicate. Has not missed a shift in eleven years. Nobody remembers his first name.',
+        lines: [
+          'Consistency is the only virtue the Bureau rewards.',
+          'A pattern this regular — either discipline, or you\'re being watched too.',
+          'Keep this rhythm. Irregularity draws attention.',
+        ],
+      },
+      comboMilestone: {
+        id: 'defector',
+        name: 'THE DEFECTOR',
+        icon: '🥷',
+        portrait: russianDefectorPortrait,
+        backstory: 'Nobody agrees on which side he actually works for anymore, including possibly him. Appears only when something remarkable happens, then vanishes again.',
+        lines: [
+          'Five in a row. Even I noticed, and I notice nothing officially.',
+          'Your hand does not shake. Good — it should never shake.',
+        ],
+      },
+      miss: {
+        id: 'zealot',
+        name: 'THE ZEALOT',
+        icon: '🚩',
+        portrait: russianZealotPortrait,
+        backstory: 'Joined the Party at sixteen and has never once questioned an order since. Reports mistakes as a matter of principle — including, if pressed, his own.',
+        lines: [
+          'A misstep. The Bureau does not forgive twice.',
+          'Erase it from the record. Do not let it happen again.',
+        ],
+      },
+      sessionComplete: {
+        id: 'handler',
+        name: 'THE HANDLER',
+        icon: '🕶',
+        portrait: russianHandlerPortrait,
+        backstory: 'A weary case officer three decades into a career that was supposed to last five years. Recruits everyone. Trusts no one. Secretly proud of the good ones.',
+        lines: [
+          'Shift complete. File it and go home, agent.',
+          'Adequate work today. The Bureau expects more tomorrow.',
+        ],
+      },
     },
   },
   italian: {
-    name: 'CENTVRIO AVLVS',
-    icon: '⚔',
-    portrait: italianCenturioPortrait,
-    lines: {
-      levelUp: [
-        'The Senate takes notice of your rise, soldier.',
-        'Another rank earned. Rome does not promote the idle.',
-        'You climb faster than most recruits. Do not grow careless.',
-      ],
-      streakUp: [
-        'A legion marches on discipline, not glory. You have both today.',
-        'Steady as a shield wall. Hold this line.',
-      ],
-      comboMilestone: [
-        'Five victories unbroken! The eagle watches favorably.',
-        'The cohort cheers your name, soldier.',
-      ],
-      miss: [
-        'Even Caesar lost a battle or two. Regroup.',
-        'A fallen scout is not a fallen legion. Rise.',
-      ],
-      sessionComplete: [
-        'Fall out, soldier. Rome will still be here tomorrow.',
-        'A good drill. Rest — the frontier can wait.',
-      ],
+    personas: {
+      levelUp: {
+        id: 'centurio',
+        name: 'CENTVRIO AVLVS',
+        icon: '⚔',
+        portrait: italianCenturioPortrait,
+        backstory: 'Rose through every rank the hard way, one campaign at a time. Runs his cohort like a family and disciplines them like one too.',
+        lines: [
+          'The Senate takes notice of your rise, soldier.',
+          'Another rank earned. Rome does not promote the idle.',
+          'You climb faster than most recruits. Do not grow careless.',
+        ],
+      },
+      streakUp: {
+        id: 'senator',
+        name: 'THE SENATOR',
+        icon: '🏛',
+        portrait: italianSenatorPortrait,
+        backstory: 'Has never held a sword in his life and considers that a point in his favor. Measures every soldier\'s worth in how useful they might someday be to him.',
+        lines: [
+          'A steady record. The Senate takes note of reliable men.',
+          'Discipline like yours is rarer in the Curia than you\'d think.',
+        ],
+      },
+      comboMilestone: {
+        id: 'oracle',
+        name: 'THE ORACLE',
+        icon: '🔥',
+        portrait: italianOraclePortrait,
+        backstory: 'Speaks for the gods, or claims to, from a cave that always smells of smoke. Generals who ignore her have historically regretted it.',
+        lines: [
+          'Five victories unbroken — the smoke curls favorably tonight.',
+          'The omens agree with your hand today. Do not test them further.',
+        ],
+      },
+      miss: {
+        id: 'gladiator',
+        name: 'THE GLADIATOR',
+        icon: '🛡',
+        portrait: italianGladiatorPortrait,
+        backstory: 'Won his freedom in the arena and kept fighting anyway, because it was the only life he knew how to live. Blunt with everyone, including himself.',
+        lines: [
+          'Even Caesar lost a battle or two. Get back up.',
+          'A fallen scout is not a fallen legion. Rise.',
+        ],
+      },
+      sessionComplete: {
+        id: 'centurio',
+        name: 'CENTVRIO AVLVS',
+        icon: '⚔',
+        portrait: italianCenturioPortrait,
+        backstory: 'Rose through every rank the hard way, one campaign at a time. Runs his cohort like a family and disciplines them like one too.',
+        lines: [
+          'Fall out, soldier. Rome will still be here tomorrow.',
+          'A good drill. Rest — the frontier can wait.',
+        ],
+      },
     },
   },
   portuguese: {
-    name: 'MESTRE HENRIQUE',
-    icon: '🧭',
-    portrait: portugueseNavigatorPortrait,
-    lines: {
-      levelUp: [
-        'The King himself will hear of this voyage, rapaz.',
-        'Another rank at the Casa. You sail further than most pilots dare.',
-        'Well charted. The crown rewards those who map the unknown.',
-      ],
-      streakUp: [
-        'A steady wind, day after day — this is how empires are built.',
-        'Hold this course. The compass has not lied to you yet.',
-      ],
-      comboMilestone: [
-        'Five true bearings running! The crew trusts your hand on the wheel.',
-        'The stars themselves seem to favor you tonight.',
-      ],
-      miss: [
-        'Every pilot drifts off course once. Correct and sail on.',
-        'The sea forgives a wrong bearing, if you fix it in time.',
-      ],
-      sessionComplete: [
-        'Log it and rest, rapaz. The Atlantic will wait for dawn.',
-        'A fair watch today. The Casa da Índia is pleased.',
-      ],
+    personas: {
+      levelUp: {
+        id: 'navigator',
+        name: 'MESTRE HENRIQUE',
+        icon: '🧭',
+        portrait: portugueseNavigatorPortrait,
+        backstory: 'Has crossed the same ocean so many times he claims to recognize individual waves. Trained half the pilots currently sailing under the crown\'s flag.',
+        lines: [
+          'The King himself will hear of this voyage, rapaz.',
+          'Another rank at the Casa. You sail further than most pilots dare.',
+          'Well charted. The crown rewards those who map the unknown.',
+        ],
+      },
+      streakUp: {
+        id: 'cartographer',
+        name: 'THE CARTOGRAPHER',
+        icon: '📐',
+        portrait: portugueseCartographerPortrait,
+        backstory: 'Has never set foot on a ship and never intends to. Draws coastlines from other men\'s memories, and gets them right more often than not.',
+        lines: [
+          'A steady wind, day after day — this is how empires are built.',
+          'Hold this course. The compass has not lied to you yet.',
+        ],
+      },
+      comboMilestone: {
+        id: 'stowaway',
+        name: 'THE STOWAWAY',
+        icon: '🕳',
+        portrait: portugueseStowawayPortrait,
+        backstory: 'Nobody signed him onto the manifest and nobody has thrown him overboard either. Knows things about the crew that the crew would rather he didn\'t.',
+        lines: [
+          'Five true bearings running — even I noticed, and I notice everything.',
+          'The stars themselves seem to favor you tonight.',
+        ],
+      },
+      miss: {
+        id: 'priest',
+        name: 'THE PRIEST',
+        icon: '✝',
+        portrait: portuguesePriestPortrait,
+        backstory: 'Blesses every departing ship and privately doubts God hears him over the wind. Forgives easily, but keeps a private ledger of who needed it most.',
+        lines: [
+          'Every pilot drifts off course once. Correct and sail on.',
+          'The sea forgives a wrong bearing, if you fix it in time.',
+        ],
+      },
+      sessionComplete: {
+        id: 'navigator',
+        name: 'MESTRE HENRIQUE',
+        icon: '🧭',
+        portrait: portugueseNavigatorPortrait,
+        backstory: 'Has crossed the same ocean so many times he claims to recognize individual waves. Trained half the pilots currently sailing under the crown\'s flag.',
+        lines: [
+          'Log it and rest, rapaz. The Atlantic will wait for dawn.',
+          'A fair watch today. The Casa da Índia is pleased.',
+        ],
+      },
     },
   },
   french: {
-    name: 'CITOYEN LAFORGE',
-    icon: '⚖',
-    portrait: frenchTribunalPortrait,
-    lines: {
-      levelUp: [
-        'The Convention notes your rise, citoyen. Liberty rewards diligence.',
-        'Another rank earned — the Republic does not forget its servants.',
-        'You climb the ranks faster than the tribunal\'s own clerks.',
-      ],
-      streakUp: [
-        'Consistency, citoyen — the surest proof of true republican virtue.',
-        'The Committee favors a steady hand over a brilliant but erratic one.',
-      ],
-      comboMilestone: [
-        'Five acquittals in a row! The tribunal is, for once, impressed.',
-        'The crowd outside cheers your verdicts, citoyen.',
-      ],
-      miss: [
-        'Even the finest orator stumbles once. Compose yourself.',
-        'A single condemned word does not end the Republic. Continue.',
-      ],
-      sessionComplete: [
-        'The session adjourns, citoyen. Liberté awaits your return.',
-        'A fair day\'s work for the Republic. Rest now.',
-      ],
+    personas: {
+      levelUp: {
+        id: 'tribunal',
+        name: 'CITOYEN LAFORGE',
+        icon: '⚖',
+        portrait: frenchTribunalPortrait,
+        backstory: 'A magistrate before the Revolution and a magistrate after it, having simply changed which portrait hangs behind his desk. Believes, mostly, in the process.',
+        lines: [
+          'The Convention notes your rise, citoyen. Liberty rewards diligence.',
+          'Another rank earned — the Republic does not forget its servants.',
+          'You climb the ranks faster than the tribunal\'s own clerks.',
+        ],
+      },
+      streakUp: {
+        id: 'pamphletaire',
+        name: 'LE PAMPHLÉTAIRE',
+        icon: '🖋',
+        portrait: frenchPamphletairePortrait,
+        backstory: 'Prints a new broadsheet every time he has an opinion, which is constantly. Half the city reads him. The other half burns him. He counts both as circulation.',
+        lines: [
+          'Consistency, citoyen — I\'m printing a column about it already.',
+          'The Committee favors a steady hand over a brilliant but erratic one.',
+        ],
+      },
+      comboMilestone: {
+        id: 'sansCulotte',
+        name: 'LA SANS-CULOTTE',
+        icon: '🚩',
+        portrait: frenchSansCulottePortrait,
+        backstory: 'Marched on the Bastille before she was old enough to vote and has not stopped marching since. Trusts the crowd more than any single leader, including herself.',
+        lines: [
+          'Five in a row! The whole street would cheer if they could see this.',
+          'The crowd outside cheers your verdicts, citoyen.',
+        ],
+      },
+      miss: {
+        id: 'aristocrate',
+        name: "L'ARISTOCRATE",
+        icon: '💠',
+        portrait: frenchAristocratePortrait,
+        backstory: 'Lost the title, the estate, and most of the family, and kept the posture anyway. Surviving this long has made her harder to rattle than she looks.',
+        lines: [
+          'Even the finest orator stumbles once. Compose yourself.',
+          'A single condemned word does not end the Republic. Continue.',
+        ],
+      },
+      sessionComplete: {
+        id: 'tribunal',
+        name: 'CITOYEN LAFORGE',
+        icon: '⚖',
+        portrait: frenchTribunalPortrait,
+        backstory: 'A magistrate before the Revolution and a magistrate after it, having simply changed which portrait hangs behind his desk. Believes, mostly, in the process.',
+        lines: [
+          'The session adjourns, citoyen. Liberté awaits your return.',
+          'A fair day\'s work for the Republic. Rest now.',
+        ],
+      },
     },
   },
   spanish: {
-    name: 'LA COMISARIA',
-    icon: '✊',
-    portrait: spanishCensorPortrait,
-    lines: {
-      levelUp: [
-        'The front hears of your work, compañero. Keep the presses running.',
-        'Promoted. The cause needs disciplined hands like yours.',
-        'Your dispatches climb the ranks. Don\'t let the censor slow you.',
-      ],
-      streakUp: [
-        'Day after day at the desk — this is what solidarity looks like.',
-        'Steady work, compañero. The front depends on it.',
-      ],
-      comboMilestone: [
-        'Five dispatches cleared without a mark! The office is proud.',
-        'The presses can barely keep up with you today.',
-      ],
-      miss: [
-        'The censor rejects one dispatch — it happens. Redraft and send it again.',
-        'No one wins every round with the censor. Keep writing.',
-      ],
-      sessionComplete: [
-        'Close the office, compañero. The front will still be there tomorrow.',
-        'Good work at the desk today. Rest while you can.',
-      ],
+    personas: {
+      levelUp: {
+        id: 'censor',
+        name: 'EL CENSOR',
+        icon: '✂',
+        portrait: spanishCensorPortrait,
+        backstory: 'Reads every dispatch twice before it leaves the office, once for facts and once for anything that might get him in trouble. Believes he is protecting people.',
+        lines: [
+          'The front hears of your work, compañero. Keep the presses running.',
+          'Promoted. The cause needs disciplined hands like yours.',
+          'Your dispatches climb the ranks. Don\'t let the censor slow you.',
+        ],
+      },
+      streakUp: {
+        id: 'corresponsal',
+        name: 'EL CORRESPONSAL EXTRANJERO',
+        icon: '📷',
+        portrait: spanishCorresponsalPortrait,
+        backstory: 'Came for one story and stayed for three years, filing dispatches nobody back home fully believes. Keeps a bag packed by the door, just in case.',
+        lines: [
+          'Day after day at the desk — I\'ve seen fronts collapse for less discipline.',
+          'Steady work, compañero. I\'m taking notes on you too.',
+        ],
+      },
+      comboMilestone: {
+        id: 'miliciana',
+        name: 'LA MILICIANA',
+        icon: '✊',
+        portrait: spanishMilicianaPortrait,
+        backstory: 'Picked up a rifle the week the war started and has not put it down since. Younger than she looks in the photographs, and knows it.',
+        lines: [
+          'Five dispatches cleared without a mark! ¡Viva!',
+          'The presses can barely keep up with you today.',
+        ],
+      },
+      miss: {
+        id: 'abuelo',
+        name: 'EL ABUELO',
+        icon: '🕯',
+        portrait: spanishAbueloPortrait,
+        backstory: 'Too old to fight and too stubborn to leave, so he sits by the office stove and hands out advice nobody asked for. Usually right anyway.',
+        lines: [
+          'The censor rejects one dispatch — it happens. Redraft and send it again.',
+          'I\'ve seen worse days than this one, hijo. Keep writing.',
+        ],
+      },
+      sessionComplete: {
+        id: 'censor',
+        name: 'EL CENSOR',
+        icon: '✂',
+        portrait: spanishCensorPortrait,
+        backstory: 'Reads every dispatch twice before it leaves the office, once for facts and once for anything that might get him in trouble. Believes he is protecting people.',
+        lines: [
+          'Close the office, compañero. The front will still be there tomorrow.',
+          'Good work at the desk today. Rest while you can.',
+        ],
+      },
     },
   },
 }
 
 /**
  * @param {string} themeId
- * @returns {MentorDef | undefined}
+ * @param {'levelUp'|'streakUp'|'comboMilestone'|'miss'|'sessionComplete'} moment
+ * @returns {MentorPersona | undefined}
  */
-export function getMentor(themeId) {
-  return MENTORS[themeId]
+export function getMentor(themeId, moment) {
+  return CASTS[themeId]?.personas[moment]
 }
 
 /**
- * Picks a random line for a theme's mentor and trigger moment.
+ * Picks a random line from the persona assigned to this theme+moment.
  * @param {string} themeId
  * @param {'levelUp'|'streakUp'|'comboMilestone'|'miss'|'sessionComplete'} moment
  * @param {() => number} [random] - returns a float in [0, 1); defaults to Math.random
  * @returns {string | null}
  */
 export function pickMentorLine(themeId, moment, random = Math.random) {
-  const mentor = MENTORS[themeId]
-  const pool = mentor?.lines[moment]
+  const pool = getMentor(themeId, moment)?.lines
   if (!pool || pool.length === 0) return null
   const index = Math.min(pool.length - 1, Math.floor(random() * pool.length))
   return pool[index]

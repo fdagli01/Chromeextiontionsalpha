@@ -344,7 +344,7 @@ export function ReviewScreen() {
           : !correct
             ? 'miss'
             : null
-    setMentorLine(mentorMoment ? pickMentorLine(theme.id, mentorMoment) : null)
+    setMentorLine(mentorMoment ? { moment: mentorMoment, line: pickMentorLine(theme.id, mentorMoment) } : null)
     if (sfxOn) {
       if (newBadges.length > 0) playBadgeUnlock()
       else if (dailyQuest.justCompleted) playQuestComplete()
@@ -530,12 +530,19 @@ export function ReviewScreen() {
         </div>
         {sessionMentorLine && (
           <div className="mentor-line">
-            {getMentor(theme.id)?.portrait ? (
-              <img className="mentor-portrait" src={getMentor(theme.id).portrait} alt="" aria-hidden="true" />
+            {getMentor(theme.id, 'sessionComplete')?.portrait ? (
+              <img
+                className="mentor-portrait"
+                src={getMentor(theme.id, 'sessionComplete').portrait}
+                alt=""
+                aria-hidden="true"
+              />
             ) : (
-              <span className="mentor-icon" aria-hidden="true">{getMentor(theme.id)?.icon}</span>
+              <span className="mentor-icon" aria-hidden="true">{getMentor(theme.id, 'sessionComplete')?.icon}</span>
             )}
-            <span className="mentor-name">{getMentor(theme.id)?.name}:</span>
+            <span className="mentor-name" title={getMentor(theme.id, 'sessionComplete')?.backstory}>
+              {getMentor(theme.id, 'sessionComplete')?.name}:
+            </span>
             <span className="mentor-quote">"{sessionMentorLine}"</span>
           </div>
         )}
@@ -783,13 +790,22 @@ export function ReviewScreen() {
 
           {mentorLine && (
             <div className="mentor-line">
-              {getMentor(theme.id)?.portrait ? (
-              <img className="mentor-portrait" src={getMentor(theme.id).portrait} alt="" aria-hidden="true" />
-            ) : (
-              <span className="mentor-icon" aria-hidden="true">{getMentor(theme.id)?.icon}</span>
-            )}
-              <span className="mentor-name">{getMentor(theme.id)?.name}:</span>
-              <span className="mentor-quote">"{mentorLine}"</span>
+              {getMentor(theme.id, mentorLine.moment)?.portrait ? (
+                <img
+                  className="mentor-portrait"
+                  src={getMentor(theme.id, mentorLine.moment).portrait}
+                  alt=""
+                  aria-hidden="true"
+                />
+              ) : (
+                <span className="mentor-icon" aria-hidden="true">
+                  {getMentor(theme.id, mentorLine.moment)?.icon}
+                </span>
+              )}
+              <span className="mentor-name" title={getMentor(theme.id, mentorLine.moment)?.backstory}>
+                {getMentor(theme.id, mentorLine.moment)?.name}:
+              </span>
+              <span className="mentor-quote">"{mentorLine.line}"</span>
             </div>
           )}
 
