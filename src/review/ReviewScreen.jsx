@@ -15,6 +15,9 @@ import { getBountyState, markBountyCelebrated } from '../progression/bounties.js
 import { recordRedemption, recordStreakTierReached } from '../progression/artifacts.js'
 import { addTrust, applyFactionTrustEvent, markAllyRewardClaimed, tierForTrust } from '../progression/affinity.js'
 import { grantAllyPack } from '../progression/allyPacks.js'
+import { resolveIntercept, rollIntercept } from '../progression/intercepts.js'
+import { getDailyDirective } from '../progression/directives.js'
+import { getDeskMementos } from '../progression/mementos.js'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -108,12 +111,17 @@ export function ReviewScreen() {
   })
   const [coldCaseWords, setColdCaseWords] = useState([])
   const [coldCaseSession, setColdCaseSession] = useState(false)
+  const [npcIntercept, setNpcIntercept] = useState(null)
+  const [interceptTimeLeft, setInterceptTimeLeft] = useState(null)
+  const [interceptOutcomeToast, setInterceptOutcomeToast] = useState(null)
+  const [deskMementos, setDeskMementos] = useState([])
   const sessionCompleteAnnouncedRef = useRef(false)
   const shownAtRef = useRef(performance.now())
   const hasTension = theme.tensionLevels.length > 0
   const tensionVisuals = useMemo(() => resolveTensionVisuals(theme, tension), [theme, tension])
   const reverseMode = useMemo(() => isReverseDay(), [])
   const worldEvent = useMemo(() => getActiveWorldEvent(), [])
+  const directive = useMemo(() => getDailyDirective(theme.id), [theme.id])
 
   // One-time celebration for a bounty completed elsewhere (the background
   // script awards the XP/shield the instant the capture completes it, so
@@ -147,6 +155,9 @@ export function ReviewScreen() {
     setColdCaseSession(false)
     setSessionStats({ reviewed: 0, correct: 0, xpGained: 0, bestCombo: 0, badgesEarned: 0, questCompleted: false })
     sessionCompleteAnnouncedRef.current = false
+    getDeskMementos(theme.id).then((m) => {
+      if (!cancelled) setDeskMementos(m)
+    })
     return () => {
       cancelled = true
     }
@@ -188,6 +199,10 @@ export function ReviewScreen() {
     setSecretReveal(null)
     setFragmentToast(null)
     setAllyToast(null)
+    setInterceptOutcomeToast(null)
+    const rolled = coldCaseSession ? null : rollIntercept(theme.id)
+    setNpcIntercept(rolled)
+    setInterceptTimeLeft(rolled?.timerSec ?? null)
     shownAtRef.current = performance.now()
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
       const opts = reverseMode
@@ -216,6 +231,20 @@ export function ReviewScreen() {
   const animatedXp = useAnimatedNumber(progress?.xp ?? 0)
   const isAnswered = selected !== null
 
+  // Spanish intercept: a ten-second radio window. If it closes before the
+  // player answers, the moment is lost — graded as a real miss via the
+  // normal pick() flow, on whichever option is wrong.
+  useEffect(() => {
+    if (!npcIntercept?.timerSec || isAnswered || interceptTimeLeft === null) return
+    if (interceptTimeLeft <= 0) {
+      const wrongIndex = options.findIndex((o) => !o.isCorrect)
+      if (wrongIndex !== -1) pick(wrongIndex)
+      return
+    }
+    const t = setTimeout(() => setInterceptTimeLeft((s) => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [npcIntercept, interceptTimeLeft, isAnswered, options])
+
   async function pick(index) {
     if (isAnswered || !options[index]) return
     setSelected(index)
@@ -236,7 +265,16 @@ export function ReviewScreen() {
     const momentumMultiplier = correct ? comboMultiplier(nextCombo) : 1
     // A world event's XP boost stacks on top of the momentum multiplier, so a
     // hot combo on a Double Dispatch weekend pays out especially well.
-    const totalMultiplier = momentumMultiplier * worldEventMultiplier(worldEvent)
+    // Daily directives also fold into the same multiplier: the Committee's
+    // "hard-won intelligence" order doubles effortful Hard-quality recalls,
+    // and Fair Winds rewards a fast correct answer with +50%.
+    const directiveMultiplier =
+      directive?.effect === 'hardXp2' && quality === QUALITY.HARD
+        ? 2
+        : directive?.effect === 'fastXp' && correct && elapsedMs < 5000
+          ? 1.5
+          : 1
+    const totalMultiplier = momentumMultiplier * worldEventMultiplier(worldEvent) * directiveMultiplier
 
     // Captured before reviewWord/awardReviewXp touch anything — `current` is
     // this render's word-before-the-answer, so this is the pre-review
@@ -290,11 +328,13 @@ export function ReviewScreen() {
         // player picks who to report it to, instead of quietly feeding both.
         setDoubleAgentChoice({ term: current.term, factions: matchedFactions })
       } else if (matchedFactions.length > 0) {
+        const reputationAward =
+          FACTION_REPUTATION_PER_CORRECT * (directive?.effect === 'doubleReputation' ? 2 : 1)
         const beforeReps = await Promise.all(
           matchedFactions.map((f) => getFactionProgress(f.factionId, theme.id))
         )
         const afterReps = await Promise.all(
-          matchedFactions.map((f) => awardReputation(f.factionId, theme.id, FACTION_REPUTATION_PER_CORRECT))
+          matchedFactions.map((f) => awardReputation(f.factionId, theme.id, reputationAward))
         )
         // Reputation still quietly accrues before the Factions tab unlocks
         // (nothing is lost), but the toast/promotion sting stay silent so a
@@ -343,11 +383,16 @@ export function ReviewScreen() {
       }
     }
 
-    const nextTension = hasTension
-      ? correct
-        ? Math.max(0, tension - 1)
-        : Math.min(3, tension + 1)
-      : 0
+    // Directives can override the normal tension math: Pax Romana suspends
+    // it entirely, and the Sharpened Blade order doubles the penalty for a
+    // miss (a correct answer still de-escalates at the normal rate).
+    const nextTension = !hasTension
+      ? 0
+      : directive?.effect === 'noTension'
+        ? tension
+        : correct
+          ? Math.max(0, tension - 1)
+          : Math.min(3, tension + (directive?.effect === 'doubleMissTension' ? 2 : 1))
 
     const sfxOn = await getSetting('sfxEnabled', true)
     const streakTierUp = streakTier(nextProgress.streak) > streakTier(progress?.streak ?? 0)
@@ -433,6 +478,33 @@ export function ReviewScreen() {
       mentorMoment ? { moment: mentorMoment, line: pickMentorLine(theme.id, mentorMoment), tier: mentorTier } : null
     )
 
+    // NPC intercept: this card was framed as a persona's plea. The word,
+    // options, and FSRS grading above are unchanged — only trust and a
+    // bonus XP windfall ride on how it resolved (inverted for the French
+    // aristocrat, who wanted the answer wrong).
+    if (npcIntercept) {
+      const outcome = resolveIntercept(npcIntercept, correct)
+      const { record: interceptTrustRecord, justBecameAlly: interceptAlly } = await addTrust(
+        theme.id,
+        outcome.creditPersonaId,
+        outcome.trustDelta
+      )
+      if (outcome.bonusXp > 0) {
+        const bonus = await awardBonusXp(theme.id, outcome.bonusXp)
+        finalProgress = bonus.progress
+        leveledUp = leveledUp || bonus.leveledUp
+        newBadges = [...newBadges, ...bonus.newBadges]
+      }
+      if (interceptAlly) allyUnlock = allyUnlock ?? { personaId: outcome.creditPersonaId }
+      setInterceptOutcomeToast({
+        personaName: getPersonaById(theme.id, outcome.creditPersonaId)?.name ?? outcome.creditPersonaId,
+        line: outcome.line,
+        bonusXp: outcome.bonusXp,
+        helped: outcome.personaHelped,
+        tier: tierForTrust(interceptTrustRecord.trust),
+      })
+    }
+
     if (allyUnlock) {
       const persona = getPersonaById(theme.id, allyUnlock.personaId)
       const pack = await grantAllyPack(theme.id, allyUnlock.personaId)
@@ -466,8 +538,9 @@ export function ReviewScreen() {
    * @param {import('../factions/factions.js').FactionDef} faction
    */
   async function resolveDoubleAgent(faction) {
+    const reputationAward = FACTION_REPUTATION_PER_CORRECT * (directive?.effect === 'doubleReputation' ? 2 : 1)
     const before = await getFactionProgress(faction.factionId, theme.id)
-    const after = await awardReputation(faction.factionId, theme.id, FACTION_REPUTATION_PER_CORRECT)
+    const after = await awardReputation(faction.factionId, theme.id, reputationAward)
     const beforeRank = rankForReputation(faction.rankNames, before.reputation)
     const afterRank = rankForReputation(faction.rankNames, after.reputation)
     if (beforeRank !== afterRank) {
@@ -497,6 +570,7 @@ export function ReviewScreen() {
     setFactionToast(null)
     setFragmentToast(null)
     setAllyToast(null)
+    setInterceptOutcomeToast(null)
     setPromotionCeremony(null)
     setDoubleAgentChoice(null)
     setSecretReveal(null)
@@ -728,6 +802,36 @@ export function ReviewScreen() {
         </div>
       )}
 
+      {directive && (
+        <div className="world-event-banner directive-banner" title={directive.order}>
+          <span className="world-event-icon" aria-hidden="true">{directive.icon}</span>
+          <span className="world-event-label">{directive.label}</span>
+        </div>
+      )}
+
+      {deskMementos.length > 0 && (
+        <div className="desk-mementos" aria-hidden="false">
+          {deskMementos.map((m) => (
+            <span key={m.personaId} className="desk-memento" title={`${m.name} — ${m.personaName}: ${m.flavor}`}>
+              {m.icon}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {npcIntercept && !isAnswered && (
+        <div className={`intercept-banner ${npcIntercept.moralInversion ? 'moral-inversion' : ''}`}>
+          <div className="intercept-title">⚠ {npcIntercept.title}</div>
+          <p className="intercept-plea">{npcIntercept.plea(current.term)}</p>
+          {npcIntercept.moralInversion && (
+            <p className="intercept-hint">She is begging you to answer WRONG.</p>
+          )}
+          {interceptTimeLeft !== null && (
+            <div className="intercept-timer">⏱ {interceptTimeLeft}s</div>
+          )}
+        </div>
+      )}
+
       <div className="review-stats">
         <span className="stat-rank">⚑ {rank}</span>
         <span className={`stat-streak tier-${streakTier(progress.streak)}`}>
@@ -767,7 +871,7 @@ export function ReviewScreen() {
       </div>
 
       <div
-        className={`term-card ${combo >= 8 ? 'combo-glow-hot' : combo >= 5 ? 'combo-glow' : ''} ${flickerKey > 0 ? 'fx-error-flicker' : ''} ${isAnswered ? 'is-answered' : ''} ${
+        className={`term-card ${combo >= 8 ? 'combo-glow-hot' : combo >= 5 ? 'combo-glow' : ''} ${flickerKey > 0 ? 'fx-error-flicker' : ''} ${isAnswered ? 'is-answered' : ''} ${npcIntercept?.shipShake && !isAnswered ? 'storm-shake' : ''} ${
           isAnswered && !isCorrect && theme.id === 'russian' ? 'redact' : ''
         } ${isAnswered && !isCorrect && theme.id === 'french' && tension >= 3 ? 'tribunal-sweep' : ''} ${
           isAnswered && !isCorrect && theme.id === 'spanish' && tension >= 3 ? 'air-raid' : ''
@@ -875,12 +979,18 @@ export function ReviewScreen() {
             {xpToast && <span className="result-xp"> {xpToast}</span>}
           </div>
 
-          {(badgeToast || questToast || factionToast || shieldToast || interceptToast || fragmentToast || allyToast || (isCorrect && combo >= 3)) && (
+          {(badgeToast || questToast || factionToast || shieldToast || interceptToast || interceptOutcomeToast || fragmentToast || allyToast || (isCorrect && combo >= 3)) && (
             <div className="result-extras">
               {isCorrect && combo >= 3 && <span className="result-chip combo-chip">🔥 Combo x{combo}</span>}
               {interceptToast && (
                 <span className="result-chip intercept-chip">
                   {interceptToast.icon} {interceptToast.label} +{interceptToast.bonusXp} XP
+                </span>
+              )}
+              {interceptOutcomeToast && (
+                <span className={`result-chip npc-intercept-chip ${interceptOutcomeToast.helped ? 'helped' : 'failed'}`}>
+                  {interceptOutcomeToast.helped ? '🤝' : '✖'} {interceptOutcomeToast.personaName}
+                  {interceptOutcomeToast.bonusXp > 0 ? ` +${interceptOutcomeToast.bonusXp} XP` : ''}
                 </span>
               )}
               {shieldToast && <span className="result-chip shield-chip">🛡 Streak saved</span>}

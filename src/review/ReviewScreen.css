@@ -1512,3 +1512,90 @@
   transform: translate(-1px, -1px);
   box-shadow: var(--shadow-md);
 }
+
+/* ── Daily directive banner ── reuses the world-event look, tinted primary. */
+.directive-banner {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+.directive-banner .world-event-icon,
+.directive-banner .world-event-label {
+  color: var(--color-primary);
+}
+
+/* ── Desk mementos ──
+   Permanent trinkets a persona leaves once trust reaches Warm. Pure display,
+   no interaction beyond a hover tooltip with the flavor text. */
+.desk-mementos {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.desk-memento {
+  font-size: 16px;
+  line-height: 1;
+  padding: 3px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: default;
+}
+
+/* ── NPC intercept ──
+   A story card frames the same underlying review as a persona's plea. */
+.intercept-banner {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+.intercept-title {
+  font-family: var(--font-heading);
+  font-size: var(--type-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-danger);
+  margin-bottom: 4px;
+}
+.intercept-plea {
+  font-size: var(--type-sm);
+  color: var(--color-text);
+  margin: 0;
+}
+.intercept-hint {
+  margin: 4px 0 0;
+  font-size: var(--type-xs);
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+.intercept-timer {
+  margin-top: 6px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--type-sm);
+  color: var(--color-danger);
+  animation: world-event-throb 1s ease-in-out infinite;
+}
+.intercept-banner.moral-inversion {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+.term-card.storm-shake {
+  animation: storm-shake 0.5s ease-in-out infinite;
+}
+@keyframes storm-shake {
+  0%, 100% { transform: rotate(0deg) translateX(0); }
+  25% { transform: rotate(-0.6deg) translateX(-2px); }
+  75% { transform: rotate(0.6deg) translateX(2px); }
+}
+
+.npc-intercept-chip.helped {
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+.npc-intercept-chip.failed {
+  color: var(--color-text-muted);
+}
