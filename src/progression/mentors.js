@@ -1,12 +1,26 @@
+import russianHandlerPortrait from '../assets/images/mentors/russian-handler.png'
+import italianCenturioPortrait from '../assets/images/mentors/italian-centurio.png'
+import portugueseNavigatorPortrait from '../assets/images/mentors/portuguese-navigator.png'
+import frenchTribunalPortrait from '../assets/images/mentors/french-tribunal.png'
+import spanishCensorPortrait from '../assets/images/mentors/spanish-censor.png'
+
 /**
  * Per-theme mentor NPCs: a recurring in-world voice that reacts to review
  * moments (leveling up, a streak growing, a combo milestone, a miss, a
  * session wrapping up) with short in-character lines. Purely flavor — no
  * mechanical effect — but it's the single cheapest way to make a mainframe
  * feel inhabited rather than a bare stat screen.
+ *
+ * Each mentor also has a hand-picked `portrait` from a larger generated
+ * roster (5 themes × 4 personas each, see the project's mentor art prompts)
+ * — one persona per theme chosen for the closest personality fit to the
+ * lines already written here; the other three per theme are unused for now
+ * but sit in src/assets/images/mentors/ as a ready bank for a future
+ * multi-persona version of this system.
  * @typedef {Object} MentorDef
  * @property {string} name
  * @property {string} icon
+ * @property {string} portrait
  * @property {Record<'levelUp'|'streakUp'|'comboMilestone'|'miss'|'sessionComplete', string[]>} lines
  */
 
@@ -15,6 +29,7 @@ export const MENTORS = {
   russian: {
     name: 'THE HANDLER',
     icon: '🕶',
+    portrait: russianHandlerPortrait,
     lines: {
       levelUp: [
         'Moscow is watching. Your file grows heavier — good.',
@@ -43,6 +58,7 @@ export const MENTORS = {
   italian: {
     name: 'CENTVRIO AVLVS',
     icon: '⚔',
+    portrait: italianCenturioPortrait,
     lines: {
       levelUp: [
         'The Senate takes notice of your rise, soldier.',
@@ -70,6 +86,7 @@ export const MENTORS = {
   portuguese: {
     name: 'MESTRE HENRIQUE',
     icon: '🧭',
+    portrait: portugueseNavigatorPortrait,
     lines: {
       levelUp: [
         'The King himself will hear of this voyage, rapaz.',
@@ -97,6 +114,7 @@ export const MENTORS = {
   french: {
     name: 'CITOYEN LAFORGE',
     icon: '⚖',
+    portrait: frenchTribunalPortrait,
     lines: {
       levelUp: [
         'The Convention notes your rise, citoyen. Liberty rewards diligence.',
@@ -124,6 +142,7 @@ export const MENTORS = {
   spanish: {
     name: 'LA COMISARIA',
     icon: '✊',
+    portrait: spanishCensorPortrait,
     lines: {
       levelUp: [
         'The front hears of your work, compañero. Keep the presses running.',

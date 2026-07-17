@@ -530,7 +530,11 @@ export function ReviewScreen() {
         </div>
         {sessionMentorLine && (
           <div className="mentor-line">
-            <span className="mentor-icon" aria-hidden="true">{getMentor(theme.id)?.icon}</span>
+            {getMentor(theme.id)?.portrait ? (
+              <img className="mentor-portrait" src={getMentor(theme.id).portrait} alt="" aria-hidden="true" />
+            ) : (
+              <span className="mentor-icon" aria-hidden="true">{getMentor(theme.id)?.icon}</span>
+            )}
             <span className="mentor-name">{getMentor(theme.id)?.name}:</span>
             <span className="mentor-quote">"{sessionMentorLine}"</span>
           </div>
@@ -779,7 +783,11 @@ export function ReviewScreen() {
 
           {mentorLine && (
             <div className="mentor-line">
+              {getMentor(theme.id)?.portrait ? (
+              <img className="mentor-portrait" src={getMentor(theme.id).portrait} alt="" aria-hidden="true" />
+            ) : (
               <span className="mentor-icon" aria-hidden="true">{getMentor(theme.id)?.icon}</span>
+            )}
               <span className="mentor-name">{getMentor(theme.id)?.name}:</span>
               <span className="mentor-quote">"{mentorLine}"</span>
             </div>
