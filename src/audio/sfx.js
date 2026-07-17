@@ -345,6 +345,68 @@ export function playBadgeUnlock() {
 }
 
 /**
+ * A Vault fragment landing: a short crystalline three-note ascent with a
+ * dull stone "clunk" underneath — something precious clicking into place,
+ * distinct from the brighter badge chime above.
+ */
+export function playFragmentRecovered() {
+  const context = getAudioContext()
+  const now = context.currentTime
+
+  const clunk = context.createOscillator()
+  clunk.type = 'sine'
+  clunk.frequency.setValueAtTime(150, now)
+  clunk.frequency.exponentialRampToValueAtTime(70, now + 0.12)
+  const clunkGain = context.createGain()
+  clunkGain.gain.setValueAtTime(0.2, now)
+  clunkGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25)
+  clunk.connect(clunkGain).connect(context.destination)
+  clunk.start(now)
+  clunk.stop(now + 0.3)
+
+  const shardNotes = [1046.5, 1318.51, 1567.98] // C6, E6, G6
+  shardNotes.forEach((freq, i) => {
+    const t = now + 0.08 + i * 0.07
+    const osc = context.createOscillator()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(freq, t)
+    const gain = context.createGain()
+    gain.gain.setValueAtTime(0.001, t)
+    gain.gain.linearRampToValueAtTime(0.1, t + 0.015)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35)
+    osc.connect(gain).connect(context.destination)
+    osc.start(t)
+    osc.stop(t + 0.4)
+  })
+}
+
+/**
+ * A persona crossing into Ally: a warm, unhurried two-note interval (a
+ * major sixth — the classic "trust" interval) held on soft triangles.
+ * Deliberately gentler and slower than every reward sting around it; this
+ * is a relationship moment, not a jackpot.
+ */
+export function playAllyUnlocked() {
+  const context = getAudioContext()
+  const now = context.currentTime
+  const notes = [392.0, 659.25] // G4 up to E5
+
+  notes.forEach((freq, i) => {
+    const t = now + i * 0.22
+    const osc = context.createOscillator()
+    osc.type = 'triangle'
+    osc.frequency.setValueAtTime(freq, t)
+    const gain = context.createGain()
+    gain.gain.setValueAtTime(0.001, t)
+    gain.gain.linearRampToValueAtTime(0.14, t + 0.06)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 1.1)
+    osc.connect(gain).connect(context.destination)
+    osc.start(t)
+    osc.stop(t + 1.15)
+  })
+}
+
+/**
  * A short two-note upward chirp — played when a daily quest is completed.
  * Lighter and quicker than the badge chime, since quests are a routine
  * daily win rather than a milestone.

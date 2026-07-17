@@ -26,6 +26,8 @@ import {
   playSessionComplete,
   playStreakTierUp,
   playSuccessSfx,
+  playFragmentRecovered,
+  playAllyUnlocked,
 } from '../audio/sfx.js'
 import { speakTerm } from '../audio/speak.js'
 import { playPronunciationSting } from '../audio/themeAudioControl.js'
@@ -244,6 +246,13 @@ export function ReviewScreen() {
 
     await reviewWord(current.id, quality)
     logReviewActivity(current.term, correct)
+    // Fire-and-forget: the toolbar badge counts due words, and one was just
+    // rescheduled. The popup must never stall on the service worker for this.
+    try {
+      chrome.runtime.sendMessage({ type: 'polyglot:refreshBadge' }).catch(() => {})
+    } catch {
+      /* messaging unavailable (e.g. tests) — badge just refreshes on the next alarm */
+    }
     let { progress: nextProgress, xpGained, leveledUp, streakShieldUsed, newBadges, dailyQuest } =
       await awardReviewXp(theme.id, quality, { multiplier: totalMultiplier, combo: nextCombo })
 
@@ -345,6 +354,7 @@ export function ReviewScreen() {
     const comboMilestoneHit = correct && nextCombo > 0 && nextCombo % COMBO_MILESTONE_STEP === 0
     if (streakTierUp) mintedFragment = mintedFragment ?? (await recordStreakTierReached(theme.id))
     setFragmentToast(mintedFragment)
+    if (sfxOn && mintedFragment) playFragmentRecovered()
     if (sfxOn) {
       if (correct) playSuccessSfx(theme.audio.sfxVariant, nextCombo)
       else playMissSfx(theme.audio.sfxVariant, nextTension)
@@ -428,6 +438,7 @@ export function ReviewScreen() {
       const pack = await grantAllyPack(theme.id, allyUnlock.personaId)
       await markAllyRewardClaimed(theme.id, allyUnlock.personaId)
       setAllyToast({ persona, pack })
+      if (sfxOn) playAllyUnlocked()
     }
 
     if (leveledUp) {

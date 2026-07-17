@@ -31,6 +31,15 @@ import './App.css'
 
 const isDetachedWindow = new URLSearchParams(window.location.search).has('window')
 if (isDetachedWindow) document.body.classList.add('is-windowed')
+
+// Every popup open re-syncs the toolbar due-count badge — the popup is
+// where due counts change (reviews, seeding, imports), and the background
+// can't observe the popup's IndexedDB writes on its own.
+try {
+  chrome.runtime.sendMessage({ type: 'polyglot:refreshBadge' }).catch(() => {})
+} catch {
+  /* messaging unavailable (tests) */
+}
 const WEEKLY_REPORT_SHOWN_KEY = 'weeklyReportShownWeek'
 const ONBOARDING_SEEN_KEY = 'onboardingSeenV1'
 const BRIEFING_SHOWN_KEY = 'dailyBriefingShownDate'

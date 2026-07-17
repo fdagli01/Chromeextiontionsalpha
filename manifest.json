@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Polyglot Chronicle",
   "description": "A theme-based vocabulary learning extension that blends language, history, and philosophy",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "action": {
     "default_popup": "src/popup/index.html",
     "default_title": "Polyglot Chronicle"
@@ -11,6 +11,13 @@
     "service_worker": "src/background/index.js",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "js": ["src/content/highlight.js"],
+      "matches": ["http://*/*", "https://*/*"],
+      "run_at": "document_idle"
+    }
+  ],
   "permissions": ["contextMenus", "storage", "activeTab", "notifications", "alarms"],
   "host_permissions": ["https://api.mymemory.translated.net/*", "https://generativelanguage.googleapis.com/*"],
   "icons": {

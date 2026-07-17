@@ -20,6 +20,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
   const [aiEngineEnabled, setAiEngineEnabled] = useState(null)
   const [aiEngineApiKey, setAiEngineApiKey] = useState('')
   const [seedMessage, setSeedMessage] = useState('')
+  const [domHighlightEnabled, setDomHighlightEnabled] = useState(null)
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     getSetting('soundscapeEnabled', true).then(setSoundscapeEnabled)
     getSetting('aiEngineEnabled', false).then(setAiEngineEnabled)
     getSetting('aiEngineApiKey', '').then(setAiEngineApiKey)
+    getSetting('domHighlightEnabled', true).then(setDomHighlightEnabled)
   }, [])
 
   useEffect(() => {
@@ -45,7 +47,8 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     autoSpeakEnabled === null ||
     soundscapeEnabled === null ||
     earnedBadges === null ||
-    aiEngineEnabled === null
+    aiEngineEnabled === null ||
+    domHighlightEnabled === null
   ) {
     return <p className="empty-state">Loading...</p>
   }
@@ -60,6 +63,12 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     const next = !sfxEnabled
     setSfxEnabled(next)
     await setSetting('sfxEnabled', next)
+  }
+
+  async function toggleDomHighlight() {
+    const next = !domHighlightEnabled
+    setDomHighlightEnabled(next)
+    await setSetting('domHighlightEnabled', next)
   }
 
   async function toggleAutoSpeak() {
@@ -167,6 +176,16 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
         </div>
         <button className={`toggle-button ${soundscapeEnabled ? 'on' : ''}`} onClick={toggleSoundscape}>
           {soundscapeEnabled ? 'On' : 'Off'}
+        </button>
+      </div>
+
+      <div className="settings-row">
+        <div className="settings-row-label">
+          <span className="title">Page Highlighting</span>
+          <span className="hint">Underline your due words on the web pages you read</span>
+        </div>
+        <button className={`toggle-button ${domHighlightEnabled ? 'on' : ''}`} onClick={toggleDomHighlight}>
+          {domHighlightEnabled ? 'On' : 'Off'}
         </button>
       </div>
 

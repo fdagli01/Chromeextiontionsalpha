@@ -1,4 +1,4 @@
-import { addWord, getProgress, getSetting, getWordsByTheme, updateWord } from '../db/index.js'
+import { addWord, getDueWords, getProgress, getSetting, getWordsByTheme, updateWord } from '../db/index.js'
 import { getTheme, listThemes } from '../themes/index.js'
 import { getExample, getFact, getPhilosophy } from '../facts/index.js'
 import { getTransliteration } from '../transliteration/index.js'
@@ -56,7 +56,71 @@ chrome.runtime.onStartup.addListener(scheduleStreakGuardChecks)
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === CRISIS_ALARM_NAME) checkForCrisis()
   if (alarm.name === STREAK_GUARD_ALARM_NAME) checkStreakGuard()
+  // Piggyback on both existing periodic alarms: words become due purely by
+  // time passing, so the badge needs refreshing even with zero user activity.
+  updateDueBadge()
 })
+
+chrome.runtime.onInstalled.addListener(updateDueBadge)
+chrome.runtime.onStartup.addListener(updateDueBadge)
+
+/**
+ * Toolbar badge: the count of words currently due across every theme, so
+ * the extension reads as "3 files waiting for you" at a glance without the
+ * popup ever being opened. Cleared entirely at zero — an empty badge is
+ * calmer than a "0".
+ */
+async function updateDueBadge() {
+  try {
+    const perTheme = await Promise.all(listThemes().map((theme) => getDueWords(theme.id)))
+    const total = perTheme.reduce((sum, words) => sum + words.length, 0)
+    await chrome.action.setBadgeText({ text: total > 0 ? (total > 99 ? '99+' : String(total)) : '' })
+    await chrome.action.setBadgeBackgroundColor({ color: '#b30000' })
+    await chrome.action.setBadgeTextColor({ color: '#ffffff' })
+  } catch {
+    // Badge is decoration — never let it break capture/review flows.
+  }
+}
+
+/**
+ * Messaging: the content script (page-highlighting) and the popup both call
+ * in here. sendResponse + `return true` is the MV3 async-response contract.
+ */
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type === 'polyglot:getDueTerms') {
+    collectDueTerms().then(sendResponse)
+    return true
+  }
+  if (message?.type === 'polyglot:refreshBadge') {
+    updateDueBadge()
+  }
+})
+
+/** Most terms handed to the page highlighter — a safety valve, far above any realistic due count. */
+const MAX_HIGHLIGHT_TERMS = 300
+
+/**
+ * Gathers every due word across all themes for the page highlighter, each
+ * tagged with its theme's accent color. Respects the Mainframe toggle —
+ * when highlighting is off this returns {enabled: false} and the content
+ * script does nothing at all.
+ * @returns {Promise<{enabled: boolean, terms: Array<{term: string, translation: string, color: string}>}>}
+ */
+async function collectDueTerms() {
+  const enabled = await getSetting('domHighlightEnabled', true)
+  if (!enabled) return { enabled: false, terms: [] }
+
+  const themes = listThemes()
+  const perTheme = await Promise.all(themes.map((theme) => getDueWords(theme.id)))
+  const terms = []
+  for (let i = 0; i < themes.length; i++) {
+    for (const word of perTheme[i]) {
+      terms.push({ term: word.term, translation: word.translation ?? '', color: themes[i].colors.accent })
+      if (terms.length >= MAX_HIGHLIGHT_TERMS) return { enabled: true, terms }
+    }
+  }
+  return { enabled: true, terms }
+}
 
 chrome.contextMenus.onClicked.addListener((info) => {
   const theme = listThemes().find((t) => menuIdForTheme(t.id) === info.menuItemId)
@@ -120,6 +184,7 @@ async function captureWord(term, themeId, pageUrl) {
   enrichWordWithAi(word.id, themeId, term, { needsFact: !fact, needsExample: !example })
 
   if (isNewWord) checkBounty(term, themeId, pageUrl)
+  updateDueBadge() // a fresh capture is due immediately, so the count just changed
 }
 
 /** XP awarded once, the moment a daily field bounty is completed. */
