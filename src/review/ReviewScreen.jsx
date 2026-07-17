@@ -540,10 +540,12 @@ export function ReviewScreen() {
             ) : (
               <span className="mentor-icon" aria-hidden="true">{getMentor(theme.id, 'sessionComplete')?.icon}</span>
             )}
-            <span className="mentor-name" title={getMentor(theme.id, 'sessionComplete')?.backstory}>
-              {getMentor(theme.id, 'sessionComplete')?.name}:
-            </span>
-            <span className="mentor-quote">"{sessionMentorLine}"</span>
+            <div className="mentor-bubble">
+              <span className="mentor-name" title={getMentor(theme.id, 'sessionComplete')?.backstory}>
+                {getMentor(theme.id, 'sessionComplete')?.name}
+              </span>
+              <span className="mentor-quote">"{sessionMentorLine}"</span>
+            </div>
           </div>
         )}
         <p className="empty-state">No more words due. Come back later, or archive new ones from any page.</p>
@@ -802,10 +804,12 @@ export function ReviewScreen() {
                   {getMentor(theme.id, mentorLine.moment)?.icon}
                 </span>
               )}
-              <span className="mentor-name" title={getMentor(theme.id, mentorLine.moment)?.backstory}>
-                {getMentor(theme.id, mentorLine.moment)?.name}:
-              </span>
-              <span className="mentor-quote">"{mentorLine.line}"</span>
+              <div className="mentor-bubble">
+                <span className="mentor-name" title={getMentor(theme.id, mentorLine.moment)?.backstory}>
+                  {getMentor(theme.id, mentorLine.moment)?.name}
+                </span>
+                <span className="mentor-quote">"{mentorLine.line}"</span>
+              </div>
             </div>
           )}
 
