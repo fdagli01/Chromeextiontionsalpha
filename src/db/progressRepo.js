@@ -15,6 +15,8 @@ import { STORE_PROGRESS, withStore } from './connection.js'
  * @property {number} streakShields - streak-insurance tokens; one is auto-spent to forgive a single missed day
  * @property {number} dailyBestCombo - best consecutive-correct combo reached on dailyQuestDate
  * @property {number} dailyXp - XP earned on dailyQuestDate (for daily-briefing objectives)
+ * @property {number} redemptionCount - lifetime count of previously-struggling words recalled correctly (Vault fragment trigger)
+ * @property {number} bountyCompletionCount - lifetime count of completed daily field bounties (Vault fragment trigger)
  */
 
 /**
@@ -36,6 +38,8 @@ function emptyProgress(themeId) {
     streakShields: 0,
     dailyBestCombo: 0,
     dailyXp: 0,
+    redemptionCount: 0,
+    bountyCompletionCount: 0,
   }
 }
 
@@ -55,6 +59,8 @@ export async function getProgress(themeId) {
     streakShields: 0,
     dailyBestCombo: 0,
     dailyXp: 0,
+    redemptionCount: 0,
+    bountyCompletionCount: 0,
     ...existing,
   }
 }

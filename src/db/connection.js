@@ -1,11 +1,12 @@
 const DB_NAME = 'polyglot-chronicle'
-const DB_VERSION = 2
+const DB_VERSION = 3
 
 export const STORE_WORDS = 'words'
 export const STORE_PROGRESS = 'progress'
 export const STORE_SETTINGS = 'settings'
 export const STORE_FACTIONS = 'factions'
 export const STORE_CRISES = 'crises'
+export const STORE_ARTIFACTS = 'artifacts'
 
 /** @type {Promise<IDBDatabase> | null} */
 let dbPromise = null
@@ -46,6 +47,15 @@ export function openDB() {
       if (!db.objectStoreNames.contains(STORE_CRISES)) {
         const crises = db.createObjectStore(STORE_CRISES, { keyPath: 'id', autoIncrement: true })
         crises.createIndex('byTheme', 'themeId', { unique: false })
+      }
+
+      if (!db.objectStoreNames.contains(STORE_ARTIFACTS)) {
+        // keyPath is a synthetic "themeId:artifactId" string rather than a
+        // compound key — plain string keys are simpler to look up directly
+        // without building an IDBKeyRange, and there are only ever two
+        // records per theme.
+        const artifacts = db.createObjectStore(STORE_ARTIFACTS, { keyPath: 'id' })
+        artifacts.createIndex('byTheme', 'themeId', { unique: false })
       }
     }
 

@@ -12,6 +12,7 @@ import { getActiveWorldEvent, worldEventMultiplier } from '../progression/worldE
 import { rollInterceptEvent } from '../progression/randomEvents.js'
 import { getBountyMentor, getMentor, pickBountyLine, pickMentorLine } from '../progression/mentors.js'
 import { getBountyState, markBountyCelebrated } from '../progression/bounties.js'
+import { recordRedemption, recordStreakTierReached } from '../progression/artifacts.js'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -79,6 +80,7 @@ export function ReviewScreen() {
   const [mentorLine, setMentorLine] = useState(null)
   const [sessionMentorLine, setSessionMentorLine] = useState(null)
   const [bountyCelebration, setBountyCelebration] = useState(null)
+  const [fragmentToast, setFragmentToast] = useState(null)
   const [levelUpInfo, setLevelUpInfo] = useState(null)
   const [flickerKey, setFlickerKey] = useState(0)
   const [shake, setShake] = useState(false)
@@ -179,6 +181,7 @@ export function ReviewScreen() {
     setLevelUpInfo(null)
     setFactionToast(null)
     setSecretReveal(null)
+    setFragmentToast(null)
     shownAtRef.current = performance.now()
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
       const opts = reverseMode
@@ -229,10 +232,26 @@ export function ReviewScreen() {
     // hot combo on a Double Dispatch weekend pays out especially well.
     const totalMultiplier = momentumMultiplier * worldEventMultiplier(worldEvent)
 
+    // Captured before reviewWord/awardReviewXp touch anything — `current` is
+    // this render's word-before-the-answer, so this is the pre-review
+    // struggling flag, not whatever it becomes after.
+    const wasStruggling = current.struggling
+    const progressBeforeAward = progress
+
     await reviewWord(current.id, quality)
     logReviewActivity(current.term, correct)
     let { progress: nextProgress, xpGained, leveledUp, streakShieldUsed, newBadges, dailyQuest } =
       await awardReviewXp(theme.id, quality, { multiplier: totalMultiplier, combo: nextCombo })
+
+    // Vault fragment triggers: a redemption (a previously-struggling word
+    // finally recalled correctly) and a new streak tier are both handled
+    // here since both facts are only known at this exact point in the
+    // review flow; the third trigger (bounty chains) lives in
+    // background/index.js, next to where bounties actually complete.
+    let mintedFragment = null
+    if (correct && wasStruggling) {
+      mintedFragment = await recordRedemption(theme.id, progressBeforeAward)
+    }
 
     // Cold case sessions run at double XP — the whole point is to make
     // rescuing a near-forgotten word worth more than a routine review.
@@ -307,6 +326,8 @@ export function ReviewScreen() {
     const sfxOn = await getSetting('sfxEnabled', true)
     const streakTierUp = streakTier(nextProgress.streak) > streakTier(progress?.streak ?? 0)
     const comboMilestoneHit = correct && nextCombo > 0 && nextCombo % COMBO_MILESTONE_STEP === 0
+    if (streakTierUp) mintedFragment = mintedFragment ?? (await recordStreakTierReached(theme.id))
+    setFragmentToast(mintedFragment)
     if (sfxOn) {
       if (correct) playSuccessSfx(theme.audio.sfxVariant, nextCombo)
       else playMissSfx(theme.audio.sfxVariant, nextTension)
@@ -423,6 +444,7 @@ export function ReviewScreen() {
     setMentorLine(null)
     setLevelUpInfo(null)
     setFactionToast(null)
+    setFragmentToast(null)
     setPromotionCeremony(null)
     setDoubleAgentChoice(null)
     setSecretReveal(null)
@@ -801,7 +823,7 @@ export function ReviewScreen() {
             {xpToast && <span className="result-xp"> {xpToast}</span>}
           </div>
 
-          {(badgeToast || questToast || factionToast || shieldToast || interceptToast || (isCorrect && combo >= 3)) && (
+          {(badgeToast || questToast || factionToast || shieldToast || interceptToast || fragmentToast || (isCorrect && combo >= 3)) && (
             <div className="result-extras">
               {isCorrect && combo >= 3 && <span className="result-chip combo-chip">🔥 Combo x{combo}</span>}
               {interceptToast && (
@@ -810,6 +832,12 @@ export function ReviewScreen() {
                 </span>
               )}
               {shieldToast && <span className="result-chip shield-chip">🛡 Streak saved</span>}
+              {fragmentToast && (
+                <span className="result-chip fragment-chip">
+                  🧩 {fragmentToast.artifact.icon} {fragmentToast.artifact.name} {fragmentToast.fragments}/3
+                  {fragmentToast.justCompleted ? ' — COMPLETE!' : ''}
+                </span>
+              )}
               {badgeToast && (
                 <span className="result-chip">
                   {badgeToast.icon} {badgeToast.name}

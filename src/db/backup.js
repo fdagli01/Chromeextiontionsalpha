@@ -1,20 +1,23 @@
 import { STORE_WORDS, withStore } from './connection.js'
 import { getAllWords } from './wordsRepo.js'
 import { getProgress, saveProgress } from './progressRepo.js'
+import { getAllArtifactRecords, restoreArtifactRecords } from './artifactsRepo.js'
 import { listThemes } from '../themes/index.js'
 
-const BACKUP_VERSION = 1
+const BACKUP_VERSION = 2
 
 /**
- * Serializes every word and every theme's progress into a single portable
- * JSON object — a safety net independent of the browser's storage (which
- * resets if the unpacked extension's folder path ever changes, since Chrome
- * derives the extension ID, and therefore the IndexedDB partition, from it).
- * @returns {Promise<{version: number, exportedAt: string, words: object[], progress: object[]}>}
+ * Serializes every word, every theme's progress, and every Vault artifact
+ * fragment into a single portable JSON object — a safety net independent of
+ * the browser's storage (which resets if the unpacked extension's folder
+ * path ever changes, since Chrome derives the extension ID, and therefore
+ * the IndexedDB partition, from it).
+ * @returns {Promise<{version: number, exportedAt: string, words: object[], progress: object[], artifacts: object[]}>}
  */
 export async function exportBackup() {
   const words = await getAllWords()
   const progress = await Promise.all(listThemes().map((theme) => getProgress(theme.id)))
+  const artifacts = await getAllArtifactRecords()
 
   return {
     version: BACKUP_VERSION,
@@ -23,6 +26,7 @@ export async function exportBackup() {
     // never collides with whatever ids already exist in the target database.
     words: words.map(({ id, ...rest }) => rest),
     progress,
+    artifacts,
   }
 }
 
@@ -49,6 +53,11 @@ export async function importBackup(data) {
     if (!progress?.themeId) continue
     await saveProgress(progress.themeId, progress)
   }
+
+  // Older backups (version 1) predate the Vault — absent on those, and
+  // simply skipped rather than treated as an error.
+  const artifactsList = Array.isArray(data.artifacts) ? data.artifacts : []
+  await restoreArtifactRecords(artifactsList)
 
   return { wordsImported: data.words.length, progressImported: progressList.length }
 }

@@ -1188,6 +1188,11 @@
   border-color: #3dff9e !important;
 }
 
+.fragment-chip {
+  color: #c77dff !important;
+  border-color: #c77dff !important;
+}
+
 /* Mentor NPC line: a portrait "steps into frame" from the side and a speech
    bubble pops open a beat after it lands, so this reads as a character
    actually turning up to react — not a caption quietly appearing next to a

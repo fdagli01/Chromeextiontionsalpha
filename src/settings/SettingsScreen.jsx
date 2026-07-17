@@ -7,6 +7,7 @@ import { seedSampleWords } from '../db/seedWords.js'
 import { listThemes } from '../themes/index.js'
 import { pauseThemeAudio } from '../audio/themeAudioControl.js'
 import { BADGE_DEFS, resolveBadges } from '../badges/badges.js'
+import { VaultSection } from './VaultSection.jsx'
 import './SettingsScreen.css'
 
 export function SettingsScreen({ activeThemeId, onThemeChange }) {
@@ -197,6 +198,8 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
           </div>
         )}
       </div>
+
+      <VaultSection themeId={activeThemeId} />
 
       <div className="settings-backup">
         <span className="title">Sample Words</span>

@@ -88,6 +88,8 @@ describe('progressRepo', () => {
       streakShields: 0,
       dailyBestCombo: 0,
       dailyXp: 0,
+      redemptionCount: 0,
+      bountyCompletionCount: 0,
     })
   })
 
@@ -108,6 +110,8 @@ describe('progressRepo', () => {
       streakShields: 0,
       dailyBestCombo: 0,
       dailyXp: 0,
+      redemptionCount: 0,
+      bountyCompletionCount: 0,
     })
   })
 })

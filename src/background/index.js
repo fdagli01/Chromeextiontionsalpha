@@ -1,4 +1,4 @@
-import { addWord, getSetting, getWordsByTheme, updateWord } from '../db/index.js'
+import { addWord, getProgress, getSetting, getWordsByTheme, updateWord } from '../db/index.js'
 import { getTheme, listThemes } from '../themes/index.js'
 import { getExample, getFact, getPhilosophy } from '../facts/index.js'
 import { getTransliteration } from '../transliteration/index.js'
@@ -9,6 +9,7 @@ import { checkForCrisis, CRISIS_ALARM_NAME, scheduleCrisisChecks } from './crisi
 import { checkStreakGuard, STREAK_GUARD_ALARM_NAME, scheduleStreakGuardChecks } from './streakGuardScheduler.js'
 import { getDailyBounty, recordBountyCapture } from '../progression/bounties.js'
 import { awardBounty } from '../xp/xpService.js'
+import { recordBountyCompletion } from '../progression/artifacts.js'
 
 const MENU_ROOT_ID = 'polyglot-chronicle-root'
 
@@ -137,6 +138,11 @@ async function checkBounty(term, themeId, pageUrl) {
   if (!justCompleted) return
 
   await awardBounty(themeId, BOUNTY_REWARD_XP)
+  // Vault fragment trigger: every 3rd completed bounty (lifetime, across all
+  // themes' bounty completions is not tracked separately — this is
+  // per-theme, same as the redemption/streak-tier triggers in ReviewScreen).
+  const progress = await getProgress(themeId)
+  await recordBountyCompletion(themeId, progress)
 
   const bounty = getDailyBounty()
   chrome.notifications.create({
