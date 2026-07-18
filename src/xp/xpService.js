@@ -74,6 +74,7 @@ export async function awardReviewXp(themeId, quality, opts = {}) {
     level: nextLevel,
     xp: nextXp,
     badges: current.badges,
+    doubleAgentsExposed: current.doubleAgentsExposed,
   })
 
   const progress = await saveProgress(themeId, {

@@ -18,6 +18,7 @@ import { grantAllyPack } from '../progression/allyPacks.js'
 import { resolveIntercept, rollIntercept } from '../progression/intercepts.js'
 import { getDailyDirective } from '../progression/directives.js'
 import { getDeskMementos } from '../progression/mementos.js'
+import { DOUBLE_AGENT_BONUS_XP, findFalseFriend } from '../progression/falseFriends.js'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -114,6 +115,7 @@ export function ReviewScreen() {
   const [npcIntercept, setNpcIntercept] = useState(null)
   const [interceptTimeLeft, setInterceptTimeLeft] = useState(null)
   const [interceptOutcomeToast, setInterceptOutcomeToast] = useState(null)
+  const [doubleAgentResult, setDoubleAgentResult] = useState(null)
   const [deskMementos, setDeskMementos] = useState([])
   const sessionCompleteAnnouncedRef = useRef(false)
   const shownAtRef = useRef(performance.now())
@@ -184,6 +186,10 @@ export function ReviewScreen() {
   }
 
   const current = queue?.[0]
+  // Double-agent check: false friends only work in the normal direction
+  // (term shown, meanings offered) — reverse mode shows the translation, so
+  // the English-lookalike trap has nothing to masquerade as there.
+  const falseFriend = current && !reverseMode ? findFalseFriend(theme.id, current.term) : null
 
   useEffect(() => {
     if (!current) return
@@ -200,11 +206,18 @@ export function ReviewScreen() {
     setFragmentToast(null)
     setAllyToast(null)
     setInterceptOutcomeToast(null)
+    setDoubleAgentResult(null)
     const rolled = coldCaseSession ? null : rollIntercept(theme.id)
     setNpcIntercept(rolled)
     setInterceptTimeLeft(rolled?.timerSec ?? null)
     shownAtRef.current = performance.now()
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
+      // A double-agent word plants its English-lookalike trap meaning as one
+      // of the wrong options — unless the player's own stored translation IS
+      // the trap (they'd get a duplicate pair), in which case the alarm still
+      // shows but the options stay untampered.
+      const trapArmed =
+        falseFriend && falseFriend.trap.toLowerCase() !== (current.translation || '').toLowerCase()
       const opts = reverseMode
         ? shuffle([
             { label: current.term, translit: current.transliteration, isCorrect: true },
@@ -212,7 +225,11 @@ export function ReviewScreen() {
           ])
         : shuffle([
             { label: current.translation || '(no translation)', isCorrect: true },
-            ...distractors.map((d) => ({ label: d.translation || '—', isCorrect: false })),
+            ...distractors.map((d, i) =>
+              trapArmed && i === 0
+                ? { label: falseFriend.trap, isCorrect: false, isTrap: true }
+                : { label: d.translation || '—', isCorrect: false }
+            ),
           ])
       setOptions(opts)
     })
@@ -249,6 +266,7 @@ export function ReviewScreen() {
     if (isAnswered || !options[index]) return
     setSelected(index)
     const correct = options[index].isCorrect
+    const pickedTrap = !!options[index].isTrap
     const elapsedMs = performance.now() - shownAtRef.current
     const quality = !correct
       ? QUALITY.AGAIN
@@ -281,6 +299,14 @@ export function ReviewScreen() {
     // struggling flag, not whatever it becomes after.
     const wasStruggling = current.struggling
     const progressBeforeAward = progress
+
+    // Double agent exposed: bump the lifetime counter BEFORE XP is awarded,
+    // so awardReviewXp evaluates the counterintelligence badges against the
+    // new count and they surface through the normal newBadges flow.
+    if (falseFriend && correct) {
+      const fresh = await getProgress(theme.id)
+      await saveProgress(theme.id, { doubleAgentsExposed: (fresh.doubleAgentsExposed ?? 0) + 1 })
+    }
 
     await reviewWord(current.id, quality)
     logReviewActivity(current.term, correct)
@@ -371,6 +397,15 @@ export function ReviewScreen() {
         setSecretReveal(secret)
       }
 
+      // Double agent exposed: picking the true meaning over the trap pays a
+      // flat bonus, separate from the momentum/event XP already awarded.
+      if (falseFriend) {
+        const exposedBonus = await awardBonusXp(theme.id, DOUBLE_AGENT_BONUS_XP)
+        finalProgress = exposedBonus.progress
+        leveledUp = leveledUp || exposedBonus.leveledUp
+        newBadges = [...newBadges, ...exposedBonus.newBadges]
+      }
+
       // Random intercept: a rare surprise bonus on a correct recall, awarded
       // outside the normal per-review XP so it reads as a windfall.
       const intercept = rollInterceptEvent()
@@ -386,13 +421,25 @@ export function ReviewScreen() {
     // Directives can override the normal tension math: Pax Romana suspends
     // it entirely, and the Sharpened Blade order doubles the penalty for a
     // miss (a correct answer still de-escalates at the normal rate).
-    const nextTension = !hasTension
+    let nextTension = !hasTension
       ? 0
       : directive?.effect === 'noTension'
         ? tension
         : correct
           ? Math.max(0, tension - 1)
           : Math.min(3, tension + (directive?.effect === 'doubleMissTension' ? 2 : 1))
+    // A double agent slipping through on a false-friend trap is a real
+    // security breach — tension maxes out regardless of any calm-day
+    // directive, since letting the trap through is worse than a normal miss.
+    if (hasTension && pickedTrap) nextTension = 3
+    if (falseFriend) {
+      setDoubleAgentResult({
+        exposed: correct,
+        trap: falseFriend.trap,
+        truth: falseFriend.truth,
+        note: falseFriend.note,
+      })
+    }
 
     const sfxOn = await getSetting('sfxEnabled', true)
     const streakTierUp = streakTier(nextProgress.streak) > streakTier(progress?.streak ?? 0)
@@ -571,6 +618,7 @@ export function ReviewScreen() {
     setFragmentToast(null)
     setAllyToast(null)
     setInterceptOutcomeToast(null)
+    setDoubleAgentResult(null)
     setPromotionCeremony(null)
     setDoubleAgentChoice(null)
     setSecretReveal(null)
@@ -819,6 +867,13 @@ export function ReviewScreen() {
         </div>
       )}
 
+      {falseFriend && !isAnswered && (
+        <div className="double-agent-alarm">
+          <span className="double-agent-alarm-icon" aria-hidden="true">🚨</span>
+          <span className="double-agent-alarm-text">SUSPICIOUS IDENTITY — verify before you file this report</span>
+        </div>
+      )}
+
       {npcIntercept && !isAnswered && (
         <div
           className={`intercept-banner ${npcIntercept.moralInversion ? 'moral-inversion' : ''} ${
@@ -992,7 +1047,7 @@ export function ReviewScreen() {
             {xpToast && <span className="result-xp"> {xpToast}</span>}
           </div>
 
-          {(badgeToast || questToast || factionToast || shieldToast || interceptToast || interceptOutcomeToast || fragmentToast || allyToast || (isCorrect && combo >= 3)) && (
+          {(badgeToast || questToast || factionToast || shieldToast || interceptToast || interceptOutcomeToast || fragmentToast || allyToast || doubleAgentResult || (isCorrect && combo >= 3)) && (
             <div className="result-extras">
               {isCorrect && combo >= 3 && <span className="result-chip combo-chip">🔥 Combo x{combo}</span>}
               {interceptToast && (
@@ -1004,6 +1059,11 @@ export function ReviewScreen() {
                 <span className={`result-chip npc-intercept-chip ${interceptOutcomeToast.helped ? 'helped' : 'failed'}`}>
                   {interceptOutcomeToast.helped ? '🤝' : '✖'} {interceptOutcomeToast.personaName}
                   {interceptOutcomeToast.bonusXp > 0 ? ` +${interceptOutcomeToast.bonusXp} XP` : ''}
+                </span>
+              )}
+              {doubleAgentResult && (
+                <span className={`result-chip double-agent-chip ${doubleAgentResult.exposed ? 'exposed' : 'slipped'}`}>
+                  {doubleAgentResult.exposed ? `🕵 Agent Exposed +${DOUBLE_AGENT_BONUS_XP} XP` : '💥 Agent Slipped Through'}
                 </span>
               )}
               {shieldToast && <span className="result-chip shield-chip">🛡 Streak saved</span>}
@@ -1026,6 +1086,12 @@ export function ReviewScreen() {
                 </span>
               )}
             </div>
+          )}
+
+          {doubleAgentResult && (
+            <p className={`double-agent-debrief ${doubleAgentResult.exposed ? 'exposed' : 'slipped'}`}>
+              {doubleAgentResult.note}
+            </p>
           )}
 
           {allyToast && allyToast.pack.added > 0 && (

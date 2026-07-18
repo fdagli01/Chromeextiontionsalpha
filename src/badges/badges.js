@@ -14,6 +14,9 @@ export const BADGE_DEFS = [
   { id: 'streak-14', icon: '🐺', name: "Wolf's Blood", check: (p) => p.streak >= 14 },
   { id: 'level-5', icon: '⭐', name: 'Promoted', check: (p) => p.level >= 5 },
   { id: 'level-10', icon: '👑', name: 'General Secretary', check: (p) => p.level >= 10 },
+  { id: 'agent-1', icon: '🕵', name: 'Agent Exposed', check: (p) => (p.doubleAgentsExposed ?? 0) >= 1 },
+  { id: 'agent-5', icon: '🧥', name: 'Counterintelligence', check: (p) => (p.doubleAgentsExposed ?? 0) >= 5 },
+  { id: 'agent-10', icon: '🎖', name: 'Mole Hunter', check: (p) => (p.doubleAgentsExposed ?? 0) >= 10 },
 ]
 
 /**

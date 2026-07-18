@@ -1781,6 +1781,48 @@
   50% { transform: rotate(2.5deg) translateY(-2px); }
 }
 
+/* ── Double agent (false friend) alarm ── */
+.double-agent-alarm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-danger) 16%, transparent);
+  animation: air-raid-flicker 0.9s steps(2) infinite;
+}
+.double-agent-alarm-text {
+  font-family: var(--font-heading);
+  font-size: var(--type-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-danger);
+}
+.double-agent-chip.exposed {
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+.double-agent-chip.slipped {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+.double-agent-debrief {
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  border-left: 3px solid var(--color-border);
+  font-size: var(--type-xs);
+  color: var(--color-text-muted);
+}
+.double-agent-debrief.exposed {
+  border-left-color: var(--color-success);
+}
+.double-agent-debrief.slipped {
+  border-left-color: var(--color-danger);
+}
+
 .term-card.storm-shake {
   animation: storm-shake 0.5s ease-in-out infinite;
 }

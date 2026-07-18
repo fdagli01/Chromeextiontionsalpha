@@ -17,6 +17,7 @@ import { STORE_PROGRESS, withStore } from './connection.js'
  * @property {number} dailyXp - XP earned on dailyQuestDate (for daily-briefing objectives)
  * @property {number} redemptionCount - lifetime count of previously-struggling words recalled correctly (Vault fragment trigger)
  * @property {number} bountyCompletionCount - lifetime count of completed daily field bounties (Vault fragment trigger)
+ * @property {number} doubleAgentsExposed - lifetime count of false-friend words answered correctly (badge trigger)
  */
 
 /**
@@ -40,6 +41,7 @@ function emptyProgress(themeId) {
     dailyXp: 0,
     redemptionCount: 0,
     bountyCompletionCount: 0,
+    doubleAgentsExposed: 0,
   }
 }
 
@@ -61,6 +63,7 @@ export async function getProgress(themeId) {
     dailyXp: 0,
     redemptionCount: 0,
     bountyCompletionCount: 0,
+    doubleAgentsExposed: 0,
     ...existing,
   }
 }

@@ -90,6 +90,7 @@ describe('progressRepo', () => {
       dailyXp: 0,
       redemptionCount: 0,
       bountyCompletionCount: 0,
+      doubleAgentsExposed: 0,
     })
   })
 
@@ -112,6 +113,7 @@ describe('progressRepo', () => {
       dailyXp: 0,
       redemptionCount: 0,
       bountyCompletionCount: 0,
+      doubleAgentsExposed: 0,
     })
   })
 })
