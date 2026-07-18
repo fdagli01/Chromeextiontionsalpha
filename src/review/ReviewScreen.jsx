@@ -28,7 +28,9 @@ import {
 import { judgeDictation, rollRadioCrisis } from '../progression/radioIntercept.js'
 import { getPendingScene, pickDecisionCallout } from '../progression/storyScenes.js'
 import { recordDecision } from '../progression/decisions.js'
+import { getPendingEnding } from '../progression/endings.js'
 import { StorySceneOverlay } from './StorySceneOverlay.jsx'
+import { EndingOverlay } from './EndingOverlay.jsx'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -133,6 +135,7 @@ export function ReviewScreen() {
   const [radioCrisis, setRadioCrisis] = useState(false)
   const [dictationInput, setDictationInput] = useState('')
   const [storyScene, setStoryScene] = useState(null)
+  const [pendingEnding, setPendingEnding] = useState(null)
   const [deskMementos, setDeskMementos] = useState([])
   const sessionCompleteAnnouncedRef = useRef(false)
   const shownAtRef = useRef(performance.now())
@@ -179,9 +182,19 @@ export function ReviewScreen() {
       if (!cancelled) setDeskMementos(m)
     })
     // A story scene earned in a previous session (or another tab) greets
-    // the player the moment they sit down at this desk.
+    // the player the moment they sit down at this desk. An ending only
+    // ever exists once the full persona arc is done, so it's checked
+    // second — mutually exclusive with a scene in practice, but checked
+    // in order for clarity.
     getPendingScene(theme.id).then((scene) => {
-      if (!cancelled) setStoryScene(scene)
+      if (cancelled) return
+      if (scene) {
+        setStoryScene(scene)
+        return
+      }
+      getPendingEnding(theme.id).then((ending) => {
+        if (!cancelled) setPendingEnding(ending)
+      })
     })
     return () => {
       cancelled = true
@@ -862,10 +875,19 @@ export function ReviewScreen() {
               setStoryScene(null)
               if (sceneProgress) setProgress(sceneProgress)
               getPendingScene(theme.id).then((next) => {
-                if (next) setStoryScene(next)
+                if (next) {
+                  setStoryScene(next)
+                  return
+                }
+                getPendingEnding(theme.id).then((ending) => {
+                  if (ending) setPendingEnding(ending)
+                })
               })
             }}
           />
+        )}
+        {!storyScene && pendingEnding && (
+          <EndingOverlay themeId={theme.id} ending={pendingEnding} onClose={() => setPendingEnding(null)} />
         )}
         <p className="session-complete-title">Session Complete</p>
         <div className="session-complete-stats">
@@ -976,12 +998,24 @@ export function ReviewScreen() {
             setStoryScene(null)
             if (sceneProgress) setProgress(sceneProgress)
             // A scene choice can push another persona over a tier line —
-            // check for a follow-up so chained unlocks aren't lost.
+            // check for a follow-up so chained unlocks aren't lost. If the
+            // arc just completed, this is also the moment an ending
+            // becomes available.
             getPendingScene(theme.id).then((next) => {
-              if (next) setStoryScene(next)
+              if (next) {
+                setStoryScene(next)
+                return
+              }
+              getPendingEnding(theme.id).then((ending) => {
+                if (ending) setPendingEnding(ending)
+              })
             })
           }}
         />
+      )}
+
+      {!storyScene && pendingEnding && (
+        <EndingOverlay themeId={theme.id} ending={pendingEnding} onClose={() => setPendingEnding(null)} />
       )}
 
       {promotionCeremony && (
