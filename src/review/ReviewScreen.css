@@ -1523,6 +1523,94 @@
   color: var(--color-primary);
 }
 
+/* ── Physical rank: the terminal itself ages with the player ──
+   Tier 0 (rookie, level < 5): cheap, unstable desk. Tier 1 (mid): today's
+   baseline look, no override. Tier 2 (veteran, level 10+): pristine desk
+   plus a gold nameplate. Shared base first, then per-theme accents reusing
+   each theme's existing motif vocabulary rather than new ones. */
+.review-wrap[data-rank-tier='0'] .term-card {
+  filter: saturate(0.85) brightness(0.94);
+  animation: tier0-flicker 4s steps(1) infinite;
+}
+@keyframes tier0-flicker {
+  0%, 82%, 88%, 100% { opacity: 1; }
+  85% { opacity: 0.94; }
+}
+.review-wrap[data-rank-tier='0'] .result-stamp {
+  filter: blur(0.3px);
+  opacity: 0.85;
+  box-shadow: none;
+}
+
+.review-wrap[data-rank-tier='2'] .term-card {
+  filter: saturate(1.05) contrast(1.03);
+}
+.review-wrap[data-rank-tier='2'] .result-stamp {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4), inset 0 0 0 2px currentColor;
+}
+.rank-plaque {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 3px 8px;
+  background: linear-gradient(160deg, #d9b45b, #8a6a24 55%, #e6cf8a);
+  border: 1px solid #5c4718;
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 6px rgba(0, 0, 0, 0.4);
+  color: #3a2c0e;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* Russian: sloppier redaction/teletype at tier 0, laser-crisp at tier 2. */
+.review-wrap[data-theme='russian'][data-rank-tier='0'] .term-card.redact::after {
+  transform: skewX(-1deg);
+  opacity: 0.8;
+}
+.review-wrap[data-theme='russian'][data-rank-tier='0'] .term-word {
+  animation-timing-function: steps(8, jump-none);
+}
+.review-wrap[data-theme='russian'][data-rank-tier='2'] .term-card.redact::after {
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+
+/* Italian: chisel-in overshoots messily at tier 0, marble sheen at tier 2. */
+.review-wrap[data-theme='italian'][data-rank-tier='0'] .level-up-rank {
+  animation-timing-function: cubic-bezier(0.3, 1.6, 0.6, 1);
+}
+.review-wrap[data-theme='italian'][data-rank-tier='2'] .term-card {
+  background-image: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.1) 50%, transparent 60%);
+}
+
+/* Portuguese: rougher seas at tier 0, calm harbor at tier 2. */
+.review-wrap[data-theme='portuguese'][data-rank-tier='0'] .term-card {
+  animation: card-flip-in 0.35s ease-out, ship-sway 3.5s ease-in-out 0.4s infinite;
+}
+.review-wrap[data-theme='portuguese'][data-rank-tier='2'] .term-card {
+  animation: card-flip-in 0.35s ease-out, ship-sway 10s ease-in-out 0.4s infinite;
+}
+
+/* French: torch sputters at tier 0, steadies to a chandelier glow at tier 2. */
+.review-wrap[data-theme='french'][data-rank-tier='0'] .term-card {
+  animation: card-press 0.18s ease, torch-light-move calc(var(--torch-duration, 6s) * 0.55) steps(6) infinite;
+}
+.review-wrap[data-theme='french'][data-rank-tier='2'] .term-card {
+  animation: card-press 0.18s ease, torch-light-move calc(var(--torch-duration, 6s) * 1.6) linear infinite;
+}
+
+/* Spanish: flicker is frequent and deep at tier 0, disabled at tier 2. */
+.review-wrap[data-theme='spanish'][data-rank-tier='0'] .term-card {
+  animation: air-raid-flicker 2.4s steps(2) infinite;
+}
+.review-wrap[data-theme='spanish'][data-rank-tier='2'] .term-card {
+  animation: none;
+  border-width: 2px;
+}
+
 /* ── Radio dictation crisis ── screen blacks out, term is heard not seen. */
 .radio-blackout {
   display: flex;

@@ -45,6 +45,7 @@ import { speakTerm } from '../audio/speak.js'
 import { playPronunciationSting } from '../audio/themeAudioControl.js'
 import { comboMeterFill, comboMultiplier, levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
 import { resolveTensionVisuals, resolveThemeStage } from '../themes/index.js'
+import { terminalTierForLevel } from '../themes/terminalTier.js'
 import { findFactionsForTerm, rankForReputation } from '../factions/factions.js'
 import { findSecretForTerm } from '../secrets/secrets.js'
 import { SecretRevealOverlay } from '../secrets/SecretRevealOverlay.jsx'
@@ -881,6 +882,7 @@ export function ReviewScreen() {
 
   const { level, xpIntoLevel, xpToNextLevel } = levelProgress(progress.xp)
   const rank = rankForLevel(theme.rankNames, level)
+  const rankTier = terminalTierForLevel(level)
   const barPct = xpToNextLevel > 0 ? Math.round((xpIntoLevel / xpToNextLevel) * 100) : 100
   const isCorrect = isAnswered && options[selected]?.isCorrect
   const today = new Date().toISOString().slice(0, 10)
@@ -912,6 +914,7 @@ export function ReviewScreen() {
     <div
       className={`review-wrap ${hasTension ? `tension-${tension}` : ''} ${shake ? 'shake-glitch' : ''}`}
       data-theme={theme.id}
+      data-rank-tier={rankTier}
       style={tensionStyle}
     >
       {secretReveal && <SecretRevealOverlay secret={secretReveal} onDismiss={() => setSecretReveal(null)} />}
@@ -1043,6 +1046,11 @@ export function ReviewScreen() {
         }`}
         key={`${current.id}-${flickerKey}`}
       >
+        {rankTier === 2 && (
+          <div className="rank-plaque" title={`${rank} — terminal fully commissioned`}>
+            {rank}
+          </div>
+        )}
         {theme.id === 'portuguese' && (
           <div
             className={`candle-glow ${isAnswered && !isCorrect ? 'gutter' : ''}`}
