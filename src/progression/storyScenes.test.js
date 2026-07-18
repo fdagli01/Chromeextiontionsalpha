@@ -5,10 +5,13 @@ import { getFactionProgress } from '../db/factionsRepo.js'
 import { getPersonaById } from './mentors.js'
 import { addTrust } from './affinity.js'
 import { getDecision, recordDecision } from './decisions.js'
+import { addWord, reviewWord } from '../db/wordsRepo.js'
+import { QUALITY } from '../srs/fsrs.js'
 import {
   DECISION_CALLOUTS,
   STORY_SCENES,
   getPendingScene,
+  isTermKnown,
   pickDecisionCallout,
   resolveSceneChoice,
 } from './storyScenes.js'
@@ -28,27 +31,43 @@ async function pushTrust(themeId, personaId, target) {
 }
 
 describe('STORY_SCENES', () => {
-  it('every scene references a real persona and offers exactly two meaningful choices', () => {
+  it('every scene references a real persona and offers 2-3 meaningful choices', () => {
     for (const [themeId, scenes] of Object.entries(STORY_SCENES)) {
       for (const scene of scenes) {
         expect(getPersonaById(themeId, scene.personaId), scene.id).toBeDefined()
         expect(['warm', 'ally']).toContain(scene.tier)
         expect(scene.body.length).toBeGreaterThan(50)
-        expect(scene.choices).toHaveLength(2)
+        expect(scene.choices.length).toBeGreaterThanOrEqual(2)
+        expect(scene.choices.length).toBeLessThanOrEqual(3)
         for (const choice of scene.choices) {
           expect(choice.label.length).toBeGreaterThan(0)
           expect(choice.response.length).toBeGreaterThan(20)
+        }
+        // A third choice is always the word-gated one — the SRS-RPG fusion.
+        if (scene.choices.length === 3) {
+          expect(scene.choices.some((c) => c.requiresTerm)).toBe(true)
         }
       }
     }
   })
 
-  it('gives Russian and French a full warm+ally chain for all four personas', () => {
-    for (const themeId of ['russian', 'french']) {
+  it('gives every theme a full warm+ally chain for all four personas', () => {
+    for (const themeId of ['russian', 'french', 'italian', 'portuguese', 'spanish']) {
       const scenes = STORY_SCENES[themeId]
-      expect(scenes).toHaveLength(8)
+      expect(scenes, themeId).toHaveLength(8)
       const personas = new Set(scenes.map((s) => s.personaId))
       expect(personas.size).toBe(4)
+    }
+  })
+
+  it('every word-gated choice pays at least as well as its ungated siblings', () => {
+    for (const scenes of Object.values(STORY_SCENES)) {
+      for (const scene of scenes) {
+        const gated = scene.choices.find((c) => c.requiresTerm)
+        if (!gated) continue
+        const maxUngatedXp = Math.max(...scene.choices.filter((c) => !c.requiresTerm).map((c) => c.effects?.xp ?? 0))
+        expect(gated.effects?.xp ?? 0, scene.id).toBeGreaterThanOrEqual(maxUngatedXp)
+      }
     }
   })
 })
@@ -116,5 +135,31 @@ describe('pickDecisionCallout', () => {
   it('progress defaults include an empty journal', async () => {
     const progress = await getProgress('russian')
     expect(progress.decisions).toEqual([])
+  })
+})
+
+describe('isTermKnown', () => {
+  it('is false for an uncaptured term, false before review, true after a correct review', async () => {
+    expect(await isTermKnown('russian', 'свобода')).toBe(false)
+
+    const word = await addWord({ themeId: 'russian', term: 'свобода', translation: 'freedom' })
+    expect(await isTermKnown('russian', 'свобода')).toBe(false)
+
+    await reviewWord(word.id, QUALITY.GOOD)
+    expect(await isTermKnown('russian', 'СВОБОДА')).toBe(true)
+  })
+
+  it('every gated term is a real seed word, so gates are attainable out of the box', async () => {
+    const { seedSampleWords } = await import('../db/seedWords.js')
+    const { getWordsByTheme } = await import('../db/wordsRepo.js')
+    for (const [themeId, scenes] of Object.entries(STORY_SCENES)) {
+      const gatedTerms = scenes.flatMap((s) => s.choices.filter((c) => c.requiresTerm).map((c) => c.requiresTerm))
+      if (gatedTerms.length === 0) continue
+      await seedSampleWords(themeId)
+      const archived = new Set((await getWordsByTheme(themeId)).map((w) => w.term.toLowerCase()))
+      for (const term of gatedTerms) {
+        expect(archived.has(term.toLowerCase()), `${themeId}:${term}`).toBe(true)
+      }
+    }
   })
 })
