@@ -127,6 +127,7 @@ export async function awardBonusXp(themeId, amount) {
     level: nextLevel,
     xp: nextXp,
     badges: current.badges,
+    doubleAgentsExposed: current.doubleAgentsExposed,
   })
 
   const progress = await saveProgress(themeId, { xp: nextXp, level: nextLevel, badges })
@@ -154,6 +155,7 @@ export async function awardBounty(themeId, amount) {
     level: nextLevel,
     xp: nextXp,
     badges: current.badges,
+    doubleAgentsExposed: current.doubleAgentsExposed,
   })
 
   const progress = await saveProgress(themeId, {

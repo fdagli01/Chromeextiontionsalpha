@@ -205,7 +205,10 @@ export function ReviewScreen() {
   // the English-lookalike trap has nothing to masquerade as there.
   const falseFriend = current && !reverseMode ? findFalseFriend(theme.id, current.term) : null
   const isContrabandWord =
-    current && contraband && contraband.matches(current.term) && !progress?.contrabandSold?.includes(current.term.toLowerCase())
+    current &&
+    contraband &&
+    contraband.matches(current.term) &&
+    !progress?.contrabandSold?.includes(current.term.trim().toLowerCase())
 
   useEffect(() => {
     if (!current) return

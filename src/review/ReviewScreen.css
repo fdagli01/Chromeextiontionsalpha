@@ -1530,7 +1530,9 @@
    each theme's existing motif vocabulary rather than new ones. */
 .review-wrap[data-rank-tier='0'] .term-card {
   filter: saturate(0.85) brightness(0.94);
-  animation: tier0-flicker 4s steps(1) infinite;
+  /* Keeps the flip-in entrance; the unstable flicker replaces only the
+     idle breathing (a rookie's desk lamp doesn't breathe, it stutters). */
+  animation: card-flip-in 0.35s ease-out, tier0-flicker 4s steps(1) infinite;
 }
 @keyframes tier0-flicker {
   0%, 82%, 88%, 100% { opacity: 1; }

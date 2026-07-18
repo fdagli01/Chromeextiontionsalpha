@@ -3,7 +3,8 @@ import { getExample, getFact, getPhilosophy } from '../facts/index.js'
 import { getTransliteration } from '../transliteration/index.js'
 
 /**
- * 10 hand-picked terms per theme, each matching an entry already curated in
+ * Hand-picked terms per theme (10 era words + 3 false-friend "double
+ * agents"), most matching an entry already curated in
  * facts/*.js — so seeding immediately attaches a fact/example/philosophy
  * note, giving a new user something to review without right-clicking
  * around the web first. English translation is supplied here since the
@@ -22,6 +23,11 @@ const SEED_WORDS = {
     { term: 'секрет', translation: 'secret' },
     { term: 'свобода', translation: 'freedom' },
     { term: 'революция', translation: 'revolution' },
+    // Double agents (false friends — see progression/falseFriends.js), so
+    // the SUSPICIOUS IDENTITY mechanic fires out of the box.
+    { term: 'магазин', translation: 'shop' },
+    { term: 'фамилия', translation: 'surname' },
+    { term: 'кабинет', translation: 'office' },
   ],
   italian: [
     { term: 'senato', translation: 'senate' },
@@ -34,6 +40,10 @@ const SEED_WORDS = {
     { term: 'impero', translation: 'empire' },
     { term: 'cittadino', translation: 'citizen' },
     { term: 'centurione', translation: 'centurion' },
+    // Double agents (false friends).
+    { term: 'camera', translation: 'room' },
+    { term: 'caldo', translation: 'hot' },
+    { term: 'parente', translation: 'relative' },
   ],
   french: [
     { term: 'citoyen', translation: 'citizen' },
@@ -46,6 +56,10 @@ const SEED_WORDS = {
     { term: 'la gauche', translation: 'the left' },
     { term: 'mètre', translation: 'meter' },
     { term: 'vandalisme', translation: 'vandalism' },
+    // Double agents (false friends).
+    { term: 'pain', translation: 'bread' },
+    { term: 'blessé', translation: 'wounded' },
+    { term: 'journée', translation: 'daytime' },
   ],
   portuguese: [
     { term: 'caravela', translation: 'caravel' },
@@ -58,6 +72,10 @@ const SEED_WORDS = {
     { term: 'monção', translation: 'monsoon' },
     { term: 'leme', translation: 'rudder' },
     { term: 'marinheiro', translation: 'sailor' },
+    // Double agents (false friends).
+    { term: 'puxar', translation: 'to pull' },
+    { term: 'esquisito', translation: 'weird' },
+    { term: 'êxito', translation: 'success' },
   ],
   spanish: [
     { term: 'milicia', translation: 'militia' },
@@ -70,6 +88,10 @@ const SEED_WORDS = {
     { term: 'brigada', translation: 'brigade' },
     { term: 'bombardeo', translation: 'bombing' },
     { term: 'no pasarán', translation: 'they shall not pass' },
+    // Double agents (false friends).
+    { term: 'embarazada', translation: 'pregnant' },
+    { term: 'éxito', translation: 'success' },
+    { term: 'ropa', translation: 'clothes' },
   ],
 }
 
