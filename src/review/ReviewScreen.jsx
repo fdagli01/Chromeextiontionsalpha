@@ -25,6 +25,7 @@ import {
   getContrabandRivalFaction,
   getDailyContraband,
 } from '../progression/contraband.js'
+import { judgeDictation, rollRadioCrisis } from '../progression/radioIntercept.js'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -38,6 +39,7 @@ import {
   playSuccessSfx,
   playFragmentRecovered,
   playAllyUnlocked,
+  playStaticBurst,
 } from '../audio/sfx.js'
 import { speakTerm } from '../audio/speak.js'
 import { playPronunciationSting } from '../audio/themeAudioControl.js'
@@ -124,6 +126,8 @@ export function ReviewScreen() {
   const [doubleAgentResult, setDoubleAgentResult] = useState(null)
   const [contrabandSaleToast, setContrabandSaleToast] = useState(null)
   const [sellingContraband, setSellingContraband] = useState(false)
+  const [radioCrisis, setRadioCrisis] = useState(false)
+  const [dictationInput, setDictationInput] = useState('')
   const [deskMementos, setDeskMementos] = useState([])
   const sessionCompleteAnnouncedRef = useRef(false)
   const shownAtRef = useRef(performance.now())
@@ -219,9 +223,14 @@ export function ReviewScreen() {
     setInterceptOutcomeToast(null)
     setDoubleAgentResult(null)
     setContrabandSaleToast(null)
+    setDictationInput('')
     const rolled = coldCaseSession ? null : rollIntercept(theme.id)
     setNpcIntercept(rolled)
     setInterceptTimeLeft(rolled?.timerSec ?? null)
+    // A radio crisis never stacks with an NPC intercept or a false-friend
+    // trap — one special framing per card keeps each one legible.
+    const isRadioCrisis = !coldCaseSession && !rolled && !falseFriend && rollRadioCrisis()
+    setRadioCrisis(isRadioCrisis)
     shownAtRef.current = performance.now()
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
       // A double-agent word plants its English-lookalike trap meaning as one
@@ -245,16 +254,29 @@ export function ReviewScreen() {
           ])
       setOptions(opts)
     })
-    // Auto-speaking the term before the player has answered would hand them
-    // the answer on a reverse day, since the term is what they're picking.
-    if (!reverseMode) {
-      getSetting('autoSpeakEnabled', true).then((enabled) => {
-        if (enabled) speakTerm(current.term, theme.sourceLanguageCode)
+    // A radio crisis speaks the term twice through static, deliberately
+    // ignoring the auto-speak setting (the crisis IS the audio) and never
+    // via the reverse-mode branch below, since the screen stays blacked out
+    // either way — there's nothing to read, only something to hear.
+    if (isRadioCrisis) {
+      playStaticBurst()
+      speakTerm(current.term, theme.sourceLanguageCode)
+      setTimeout(() => {
+        playStaticBurst()
+        speakTerm(current.term, theme.sourceLanguageCode)
+      }, 1400)
+    } else {
+      // Auto-speaking the term before the player has answered would hand them
+      // the answer on a reverse day, since the term is what they're picking.
+      if (!reverseMode) {
+        getSetting('autoSpeakEnabled', true).then((enabled) => {
+          if (enabled) speakTerm(current.term, theme.sourceLanguageCode)
+        })
+      }
+      getSetting('soundscapeEnabled', true).then((enabled) => {
+        if (enabled) playPronunciationSting(theme.id)
       })
     }
-    getSetting('soundscapeEnabled', true).then((enabled) => {
-      if (enabled) playPronunciationSting(theme.id)
-    })
   }, [current?.id, theme.id])
 
   const animatedXp = useAnimatedNumber(progress?.xp ?? 0)
@@ -590,6 +612,20 @@ export function ReviewScreen() {
   }
 
   /**
+   * Resolves a radio dictation crisis: the player typed what they heard
+   * with no text ever shown. Judged with typo tolerance, then routed
+   * through the normal pick() flow (by index) so every downstream effect —
+   * FSRS grading, XP, tension, mentor lines, badges — runs identically to
+   * a routine multiple-choice answer.
+   */
+  function submitDictation() {
+    if (isAnswered || !options.length) return
+    const heard = judgeDictation(dictationInput, current.term)
+    const targetIndex = options.findIndex((o) => o.isCorrect === heard)
+    pick(targetIndex !== -1 ? targetIndex : options.findIndex((o) => !o.isCorrect))
+  }
+
+  /**
    * Fences a banned word on the Black Market: a flat XP payout and a nudge
    * of trust with the theme's bounty-desk contact, at the cost of
    * reputation with the faction that DIDN'T declare the ban — a real
@@ -682,6 +718,7 @@ export function ReviewScreen() {
     if (!current) return
     function onKeyDown(e) {
       if (!isAnswered) {
+        if (radioCrisis) return // dictation is submitted via its own input, not number keys
         const index = Number.parseInt(e.key, 10) - 1
         if (index >= 0 && index < options.length) {
           e.preventDefault()
@@ -1024,31 +1061,53 @@ export function ReviewScreen() {
             🧭
           </div>
         )}
-        <div className="term-eyebrow">
-          {reverseMode ? 'REVERSE INTERROGATION' : theme.eyebrowLabel}
-          {current.struggling && theme.strugglingLabel && (
-            <span className="struggling-tag">{theme.strugglingLabel}</span>
-          )}
-        </div>
-        <div className="term-word">
-          {reverseMode ? current.translation || '(no translation)' : current.term}
-          {(!reverseMode || isAnswered) && (
+        {radioCrisis && !isAnswered ? (
+          <div className="radio-blackout">
+            <div className="radio-blackout-label">🔒 SIGNAL ENCRYPTED — LISTEN CLOSELY</div>
+            <div className="radio-waveform" aria-hidden="true">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <span key={i} className="radio-wave-bar" style={{ animationDelay: `${i * 90}ms` }} />
+              ))}
+            </div>
             <button
-              className="term-speak-btn"
+              className="radio-replay-btn"
               onClick={() => {
+                playStaticBurst()
                 speakTerm(current.term, theme.sourceLanguageCode)
-                getSetting('soundscapeEnabled', true).then((enabled) => {
-                  if (enabled) playPronunciationSting(theme.id)
-                })
               }}
-              title="Listen to pronunciation again"
             >
-              🔊
+              🔊 Replay Frequency
             </button>
-          )}
-        </div>
-        {current.transliteration && (!reverseMode || isAnswered) && (
-          <div className="term-translit">[ {current.transliteration} ]</div>
+          </div>
+        ) : (
+          <>
+            <div className="term-eyebrow">
+              {reverseMode ? 'REVERSE INTERROGATION' : theme.eyebrowLabel}
+              {current.struggling && theme.strugglingLabel && (
+                <span className="struggling-tag">{theme.strugglingLabel}</span>
+              )}
+            </div>
+            <div className="term-word">
+              {reverseMode ? current.translation || '(no translation)' : current.term}
+              {(!reverseMode || isAnswered) && (
+                <button
+                  className="term-speak-btn"
+                  onClick={() => {
+                    speakTerm(current.term, theme.sourceLanguageCode)
+                    getSetting('soundscapeEnabled', true).then((enabled) => {
+                      if (enabled) playPronunciationSting(theme.id)
+                    })
+                  }}
+                  title="Listen to pronunciation again"
+                >
+                  🔊
+                </button>
+              )}
+            </div>
+            {current.transliteration && (!reverseMode || isAnswered) && (
+              <div className="term-translit">[ {current.transliteration} ]</div>
+            )}
+          </>
         )}
         {STREAK_GLYPHS[theme.id] && (combo > 0 || streakScatter) && (
           <div className={`streak-column ${streakScatter ? 'scatter' : ''}`} aria-hidden="true">
@@ -1068,6 +1127,29 @@ export function ReviewScreen() {
         )}
       </div>
 
+      {radioCrisis && !isAnswered ? (
+        <form
+          className="dictation-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            submitDictation()
+          }}
+        >
+          <input
+            className="dictation-input"
+            type="text"
+            value={dictationInput}
+            onChange={(e) => setDictationInput(e.target.value)}
+            placeholder="Type what you heard..."
+            autoFocus
+            autoComplete="off"
+            spellCheck="false"
+          />
+          <button className="dictation-submit-btn" type="submit">
+            TRANSCRIBE
+          </button>
+        </form>
+      ) : (
       <div className="options-list">
         {options.map((opt, i) => {
           if (isAnswered && !opt.isCorrect && i !== selected) return null
@@ -1083,6 +1165,7 @@ export function ReviewScreen() {
           )
         })}
       </div>
+      )}
 
       {isAnswered && levelUpInfo && (
         <div className="level-up-banner">

@@ -1523,6 +1523,79 @@
   color: var(--color-primary);
 }
 
+/* ── Radio dictation crisis ── screen blacks out, term is heard not seen. */
+.radio-blackout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 12px;
+  background: #060606;
+  border-radius: var(--radius-sm);
+  color: #4dff88;
+}
+.radio-blackout-label {
+  font-family: var(--font-heading);
+  font-size: var(--type-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4dff88;
+  text-shadow: 0 0 6px rgba(77, 255, 136, 0.6);
+}
+.radio-waveform {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 32px;
+}
+.radio-wave-bar {
+  width: 3px;
+  height: 8px;
+  background: #4dff88;
+  box-shadow: 0 0 4px rgba(77, 255, 136, 0.7);
+  animation: radio-wave 0.7s ease-in-out infinite;
+}
+@keyframes radio-wave {
+  0%, 100% { height: 6px; }
+  50% { height: 28px; }
+}
+.radio-replay-btn {
+  padding: 5px 10px;
+  border: 1px solid #4dff88;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #4dff88;
+  font-size: var(--type-xs);
+  cursor: pointer;
+}
+.dictation-form {
+  display: flex;
+  gap: 8px;
+}
+.dictation-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-size: 14px;
+}
+.dictation-submit-btn {
+  padding: 10px 14px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--type-xs);
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
 /* ── Contraband ── black-market fencing of a today's-banned word. */
 .contraband-banner {
   border-color: var(--color-accent);
