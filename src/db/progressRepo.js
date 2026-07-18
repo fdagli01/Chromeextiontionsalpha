@@ -19,6 +19,7 @@ import { STORE_PROGRESS, withStore } from './connection.js'
  * @property {number} bountyCompletionCount - lifetime count of completed daily field bounties (Vault fragment trigger)
  * @property {number} doubleAgentsExposed - lifetime count of false-friend words answered correctly (badge trigger)
  * @property {string[]} contrabandSold - lowercased terms already fenced on the Black Market (each sells once)
+ * @property {Array<{id: string, choiceId: string, at: string}>} decisions - permanent journal of story choices (see progression/decisions.js)
  */
 
 /**
@@ -44,6 +45,7 @@ function emptyProgress(themeId) {
     bountyCompletionCount: 0,
     doubleAgentsExposed: 0,
     contrabandSold: [],
+    decisions: [],
   }
 }
 
@@ -67,6 +69,7 @@ export async function getProgress(themeId) {
     bountyCompletionCount: 0,
     doubleAgentsExposed: 0,
     contrabandSold: [],
+    decisions: [],
     ...existing,
   }
 }

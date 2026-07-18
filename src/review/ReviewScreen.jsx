@@ -26,6 +26,9 @@ import {
   getDailyContraband,
 } from '../progression/contraband.js'
 import { judgeDictation, rollRadioCrisis } from '../progression/radioIntercept.js'
+import { getPendingScene, pickDecisionCallout } from '../progression/storyScenes.js'
+import { recordDecision } from '../progression/decisions.js'
+import { StorySceneOverlay } from './StorySceneOverlay.jsx'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -129,6 +132,7 @@ export function ReviewScreen() {
   const [sellingContraband, setSellingContraband] = useState(false)
   const [radioCrisis, setRadioCrisis] = useState(false)
   const [dictationInput, setDictationInput] = useState('')
+  const [storyScene, setStoryScene] = useState(null)
   const [deskMementos, setDeskMementos] = useState([])
   const sessionCompleteAnnouncedRef = useRef(false)
   const shownAtRef = useRef(performance.now())
@@ -173,6 +177,11 @@ export function ReviewScreen() {
     sessionCompleteAnnouncedRef.current = false
     getDeskMementos(theme.id).then((m) => {
       if (!cancelled) setDeskMementos(m)
+    })
+    // A story scene earned in a previous session (or another tab) greets
+    // the player the moment they sit down at this desk.
+    getPendingScene(theme.id).then((scene) => {
+      if (!cancelled) setStoryScene(scene)
     })
     return () => {
       cancelled = true
@@ -552,15 +561,28 @@ export function ReviewScreen() {
     // is applied before the mentor line is set so the speech bubble's tier
     // chip reflects the result of *this* turn, not the one before it.
     let mentorTier = null
+    let mentorCallout = null
     if (mentorMoment) {
       const speakingPersona = getMentor(theme.id, mentorMoment)
       const trustDelta = mentorMoment === 'miss' ? 1 : 2
       const { record, justBecameAlly } = await addTrust(theme.id, speakingPersona.id, trustDelta)
       mentorTier = tierForTrust(record.trust)
       if (justBecameAlly) allyUnlock = { personaId: speakingPersona.id }
+      // Sometimes the persona doesn't comment on the answer at all —
+      // they bring up something the player DID. The journal talks back.
+      if (Math.random() < 0.3) {
+        mentorCallout = pickDecisionCallout(theme.id, finalProgress.decisions ?? [], speakingPersona.id)
+      }
     }
     setMentorLine(
-      mentorMoment ? { moment: mentorMoment, line: pickMentorLine(theme.id, mentorMoment), tier: mentorTier } : null
+      mentorMoment
+        ? {
+            moment: mentorMoment,
+            line: mentorCallout ?? pickMentorLine(theme.id, mentorMoment),
+            tier: mentorTier,
+            isCallout: !!mentorCallout,
+          }
+        : null
     )
 
     // NPC intercept: this card was framed as a persona's plea. The word,
@@ -568,6 +590,11 @@ export function ReviewScreen() {
     // bonus XP windfall ride on how it resolved (inverted for the French
     // aristocrat, who wanted the answer wrong).
     if (npcIntercept) {
+      // The aristocrat's bribe is a real moral fork — journal it the first
+      // time, whichever way it went. Personas will bring it up later.
+      if (npcIntercept.moralInversion) {
+        recordDecision(theme.id, 'french-bribe', correct ? 'refused' : 'accepted')
+      }
       const outcome = resolveIntercept(npcIntercept, correct)
       const { record: interceptTrustRecord, justBecameAlly: interceptAlly } = await addTrust(
         theme.id,
@@ -640,6 +667,7 @@ export function ReviewScreen() {
     setSellingContraband(true)
     try {
       const termLower = current.term.trim().toLowerCase()
+      recordDecision(theme.id, 'contraband-sale', 'sold')
       const sold = await awardBonusXp(theme.id, CONTRABAND_SALE_XP)
       const withSaleLog = await saveProgress(theme.id, {
         contrabandSold: [...(sold.progress.contrabandSold ?? []), termLower],
@@ -692,6 +720,11 @@ export function ReviewScreen() {
 
   function nextWord() {
     const wasCorrect = options[selected]?.isCorrect
+    // Between cards is where story scenes step in: trust earned by the
+    // answer just given may have unlocked one.
+    getPendingScene(theme.id).then((scene) => {
+      if (scene) setStoryScene(scene)
+    })
     const rest = queue.slice(1)
     setQueue(
       !wasCorrect
@@ -821,6 +854,19 @@ export function ReviewScreen() {
         }
     return (
       <div className="session-complete">
+        {storyScene && (
+          <StorySceneOverlay
+            themeId={theme.id}
+            scene={storyScene}
+            onClose={(sceneProgress) => {
+              setStoryScene(null)
+              if (sceneProgress) setProgress(sceneProgress)
+              getPendingScene(theme.id).then((next) => {
+                if (next) setStoryScene(next)
+              })
+            }}
+          />
+        )}
         <p className="session-complete-title">Session Complete</p>
         <div className="session-complete-stats">
           <div className="session-stat">
@@ -921,6 +967,22 @@ export function ReviewScreen() {
       style={tensionStyle}
     >
       {secretReveal && <SecretRevealOverlay secret={secretReveal} onDismiss={() => setSecretReveal(null)} />}
+
+      {storyScene && (
+        <StorySceneOverlay
+          themeId={theme.id}
+          scene={storyScene}
+          onClose={(sceneProgress) => {
+            setStoryScene(null)
+            if (sceneProgress) setProgress(sceneProgress)
+            // A scene choice can push another persona over a tier line —
+            // check for a follow-up so chained unlocks aren't lost.
+            getPendingScene(theme.id).then((next) => {
+              if (next) setStoryScene(next)
+            })
+          }}
+        />
+      )}
 
       {promotionCeremony && (
         <div className="promotion-ceremony-overlay">
@@ -1286,7 +1348,9 @@ export function ReviewScreen() {
                   {getMentor(theme.id, mentorLine.moment)?.name}
                 </span>
                 {mentorLine.tier && <span className="mentor-trust-tier">{mentorLine.tier.label}</span>}
-                <span className="mentor-quote">"{mentorLine.line}"</span>
+                <span className={`mentor-quote${mentorLine.isCallout ? ' mentor-callout' : ''}`}>
+                  "{mentorLine.line}"
+                </span>
               </div>
             </div>
           )}

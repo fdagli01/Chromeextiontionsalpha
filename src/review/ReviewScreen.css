@@ -1523,6 +1523,13 @@
   color: var(--color-primary);
 }
 
+/* A mentor line that references a past decision — visually set apart so
+   the player feels the journal being read back to them. */
+.mentor-quote.mentor-callout {
+  color: var(--color-accent);
+  font-style: italic;
+}
+
 /* ── Physical rank: the terminal itself ages with the player ──
    Tier 0 (rookie, level < 5): cheap, unstable desk. Tier 1 (mid): today's
    baseline look, no override. Tier 2 (veteran, level 10+): pristine desk
