@@ -1542,13 +1542,17 @@
 }
 
 /* ── NPC intercept ──
-   A story card frames the same underlying review as a persona's plea. */
+   A story card frames the same underlying review as a persona's plea. Each
+   theme gets its own document/object metaphor, CSS-only (no new assets),
+   layered on a shared base so the markup stays identical across themes. */
 .intercept-banner {
+  position: relative;
   margin-bottom: 10px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--color-danger);
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  overflow: hidden;
 }
 .intercept-title {
   font-family: var(--font-heading);
@@ -1563,6 +1567,7 @@
   font-size: var(--type-sm);
   color: var(--color-text);
   margin: 0;
+  position: relative;
 }
 .intercept-hint {
   margin: 4px 0 0;
@@ -1571,16 +1576,209 @@
   color: var(--color-text-muted);
 }
 .intercept-timer {
-  margin-top: 6px;
+  margin-top: 8px;
+}
+.intercept-timer-digits {
   font-family: var(--font-heading);
   font-weight: 700;
   font-size: var(--type-sm);
   color: var(--color-danger);
-  animation: world-event-throb 1s ease-in-out infinite;
 }
-.intercept-banner.moral-inversion {
-  border-color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+.intercept-timer-bar {
+  margin-top: 4px;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--color-danger) 20%, transparent);
+  overflow: hidden;
+}
+.intercept-timer-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-danger));
+  transition: width 1s linear;
+}
+.intercept-banner.critical .intercept-timer-digits {
+  animation: air-raid-flicker 0.4s steps(2) infinite;
+}
+.intercept-banner.critical {
+  animation: air-raid-flicker 0.4s steps(2) infinite;
+}
+@keyframes air-raid-flicker {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.4); }
+}
+
+/* Russian — redacted dossier: stark paper, hard edges, diagonal stamp. */
+.intercept-banner[data-theme='russian'] {
+  border-radius: 0;
+  border: 1px solid #2a2a26;
+  background: linear-gradient(175deg, #e8e2d0, #d9d2bc);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
+  color: #1c1a14;
+}
+.intercept-banner[data-theme='russian'] .intercept-title,
+.intercept-banner[data-theme='russian'] .intercept-plea {
+  color: #1c1a14;
+}
+.intercept-banner[data-theme='russian']::before {
+  content: 'СЕКРЕТНО';
+  position: absolute;
+  top: 6px;
+  right: -18px;
+  padding: 2px 22px;
+  border: 3px double #a11d1d;
+  color: #a11d1d;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  transform: rotate(-12deg);
+  opacity: 0.55;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+.intercept-banner[data-theme='russian'] .intercept-hint {
+  background: #111;
+  color: transparent;
+  border-radius: 2px;
+  transition: color 0.2s;
+}
+.intercept-banner[data-theme='russian'] .intercept-hint:hover {
+  color: #e8e2d0;
+}
+
+/* Spanish — torn radio telegram strip with a depleting bar. */
+.intercept-banner[data-theme='spanish'] {
+  background: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 8px,
+      color-mix(in srgb, var(--color-danger) 6%, transparent) 8px,
+      color-mix(in srgb, var(--color-danger) 6%, transparent) 9px
+    ),
+    color-mix(in srgb, var(--color-danger) 8%, transparent);
+  clip-path: polygon(
+    0 6px, 4% 0, 8% 6px, 12% 0, 16% 6px, 20% 0, 24% 6px, 28% 0, 32% 6px, 36% 0, 40% 6px, 44% 0, 48% 6px, 52% 0,
+    56% 6px, 60% 0, 64% 6px, 68% 0, 72% 6px, 76% 0, 80% 6px, 84% 0, 88% 6px, 92% 0, 96% 6px, 100% 0,
+    100% calc(100% - 6px), 96% 100%, 92% calc(100% - 6px), 88% 100%, 84% calc(100% - 6px), 80% 100%,
+    76% calc(100% - 6px), 72% 100%, 68% calc(100% - 6px), 64% 100%, 60% calc(100% - 6px), 56% 100%,
+    52% calc(100% - 6px), 48% 100%, 44% calc(100% - 6px), 40% 100%, 36% calc(100% - 6px), 32% 100%,
+    28% calc(100% - 6px), 24% 100%, 20% calc(100% - 6px), 16% 100%, 12% calc(100% - 6px), 8% 100%,
+    4% calc(100% - 6px), 0 100%
+  );
+  padding: 16px 14px;
+}
+.intercept-banner[data-theme='spanish'] .intercept-timer-digits {
+  text-shadow: 0 0 6px var(--color-danger);
+}
+
+/* French — sealed letter, corrupted for the moral-inversion temptation. */
+.intercept-banner[data-theme='french'] {
+  background: linear-gradient(175deg, #f4ecd8, #e6d9b8);
+  border-color: var(--color-border);
+  border-radius: 2px;
+  color: #2c2416;
+  padding-right: 56px;
+}
+.intercept-banner[data-theme='french'] .intercept-title,
+.intercept-banner[data-theme='french'] .intercept-plea {
+  color: #2c2416;
+}
+.intercept-banner[data-theme='french']::after {
+  content: '';
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 3.2em;
+  height: 3.2em;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #b03040, #6d1522 70%);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
+  transform: rotate(8deg);
+  border: 2px dashed rgba(0, 0, 0, 0.3);
+}
+.intercept-banner[data-theme='french'].moral-inversion {
+  background: linear-gradient(175deg, #d8c8b0, #b8a488);
+  filter: brightness(0.9);
+  animation: temptation-pulse 2.5s ease-in-out infinite;
+}
+.intercept-banner[data-theme='french'].moral-inversion .intercept-title,
+.intercept-banner[data-theme='french'].moral-inversion .intercept-plea {
+  color: #6d1522;
+  font-style: italic;
+}
+.intercept-banner[data-theme='french'].moral-inversion::after {
+  clip-path: polygon(0 0, 45% 0, 55% 100%, 0 100%);
+}
+@keyframes temptation-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(109, 21, 34, 0); }
+  50% { box-shadow: 0 0 14px rgba(109, 21, 34, 0.55); }
+}
+
+/* Italian — chiseled stone decree tablet. */
+.intercept-banner[data-theme='italian'] {
+  background: linear-gradient(160deg, #b8b2a4, #8f897b),
+    repeating-linear-gradient(45deg, transparent 0 6px, rgba(0, 0, 0, 0.03) 6px 7px);
+  border: none;
+  box-shadow: inset 2px 2px 3px rgba(255, 255, 255, 0.35), inset -3px -3px 5px rgba(0, 0, 0, 0.45);
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  color: #2a2620;
+}
+.intercept-banner[data-theme='italian'] .intercept-title {
+  color: #2a2620;
+  letter-spacing: 0.15em;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.3), -1px -1px 1px rgba(0, 0, 0, 0.4);
+}
+.intercept-banner[data-theme='italian'] .intercept-plea {
+  color: #2a2620;
+}
+.intercept-banner[data-theme='italian']::before {
+  content: 'SPQR';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 48px;
+  font-weight: 700;
+  opacity: 0.06;
+  pointer-events: none;
+}
+
+/* Portuguese — storm-tossed chart, swaying with the ship. */
+.intercept-banner[data-theme='portuguese'] {
+  background: radial-gradient(ellipse at 30% 20%, #e6d5a8, #c9b077);
+  box-shadow: inset 0 0 40px rgba(80, 50, 20, 0.35);
+  color: #3a2a12;
+}
+.intercept-banner[data-theme='portuguese'] .intercept-title,
+.intercept-banner[data-theme='portuguese'] .intercept-plea {
+  color: #3a2a12;
+}
+.intercept-banner[data-theme='portuguese']::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 24px;
+  background: radial-gradient(closest-side, rgba(40, 60, 90, 0.25), transparent);
+  filter: blur(2px);
+  pointer-events: none;
+}
+.intercept-banner[data-theme='portuguese'].storm {
+  animation: chart-sway 3s ease-in-out infinite;
+}
+.intercept-banner[data-theme='portuguese'].storm.critical {
+  animation-name: chart-sway-heavy;
+  animation-duration: 1.4s;
+}
+@keyframes chart-sway {
+  0%, 100% { transform: rotate(-1deg) translateY(0); }
+  50% { transform: rotate(1deg) translateY(-1px); }
+}
+@keyframes chart-sway-heavy {
+  0%, 100% { transform: rotate(-2.5deg) translateY(0); }
+  50% { transform: rotate(2.5deg) translateY(-2px); }
 }
 
 .term-card.storm-shake {

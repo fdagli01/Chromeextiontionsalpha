@@ -820,14 +820,27 @@ export function ReviewScreen() {
       )}
 
       {npcIntercept && !isAnswered && (
-        <div className={`intercept-banner ${npcIntercept.moralInversion ? 'moral-inversion' : ''}`}>
-          <div className="intercept-title">⚠ {npcIntercept.title}</div>
+        <div
+          className={`intercept-banner ${npcIntercept.moralInversion ? 'moral-inversion' : ''} ${
+            npcIntercept.shipShake ? 'storm' : ''
+          } ${interceptTimeLeft !== null && interceptTimeLeft <= 3 ? 'critical' : ''}`}
+          data-theme={theme.id}
+        >
+          <div className="intercept-title">{npcIntercept.title}</div>
           <p className="intercept-plea">{npcIntercept.plea(current.term)}</p>
           {npcIntercept.moralInversion && (
             <p className="intercept-hint">She is begging you to answer WRONG.</p>
           )}
           {interceptTimeLeft !== null && (
-            <div className="intercept-timer">⏱ {interceptTimeLeft}s</div>
+            <div className="intercept-timer">
+              <span className="intercept-timer-digits">⏱ {interceptTimeLeft}s</span>
+              <div className="intercept-timer-bar">
+                <div
+                  className="intercept-timer-bar-fill"
+                  style={{ width: `${(interceptTimeLeft / npcIntercept.timerSec) * 100}%` }}
+                />
+              </div>
+            </div>
           )}
         </div>
       )}
