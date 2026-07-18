@@ -91,6 +91,7 @@ describe('progressRepo', () => {
       redemptionCount: 0,
       bountyCompletionCount: 0,
       doubleAgentsExposed: 0,
+      contrabandSold: [],
     })
   })
 
@@ -114,6 +115,7 @@ describe('progressRepo', () => {
       redemptionCount: 0,
       bountyCompletionCount: 0,
       doubleAgentsExposed: 0,
+      contrabandSold: [],
     })
   })
 })

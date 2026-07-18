@@ -19,6 +19,12 @@ import { resolveIntercept, rollIntercept } from '../progression/intercepts.js'
 import { getDailyDirective } from '../progression/directives.js'
 import { getDeskMementos } from '../progression/mementos.js'
 import { DOUBLE_AGENT_BONUS_XP, findFalseFriend } from '../progression/falseFriends.js'
+import {
+  CONTRABAND_RIVAL_PENALTY,
+  CONTRABAND_SALE_XP,
+  getContrabandRivalFaction,
+  getDailyContraband,
+} from '../progression/contraband.js'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -116,6 +122,8 @@ export function ReviewScreen() {
   const [interceptTimeLeft, setInterceptTimeLeft] = useState(null)
   const [interceptOutcomeToast, setInterceptOutcomeToast] = useState(null)
   const [doubleAgentResult, setDoubleAgentResult] = useState(null)
+  const [contrabandSaleToast, setContrabandSaleToast] = useState(null)
+  const [sellingContraband, setSellingContraband] = useState(false)
   const [deskMementos, setDeskMementos] = useState([])
   const sessionCompleteAnnouncedRef = useRef(false)
   const shownAtRef = useRef(performance.now())
@@ -124,6 +132,7 @@ export function ReviewScreen() {
   const reverseMode = useMemo(() => isReverseDay(), [])
   const worldEvent = useMemo(() => getActiveWorldEvent(), [])
   const directive = useMemo(() => getDailyDirective(theme.id), [theme.id])
+  const contraband = useMemo(() => getDailyContraband(theme.id), [theme.id])
 
   // One-time celebration for a bounty completed elsewhere (the background
   // script awards the XP/shield the instant the capture completes it, so
@@ -190,6 +199,8 @@ export function ReviewScreen() {
   // (term shown, meanings offered) — reverse mode shows the translation, so
   // the English-lookalike trap has nothing to masquerade as there.
   const falseFriend = current && !reverseMode ? findFalseFriend(theme.id, current.term) : null
+  const isContrabandWord =
+    current && contraband && contraband.matches(current.term) && !progress?.contrabandSold?.includes(current.term.toLowerCase())
 
   useEffect(() => {
     if (!current) return
@@ -207,6 +218,7 @@ export function ReviewScreen() {
     setAllyToast(null)
     setInterceptOutcomeToast(null)
     setDoubleAgentResult(null)
+    setContrabandSaleToast(null)
     const rolled = coldCaseSession ? null : rollIntercept(theme.id)
     setNpcIntercept(rolled)
     setInterceptTimeLeft(rolled?.timerSec ?? null)
@@ -578,6 +590,46 @@ export function ReviewScreen() {
   }
 
   /**
+   * Fences a banned word on the Black Market: a flat XP payout and a nudge
+   * of trust with the theme's bounty-desk contact, at the cost of
+   * reputation with the faction that DIDN'T declare the ban — a real
+   * tradeoff, not flavor text. Each word can only be sold once.
+   */
+  async function sellContraband() {
+    if (!current || sellingContraband) return
+    setSellingContraband(true)
+    try {
+      const termLower = current.term.trim().toLowerCase()
+      const sold = await awardBonusXp(theme.id, CONTRABAND_SALE_XP)
+      const withSaleLog = await saveProgress(theme.id, {
+        contrabandSold: [...(sold.progress.contrabandSold ?? []), termLower],
+      })
+      setProgress(withSaleLog)
+
+      const fence = getBountyMentor(theme.id)
+      let trustTierLabel = null
+      if (fence) {
+        const { record } = await addTrust(theme.id, fence.id, 2)
+        trustTierLabel = tierForTrust(record.trust)?.label ?? null
+      }
+
+      const rival = getContrabandRivalFaction(theme.id)
+      if (rival) {
+        await awardReputation(rival.factionId, theme.id, CONTRABAND_RIVAL_PENALTY)
+      }
+
+      setContrabandSaleToast({
+        fenceName: fence?.name ?? 'the fence',
+        rivalName: rival?.name ?? null,
+        xp: CONTRABAND_SALE_XP,
+        trustTierLabel,
+      })
+    } finally {
+      setSellingContraband(false)
+    }
+  }
+
+  /**
    * Resolves a "double agent" word — one that fed two rival factions —
    * by awarding reputation only to the chosen faction. The other faction
    * gets nothing this round, making the choice a real tradeoff rather than
@@ -619,6 +671,7 @@ export function ReviewScreen() {
     setAllyToast(null)
     setInterceptOutcomeToast(null)
     setDoubleAgentResult(null)
+    setContrabandSaleToast(null)
     setPromotionCeremony(null)
     setDoubleAgentChoice(null)
     setSecretReveal(null)
@@ -857,6 +910,13 @@ export function ReviewScreen() {
         </div>
       )}
 
+      {contraband && (
+        <div className="world-event-banner contraband-banner" title={contraband.order}>
+          <span className="world-event-icon" aria-hidden="true">{contraband.icon}</span>
+          <span className="world-event-label">{contraband.label}</span>
+        </div>
+      )}
+
       {deskMementos.length > 0 && (
         <div className="desk-mementos" aria-hidden="false">
           {deskMementos.map((m) => (
@@ -1091,6 +1151,18 @@ export function ReviewScreen() {
           {doubleAgentResult && (
             <p className={`double-agent-debrief ${doubleAgentResult.exposed ? 'exposed' : 'slipped'}`}>
               {doubleAgentResult.note}
+            </p>
+          )}
+
+          {isCorrect && isContrabandWord && !contrabandSaleToast && (
+            <button className="contraband-sell-btn" onClick={sellContraband} disabled={sellingContraband}>
+              📦 FENCE ON THE BLACK MARKET (+{CONTRABAND_SALE_XP} XP)
+            </button>
+          )}
+          {contrabandSaleToast && (
+            <p className="contraband-sale-note">
+              {contrabandSaleToast.fenceName} takes the word off your hands — +{contrabandSaleToast.xp} XP.
+              {contrabandSaleToast.rivalName ? ` ${contrabandSaleToast.rivalName} will hear about this.` : ''}
             </p>
           )}
 

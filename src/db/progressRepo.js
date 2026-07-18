@@ -18,6 +18,7 @@ import { STORE_PROGRESS, withStore } from './connection.js'
  * @property {number} redemptionCount - lifetime count of previously-struggling words recalled correctly (Vault fragment trigger)
  * @property {number} bountyCompletionCount - lifetime count of completed daily field bounties (Vault fragment trigger)
  * @property {number} doubleAgentsExposed - lifetime count of false-friend words answered correctly (badge trigger)
+ * @property {string[]} contrabandSold - lowercased terms already fenced on the Black Market (each sells once)
  */
 
 /**
@@ -42,6 +43,7 @@ function emptyProgress(themeId) {
     redemptionCount: 0,
     bountyCompletionCount: 0,
     doubleAgentsExposed: 0,
+    contrabandSold: [],
   }
 }
 
@@ -64,6 +66,7 @@ export async function getProgress(themeId) {
     redemptionCount: 0,
     bountyCompletionCount: 0,
     doubleAgentsExposed: 0,
+    contrabandSold: [],
     ...existing,
   }
 }

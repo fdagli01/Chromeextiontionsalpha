@@ -1523,6 +1523,41 @@
   color: var(--color-primary);
 }
 
+/* ── Contraband ── black-market fencing of a today's-banned word. */
+.contraband-banner {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+.contraband-banner .world-event-icon,
+.contraband-banner .world-event-label {
+  color: var(--color-accent);
+}
+.contraband-sell-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px dashed var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  color: var(--color-accent);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--type-xs);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.contraband-sell-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.contraband-sale-note {
+  margin: 8px 0 0;
+  font-size: var(--type-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
 /* ── Desk mementos ──
    Permanent trinkets a persona leaves once trust reaches Warm. Pure display,
    no interaction beyond a hover tooltip with the flavor text. */
