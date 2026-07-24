@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useThemeConfig } from '../components/ThemeProvider.jsx'
 import { useAnimatedNumber } from '../components/useAnimatedNumber.js'
+import { useAnswerFeedback } from './useAnswerFeedback.js'
+import { useNarrativeOverlays } from './useNarrativeOverlays.js'
 import { getColdCaseWords, getDueWords, getFreePracticeWords, getRandomWords, reviewWord } from '../db/wordsRepo.js'
 import { getProgress, saveProgress } from '../db/progressRepo.js'
 import { getSetting } from '../db/settingsRepo.js'
@@ -17,7 +19,6 @@ import { addTrust, applyFactionTrustEvent, markAllyRewardClaimed, tierForTrust }
 import { grantAllyPack } from '../progression/allyPacks.js'
 import { resolveIntercept, rollIntercept } from '../progression/intercepts.js'
 import { getDailyDirective } from '../progression/directives.js'
-import { getDeskMementos } from '../progression/mementos.js'
 import { DOUBLE_AGENT_BONUS_XP, findFalseFriend } from '../progression/falseFriends.js'
 import {
   CONTRABAND_RIVAL_PENALTY,
@@ -26,10 +27,8 @@ import {
   getDailyContraband,
 } from '../progression/contraband.js'
 import { judgeDictation, rollRadioCrisis } from '../progression/radioIntercept.js'
-import { getPendingScene, pickDecisionCallout } from '../progression/storyScenes.js'
+import { pickDecisionCallout } from '../progression/storyScenes.js'
 import { recordDecision } from '../progression/decisions.js'
-import { getPendingEnding } from '../progression/endings.js'
-import { getPendingAct } from '../progression/acts.js'
 import { masteryForWord } from '../srs/mastery.js'
 import { StorySceneOverlay } from './StorySceneOverlay.jsx'
 import { EndingOverlay } from './EndingOverlay.jsx'
@@ -97,22 +96,22 @@ export function ReviewScreen({ deferScenes = false } = {}) {
   const [options, setOptions] = useState([])
   const [selected, setSelected] = useState(null)
   const [progress, setProgress] = useState(null)
-  const [xpToast, setXpToast] = useState('')
-  const [badgeToast, setBadgeToast] = useState(null)
-  const [questToast, setQuestToast] = useState(false)
-  const [shieldToast, setShieldToast] = useState(false)
-  const [interceptToast, setInterceptToast] = useState(null)
-  const [mentorLine, setMentorLine] = useState(null)
+  // Per-answer feedback lives in one hook so it is always cleared as a set.
+  const feedback = useAnswerFeedback()
+  const {
+    xpToast, setXpToast, badgeToast, setBadgeToast, questToast, setQuestToast,
+    shieldToast, setShieldToast, interceptToast, setInterceptToast,
+    interceptOutcomeToast, setInterceptOutcomeToast, doubleAgentResult, setDoubleAgentResult,
+    contrabandSaleToast, setContrabandSaleToast, fragmentToast, setFragmentToast,
+    allyToast, setAllyToast, factionToast, setFactionToast, mentorLine, setMentorLine,
+    levelUpInfo, setLevelUpInfo,
+  } = feedback
   const [sessionMentorLine, setSessionMentorLine] = useState(null)
   const [bountyCelebration, setBountyCelebration] = useState(null)
-  const [fragmentToast, setFragmentToast] = useState(null)
-  const [allyToast, setAllyToast] = useState(null)
-  const [levelUpInfo, setLevelUpInfo] = useState(null)
   const [flickerKey, setFlickerKey] = useState(0)
   const [shake, setShake] = useState(false)
   const [tension, setTension] = useState(0)
   const [combo, setCombo] = useState(0)
-  const [factionToast, setFactionToast] = useState(null)
   const [promotionCeremony, setPromotionCeremony] = useState(null)
   const [doubleAgentChoice, setDoubleAgentChoice] = useState(null)
   const [secretReveal, setSecretReveal] = useState(null)
@@ -131,16 +130,12 @@ export function ReviewScreen({ deferScenes = false } = {}) {
   const [coldCaseSession, setColdCaseSession] = useState(false)
   const [npcIntercept, setNpcIntercept] = useState(null)
   const [interceptTimeLeft, setInterceptTimeLeft] = useState(null)
-  const [interceptOutcomeToast, setInterceptOutcomeToast] = useState(null)
-  const [doubleAgentResult, setDoubleAgentResult] = useState(null)
-  const [contrabandSaleToast, setContrabandSaleToast] = useState(null)
   const [sellingContraband, setSellingContraband] = useState(false)
   const [radioCrisis, setRadioCrisis] = useState(false)
   const [dictationInput, setDictationInput] = useState('')
-  const [storyScene, setStoryScene] = useState(null)
-  const [pendingEnding, setPendingEnding] = useState(null)
-  const [pendingAct, setPendingAct] = useState(null)
-  const [deskMementos, setDeskMementos] = useState([])
+  // Act briefings, story scenes and the ending share one ordered queue.
+  const narrative = useNarrativeOverlays(theme.id, deferScenes)
+  const { visibleAct, visibleScene, visibleEnding, deskMementos } = narrative
   const sessionCompleteAnnouncedRef = useRef(false)
   const shownAtRef = useRef(performance.now())
   const hasTension = theme.tensionLevels.length > 0
@@ -182,29 +177,6 @@ export function ReviewScreen({ deferScenes = false } = {}) {
     setColdCaseSession(false)
     setSessionStats({ reviewed: 0, correct: 0, xpGained: 0, bestCombo: 0, badgesEarned: 0, questCompleted: false })
     sessionCompleteAnnouncedRef.current = false
-    getDeskMementos(theme.id).then((m) => {
-      if (!cancelled) setDeskMementos(m)
-    })
-    // An act briefing opens the era before anything else gets to speak —
-    // it's the frame the scenes and the ending happen inside.
-    getPendingAct(theme.id).then((act) => {
-      if (!cancelled) setPendingAct(act)
-    })
-    // A story scene earned in a previous session (or another tab) greets
-    // the player the moment they sit down at this desk. An ending only
-    // ever exists once the full persona arc is done, so it's checked
-    // second — mutually exclusive with a scene in practice, but checked
-    // in order for clarity.
-    getPendingScene(theme.id).then((scene) => {
-      if (cancelled) return
-      if (scene) {
-        setStoryScene(scene)
-        return
-      }
-      getPendingEnding(theme.id).then((ending) => {
-        if (!cancelled) setPendingEnding(ending)
-      })
-    })
     return () => {
       cancelled = true
     }
@@ -244,20 +216,8 @@ export function ReviewScreen({ deferScenes = false } = {}) {
   useEffect(() => {
     if (!current) return
     setSelected(null)
-    setXpToast('')
-    setBadgeToast(null)
-    setQuestToast(false)
-    setShieldToast(false)
-    setInterceptToast(null)
-    setMentorLine(null)
-    setLevelUpInfo(null)
-    setFactionToast(null)
+    feedback.reset()
     setSecretReveal(null)
-    setFragmentToast(null)
-    setAllyToast(null)
-    setInterceptOutcomeToast(null)
-    setDoubleAgentResult(null)
-    setContrabandSaleToast(null)
     setDictationInput('')
     const rolled = coldCaseSession ? null : rollIntercept(theme.id)
     setNpcIntercept(rolled)
@@ -316,9 +276,31 @@ export function ReviewScreen({ deferScenes = false } = {}) {
 
   // A pending scene stays in state while deferred, so it opens the moment
   // the briefing/onboarding above it is dismissed.
+  // One definition, rendered by both the session-complete screen and the
+  // main review screen, so the two can never drift apart.
+  const narrativeOverlays = (
+    <>
+      {visibleAct && (
+        <ActBriefingOverlay themeId={theme.id} act={visibleAct} onClose={narrative.dismissAct} />
+      )}
+      {visibleScene && (
+        <StorySceneOverlay
+          themeId={theme.id}
+          scene={visibleScene}
+          onClose={(sceneProgress) => {
+            narrative.dismissScene()
+            if (sceneProgress) setProgress(sceneProgress)
+            narrative.refresh()
+          }}
+        />
+      )}
+      {visibleEnding && (
+        <EndingOverlay themeId={theme.id} ending={visibleEnding} onClose={narrative.dismissEnding} />
+      )}
+    </>
+  )
+
   const mastery = current ? masteryForWord(current) : null
-  const visibleAct = deferScenes ? null : pendingAct
-  const visibleScene = deferScenes || visibleAct ? null : storyScene
 
   const animatedXp = useAnimatedNumber(progress?.xp ?? 0)
   const isAnswered = selected !== null
@@ -750,12 +732,7 @@ export function ReviewScreen({ deferScenes = false } = {}) {
     const wasCorrect = options[selected]?.isCorrect
     // Between cards is where story scenes step in: trust earned by the
     // answer just given may have unlocked one.
-    getPendingScene(theme.id).then((scene) => {
-      if (scene) setStoryScene(scene)
-    })
-    getPendingAct(theme.id).then((act) => {
-      if (act) setPendingAct(act)
-    })
+    narrative.refresh()
     const rest = queue.slice(1)
     setQueue(
       !wasCorrect
@@ -763,19 +740,7 @@ export function ReviewScreen({ deferScenes = false } = {}) {
         : rest
     )
     setSelected(null)
-    setXpToast('')
-    setBadgeToast(null)
-    setQuestToast(false)
-    setShieldToast(false)
-    setInterceptToast(null)
-    setMentorLine(null)
-    setLevelUpInfo(null)
-    setFactionToast(null)
-    setFragmentToast(null)
-    setAllyToast(null)
-    setInterceptOutcomeToast(null)
-    setDoubleAgentResult(null)
-    setContrabandSaleToast(null)
+    feedback.reset()
     setPromotionCeremony(null)
     setDoubleAgentChoice(null)
     setSecretReveal(null)
@@ -885,31 +850,7 @@ export function ReviewScreen({ deferScenes = false } = {}) {
         }
     return (
       <div className="session-complete">
-        {visibleAct && (
-          <ActBriefingOverlay themeId={theme.id} act={visibleAct} onClose={() => setPendingAct(null)} />
-        )}
-        {visibleScene && (
-          <StorySceneOverlay
-            themeId={theme.id}
-            scene={visibleScene}
-            onClose={(sceneProgress) => {
-              setStoryScene(null)
-              if (sceneProgress) setProgress(sceneProgress)
-              getPendingScene(theme.id).then((next) => {
-                if (next) {
-                  setStoryScene(next)
-                  return
-                }
-                getPendingEnding(theme.id).then((ending) => {
-                  if (ending) setPendingEnding(ending)
-                })
-              })
-            }}
-          />
-        )}
-        {!visibleScene && !visibleAct && !deferScenes && pendingEnding && (
-          <EndingOverlay themeId={theme.id} ending={pendingEnding} onClose={() => setPendingEnding(null)} />
-        )}
+        {narrativeOverlays}
         <p className="session-complete-title">Session Complete</p>
         <div className="session-complete-stats">
           <div className="session-stat">
@@ -1011,37 +952,7 @@ export function ReviewScreen({ deferScenes = false } = {}) {
     >
       {secretReveal && <SecretRevealOverlay secret={secretReveal} onDismiss={() => setSecretReveal(null)} />}
 
-      {visibleAct && (
-        <ActBriefingOverlay themeId={theme.id} act={visibleAct} onClose={() => setPendingAct(null)} />
-      )}
-
-      {visibleScene && (
-        <StorySceneOverlay
-          themeId={theme.id}
-          scene={visibleScene}
-          onClose={(sceneProgress) => {
-            setStoryScene(null)
-            if (sceneProgress) setProgress(sceneProgress)
-            // A scene choice can push another persona over a tier line —
-            // check for a follow-up so chained unlocks aren't lost. If the
-            // arc just completed, this is also the moment an ending
-            // becomes available.
-            getPendingScene(theme.id).then((next) => {
-              if (next) {
-                setStoryScene(next)
-                return
-              }
-              getPendingEnding(theme.id).then((ending) => {
-                if (ending) setPendingEnding(ending)
-              })
-            })
-          }}
-        />
-      )}
-
-      {!visibleScene && !visibleAct && !deferScenes && pendingEnding && (
-        <EndingOverlay themeId={theme.id} ending={pendingEnding} onClose={() => setPendingEnding(null)} />
-      )}
+      {narrativeOverlays}
 
       {promotionCeremony && (
         <div className="promotion-ceremony-overlay">
