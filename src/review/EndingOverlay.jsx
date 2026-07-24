@@ -1,3 +1,5 @@
+import { createPortal } from 'react-dom'
+import { getOverlayPortalTarget } from './overlayPortal.js'
 import { claimEnding } from '../progression/endings.js'
 import './EndingOverlay.css'
 
@@ -14,7 +16,7 @@ export function EndingOverlay({ themeId, ending, onClose }) {
     onClose()
   }
 
-  return (
+  return createPortal(
     <div className="ending-overlay">
       <div className="ending-card">
         <div className="ending-label">◆ ◆ ◆ ARCHIVE COMPLETE ◆ ◆ ◆</div>
@@ -24,6 +26,7 @@ export function EndingOverlay({ themeId, ending, onClose }) {
           CLOSE THE FILE
         </button>
       </div>
-    </div>
+    </div>,
+    getOverlayPortalTarget()
   )
 }

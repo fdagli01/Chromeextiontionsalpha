@@ -256,7 +256,14 @@ function AppShell({ activeThemeId, onThemeChange }) {
   }
 
   const TABS = [
-    { id: 'review', icon: '⚑', label: 'INTERROGATE', node: <ReviewScreen /> },
+    {
+      id: 'review',
+      icon: '⚑',
+      label: 'INTERROGATE',
+      // Story scenes are modal; they wait their turn behind the day's
+      // opening rituals rather than stacking two overlays at once.
+      node: <ReviewScreen deferScenes={showOnboarding || !!dailyBriefing} />,
+    },
     { id: 'archive', icon: '📁', label: 'ARCHIVE', node: <ArchiveScreen /> },
     {
       id: 'factions',

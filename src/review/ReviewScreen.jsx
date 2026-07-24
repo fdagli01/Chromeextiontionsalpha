@@ -88,7 +88,7 @@ function shuffle(arr) {
   return a
 }
 
-export function ReviewScreen() {
+export function ReviewScreen({ deferScenes = false } = {}) {
   const theme = useThemeConfig()
   const [queue, setQueue] = useState(null)
   const [options, setOptions] = useState([])
@@ -304,6 +304,10 @@ export function ReviewScreen() {
       })
     }
   }, [current?.id, theme.id])
+
+  // A pending scene stays in state while deferred, so it opens the moment
+  // the briefing/onboarding above it is dismissed.
+  const visibleScene = deferScenes ? null : storyScene
 
   const animatedXp = useAnimatedNumber(progress?.xp ?? 0)
   const isAnswered = selected !== null
@@ -867,10 +871,10 @@ export function ReviewScreen() {
         }
     return (
       <div className="session-complete">
-        {storyScene && (
+        {visibleScene && (
           <StorySceneOverlay
             themeId={theme.id}
-            scene={storyScene}
+            scene={visibleScene}
             onClose={(sceneProgress) => {
               setStoryScene(null)
               if (sceneProgress) setProgress(sceneProgress)
@@ -886,7 +890,7 @@ export function ReviewScreen() {
             }}
           />
         )}
-        {!storyScene && pendingEnding && (
+        {!visibleScene && !deferScenes && pendingEnding && (
           <EndingOverlay themeId={theme.id} ending={pendingEnding} onClose={() => setPendingEnding(null)} />
         )}
         <p className="session-complete-title">Session Complete</p>
@@ -990,10 +994,10 @@ export function ReviewScreen() {
     >
       {secretReveal && <SecretRevealOverlay secret={secretReveal} onDismiss={() => setSecretReveal(null)} />}
 
-      {storyScene && (
+      {visibleScene && (
         <StorySceneOverlay
           themeId={theme.id}
-          scene={storyScene}
+          scene={visibleScene}
           onClose={(sceneProgress) => {
             setStoryScene(null)
             if (sceneProgress) setProgress(sceneProgress)
@@ -1014,7 +1018,7 @@ export function ReviewScreen() {
         />
       )}
 
-      {!storyScene && pendingEnding && (
+      {!visibleScene && !deferScenes && pendingEnding && (
         <EndingOverlay themeId={theme.id} ending={pendingEnding} onClose={() => setPendingEnding(null)} />
       )}
 

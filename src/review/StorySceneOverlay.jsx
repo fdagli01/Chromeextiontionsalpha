@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { getOverlayPortalTarget } from './overlayPortal.js'
 import { getPersonaById } from '../progression/mentors.js'
 import { isTermKnown, resolveSceneChoice } from '../progression/storyScenes.js'
 import './StorySceneOverlay.css'
@@ -56,7 +58,7 @@ export function StorySceneOverlay({ themeId, scene, onClose }) {
     }
   }
 
-  return (
+  return createPortal(
     <div className="story-scene-overlay">
       <div className="story-scene-card">
         <div className="story-scene-label">◈ PERSONAL FILE ◈</div>
@@ -109,6 +111,7 @@ export function StorySceneOverlay({ themeId, scene, onClose }) {
           </>
         )}
       </div>
-    </div>
+    </div>,
+    getOverlayPortalTarget()
   )
 }
