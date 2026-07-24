@@ -1,0 +1,241 @@
+.dossier {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+
+.dossier-header {
+  text-align: center;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-strong);
+}
+
+.dossier-header-label {
+  font-family: var(--font-heading);
+  font-size: var(--type-xs);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--color-accent);
+}
+
+.dossier-rank {
+  margin-top: 4px;
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.dossier-sub {
+  font-size: var(--type-xs);
+  color: var(--color-text-muted);
+}
+
+.dossier-section-title {
+  font-family: var(--font-heading);
+  font-size: var(--type-xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--color-accent);
+  margin-top: 4px;
+}
+
+/* ── Ending requirements: the quest log ── */
+.dossier-ending {
+  padding: 10px 12px;
+  border: 1px dashed var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+.dossier-ending.claimed {
+  border-style: solid;
+}
+
+.dossier-req-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: var(--type-sm);
+  color: var(--color-text);
+}
+
+.dossier-req-list li.done {
+  color: var(--color-success);
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+
+.dossier-ending-note {
+  margin: 6px 0 0;
+  font-size: var(--type-sm);
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+/* ── Cast ── */
+.dossier-personas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dossier-persona {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.dossier-persona.tier-ally {
+  border-color: var(--color-accent);
+}
+
+.dossier-persona-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-text);
+}
+
+.dossier-portrait {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.dossier-portrait-icon {
+  font-size: 30px;
+  line-height: 1;
+  width: 42px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.dossier-persona-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dossier-persona-name {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--type-sm);
+}
+
+.dossier-persona-tier,
+.dossier-persona-scenes {
+  font-size: var(--type-xs);
+  color: var(--color-text-muted);
+}
+
+.dossier-chevron {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.dossier-persona-body {
+  padding: 0 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dossier-backstory,
+.dossier-memento {
+  margin: 0;
+  font-size: var(--type-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.dossier-scene {
+  padding: 8px;
+  border-left: 3px solid var(--color-border);
+  background: var(--color-surface-strong);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.dossier-scene.resolved {
+  border-left-color: var(--color-success);
+}
+
+.dossier-scene-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-size: var(--type-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-text);
+}
+
+.dossier-scene-tier {
+  margin-left: auto;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  letter-spacing: 0.1em;
+}
+
+.dossier-scene-choice {
+  margin: 5px 0 0;
+  font-size: var(--type-xs);
+  color: var(--color-accent);
+}
+
+.dossier-scene-choice.muted {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.dossier-scene-response {
+  margin: 4px 0 0;
+  font-size: var(--type-xs);
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+/* ── Journal ── */
+.dossier-journal {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dossier-journal-entry {
+  font-size: var(--type-xs);
+  color: var(--color-text);
+}
+
+.dossier-journal-label {
+  margin-right: 6px;
+}
+
+.dossier-journal-date {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.dossier-empty {
+  font-size: var(--type-xs);
+  font-style: italic;
+  color: var(--color-text-muted);
+  margin: 0;
+}

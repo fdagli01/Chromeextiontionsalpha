@@ -7,6 +7,7 @@ import { onProgressChanged } from '../xp/progressEvents.js'
 import { isUnlocked, UNLOCK_LEVELS } from '../progression/unlocks.js'
 import { getWeeklySummary } from '../db/activityLog.js'
 import { ReviewScreen } from '../review/ReviewScreen.jsx'
+import { DossierScreen } from '../dossier/DossierScreen.jsx'
 import { ArchiveScreen } from '../archive/ArchiveScreen.jsx'
 import { FactionsScreen } from '../factions/FactionsScreen.jsx'
 import { SettingsScreen } from '../settings/SettingsScreen.jsx'
@@ -265,6 +266,7 @@ function AppShell({ activeThemeId, onThemeChange }) {
       node: <ReviewScreen deferScenes={showOnboarding || !!dailyBriefing} />,
     },
     { id: 'archive', icon: '📁', label: 'ARCHIVE', node: <ArchiveScreen /> },
+    { id: 'dossier', icon: '🗂', label: 'DOSSIER', node: <DossierScreen /> },
     {
       id: 'factions',
       icon: '🎖',
