@@ -2044,3 +2044,12 @@
 .npc-intercept-chip.failed {
   color: var(--color-text-muted);
 }
+
+/* A word's mastery seal — earned only by holding it across spaced recalls
+   (FSRS stability), so it can't be farmed in a single session. */
+.mastery-seal {
+  margin-left: 6px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: default;
+}

@@ -1,6 +1,8 @@
 import { getTheme } from '../themes/index.js'
 import { getProgress } from '../db/progressRepo.js'
 import { getAffinityRecordsForTheme } from '../db/affinityRepo.js'
+import { getWordsByTheme } from '../db/wordsRepo.js'
+import { masterySummary } from '../srs/mastery.js'
 import { rankForLevel } from '../xp/xp.js'
 import { tierForTrust } from './affinity.js'
 import { getPersonaById } from './mentors.js'
@@ -33,13 +35,15 @@ import { MEMENTOS } from './mementos.js'
  * @returns {Promise<{
  *   rank: string, level: number, xp: number,
  *   personas: DossierPersona[],
+ *   mastery: {gold: number, silver: number, bronze: number, total: number},
  *   journal: {id: string, choiceId: string, at: string, label: string}[],
  *   ending: {claimed: boolean, title: string|null, needsRank: string|null, scenesRemaining: number} }>}
  */
 export async function getDossier(themeId) {
-  const [progress, records] = await Promise.all([
+  const [progress, records, words] = await Promise.all([
     getProgress(themeId),
     getAffinityRecordsForTheme(themeId),
+    getWordsByTheme(themeId),
   ])
   const theme = getTheme(themeId)
   const scenes = STORY_SCENES[themeId] ?? []
@@ -106,6 +110,7 @@ export async function getDossier(themeId) {
   const scenesRemaining = scenes.filter((s) => !decisionsById.has(`scene:${s.id}`)).length
 
   return {
+    mastery: masterySummary(words),
     rank: theme ? rankForLevel(theme.rankNames, progress.level) : `Level ${progress.level}`,
     level: progress.level,
     xp: progress.xp,

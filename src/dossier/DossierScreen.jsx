@@ -27,7 +27,7 @@ export function DossierScreen() {
 
   if (!data) return <p className="empty-state">Retrieving file...</p>
 
-  const { rank, level, personas, journal, ending } = data
+  const { rank, level, personas, journal, ending, mastery } = data
 
   return (
     <div className="dossier">
@@ -36,6 +36,16 @@ export function DossierScreen() {
         <div className="dossier-rank">{rank}</div>
         <div className="dossier-sub">
           Level {level} · {theme.terminalName}
+        </div>
+      </div>
+
+      <div className="dossier-mastery">
+        <div className="dossier-section-title">⬥ ARCHIVE MASTERY</div>
+        <div className="dossier-mastery-row">
+          <span className="dossier-medal" title="Held 90+ days">🥇 {mastery.gold}</span>
+          <span className="dossier-medal" title="Held 30+ days">🥈 {mastery.silver}</span>
+          <span className="dossier-medal" title="Held 7+ days">🥉 {mastery.bronze}</span>
+          <span className="dossier-medal-total">of {mastery.total} words</span>
         </div>
       </div>
 

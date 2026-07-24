@@ -239,3 +239,28 @@
   color: var(--color-text-muted);
   margin: 0;
 }
+
+/* ── Archive mastery: FSRS stability made visible and collectable ── */
+.dossier-mastery-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.dossier-medal {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--type-sm);
+  color: var(--color-text);
+}
+
+.dossier-medal-total {
+  margin-left: auto;
+  font-size: var(--type-xs);
+  color: var(--color-text-muted);
+}

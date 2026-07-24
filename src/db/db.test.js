@@ -93,6 +93,7 @@ describe('progressRepo', () => {
       doubleAgentsExposed: 0,
       contrabandSold: [],
       decisions: [],
+      actsSeen: [],
     })
   })
 
@@ -118,6 +119,7 @@ describe('progressRepo', () => {
       doubleAgentsExposed: 0,
       contrabandSold: [],
       decisions: [],
+      actsSeen: [],
     })
   })
 })

@@ -20,6 +20,7 @@ import { STORE_PROGRESS, withStore } from './connection.js'
  * @property {number} doubleAgentsExposed - lifetime count of false-friend words answered correctly (badge trigger)
  * @property {string[]} contrabandSold - lowercased terms already fenced on the Black Market (each sells once)
  * @property {Array<{id: string, choiceId: string, at: string}>} decisions - permanent journal of story choices (see progression/decisions.js)
+ * @property {string[]} actsSeen - ids of act briefings already shown (see progression/acts.js)
  */
 
 /**
@@ -46,6 +47,7 @@ function emptyProgress(themeId) {
     doubleAgentsExposed: 0,
     contrabandSold: [],
     decisions: [],
+    actsSeen: [],
   }
 }
 
@@ -70,6 +72,7 @@ export async function getProgress(themeId) {
     doubleAgentsExposed: 0,
     contrabandSold: [],
     decisions: [],
+    actsSeen: [],
     ...existing,
   }
 }

@@ -29,8 +29,11 @@ import { judgeDictation, rollRadioCrisis } from '../progression/radioIntercept.j
 import { getPendingScene, pickDecisionCallout } from '../progression/storyScenes.js'
 import { recordDecision } from '../progression/decisions.js'
 import { getPendingEnding } from '../progression/endings.js'
+import { getPendingAct } from '../progression/acts.js'
+import { masteryForWord } from '../srs/mastery.js'
 import { StorySceneOverlay } from './StorySceneOverlay.jsx'
 import { EndingOverlay } from './EndingOverlay.jsx'
+import { ActBriefingOverlay } from './ActBriefingOverlay.jsx'
 import { isReverseDay } from './reverseMode.js'
 import {
   playBadgeUnlock,
@@ -136,6 +139,7 @@ export function ReviewScreen({ deferScenes = false } = {}) {
   const [dictationInput, setDictationInput] = useState('')
   const [storyScene, setStoryScene] = useState(null)
   const [pendingEnding, setPendingEnding] = useState(null)
+  const [pendingAct, setPendingAct] = useState(null)
   const [deskMementos, setDeskMementos] = useState([])
   const sessionCompleteAnnouncedRef = useRef(false)
   const shownAtRef = useRef(performance.now())
@@ -180,6 +184,11 @@ export function ReviewScreen({ deferScenes = false } = {}) {
     sessionCompleteAnnouncedRef.current = false
     getDeskMementos(theme.id).then((m) => {
       if (!cancelled) setDeskMementos(m)
+    })
+    // An act briefing opens the era before anything else gets to speak —
+    // it's the frame the scenes and the ending happen inside.
+    getPendingAct(theme.id).then((act) => {
+      if (!cancelled) setPendingAct(act)
     })
     // A story scene earned in a previous session (or another tab) greets
     // the player the moment they sit down at this desk. An ending only
@@ -307,7 +316,9 @@ export function ReviewScreen({ deferScenes = false } = {}) {
 
   // A pending scene stays in state while deferred, so it opens the moment
   // the briefing/onboarding above it is dismissed.
-  const visibleScene = deferScenes ? null : storyScene
+  const mastery = current ? masteryForWord(current) : null
+  const visibleAct = deferScenes ? null : pendingAct
+  const visibleScene = deferScenes || visibleAct ? null : storyScene
 
   const animatedXp = useAnimatedNumber(progress?.xp ?? 0)
   const isAnswered = selected !== null
@@ -742,6 +753,9 @@ export function ReviewScreen({ deferScenes = false } = {}) {
     getPendingScene(theme.id).then((scene) => {
       if (scene) setStoryScene(scene)
     })
+    getPendingAct(theme.id).then((act) => {
+      if (act) setPendingAct(act)
+    })
     const rest = queue.slice(1)
     setQueue(
       !wasCorrect
@@ -871,6 +885,9 @@ export function ReviewScreen({ deferScenes = false } = {}) {
         }
     return (
       <div className="session-complete">
+        {visibleAct && (
+          <ActBriefingOverlay themeId={theme.id} act={visibleAct} onClose={() => setPendingAct(null)} />
+        )}
         {visibleScene && (
           <StorySceneOverlay
             themeId={theme.id}
@@ -890,7 +907,7 @@ export function ReviewScreen({ deferScenes = false } = {}) {
             }}
           />
         )}
-        {!visibleScene && !deferScenes && pendingEnding && (
+        {!visibleScene && !visibleAct && !deferScenes && pendingEnding && (
           <EndingOverlay themeId={theme.id} ending={pendingEnding} onClose={() => setPendingEnding(null)} />
         )}
         <p className="session-complete-title">Session Complete</p>
@@ -994,6 +1011,10 @@ export function ReviewScreen({ deferScenes = false } = {}) {
     >
       {secretReveal && <SecretRevealOverlay secret={secretReveal} onDismiss={() => setSecretReveal(null)} />}
 
+      {visibleAct && (
+        <ActBriefingOverlay themeId={theme.id} act={visibleAct} onClose={() => setPendingAct(null)} />
+      )}
+
       {visibleScene && (
         <StorySceneOverlay
           themeId={theme.id}
@@ -1018,7 +1039,7 @@ export function ReviewScreen({ deferScenes = false } = {}) {
         />
       )}
 
-      {!visibleScene && !deferScenes && pendingEnding && (
+      {!visibleScene && !visibleAct && !deferScenes && pendingEnding && (
         <EndingOverlay themeId={theme.id} ending={pendingEnding} onClose={() => setPendingEnding(null)} />
       )}
 
@@ -1196,6 +1217,11 @@ export function ReviewScreen({ deferScenes = false } = {}) {
               {reverseMode ? 'REVERSE INTERROGATION' : theme.eyebrowLabel}
               {current.struggling && theme.strugglingLabel && (
                 <span className="struggling-tag">{theme.strugglingLabel}</span>
+              )}
+              {mastery && (
+                <span className="mastery-seal" title={`${mastery.label} — held for ${Math.round(current.stability)} days`}>
+                  {mastery.icon}
+                </span>
               )}
             </div>
             <div className="term-word">
