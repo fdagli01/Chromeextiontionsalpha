@@ -16,7 +16,7 @@ export function ActBriefingOverlay({ themeId, act, onClose }) {
   }
 
   return createPortal(
-    <div className="act-overlay">
+    <div className="act-overlay" role="dialog" aria-modal="true" aria-label={act.title}>
       <div className="act-card">
         <div className="act-dateline">{act.dateline}</div>
         <div className="act-rule" aria-hidden="true" />

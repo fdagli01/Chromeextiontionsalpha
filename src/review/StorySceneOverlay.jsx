@@ -59,7 +59,7 @@ export function StorySceneOverlay({ themeId, scene, onClose }) {
   }
 
   return createPortal(
-    <div className="story-scene-overlay">
+    <div className="story-scene-overlay" role="dialog" aria-modal="true" aria-label={`${persona?.name ?? scene.personaId}: ${scene.title}`}>
       <div className="story-scene-card">
         <div className="story-scene-label">◈ PERSONAL FILE ◈</div>
         <div className="story-scene-header">

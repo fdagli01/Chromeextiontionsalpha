@@ -318,7 +318,7 @@ function AppShell({ activeThemeId, onThemeChange }) {
         )}
       </header>
 
-      <main className="app-content">
+      <main role="tabpanel" className="app-content">
         {activeCrisis ? (
           <CrisisScreen crisis={activeCrisis} onResolve={handleCrisisResolved} />
         ) : (
@@ -326,17 +326,20 @@ function AppShell({ activeThemeId, onThemeChange }) {
         )}
       </main>
 
-      <nav className="app-tabs">
+      <nav className="app-tabs" role="tablist" aria-label="Sections">
         {TABS.map((tab) => (
           <button
             key={tab.id}
+            role="tab"
+            aria-selected={tab.id === active.id}
+            aria-label={tab.locked ? `${tab.label} — locked until level ${tab.unlockLevel}` : tab.label}
             className={`${tab.id === active.id ? 'active' : ''} ${tab.locked ? 'locked' : ''}`}
             onClick={() => !tab.locked && setActiveTab(tab.id)}
             disabled={tab.locked}
             title={tab.locked ? `Unlocks at level ${tab.unlockLevel}` : undefined}
           >
-            <span className="tab-icon">{tab.locked ? '🔒' : tab.icon}</span>
-            <span className="tab-label">{tab.locked ? `LVL ${tab.unlockLevel}` : tab.label}</span>
+            <span className="tab-icon" aria-hidden="true">{tab.locked ? '🔒' : tab.icon}</span>
+            <span className="tab-label" aria-hidden="true">{tab.locked ? `LVL ${tab.unlockLevel}` : tab.label}</span>
           </button>
         ))}
         {hasAudio && (

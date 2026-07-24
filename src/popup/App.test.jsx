@@ -73,15 +73,17 @@ describe('progressive tab locking', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    const reviewTab = await screen.findByRole('button', { name: /INTERROGATE/ })
-    expect(reviewTab.className).toContain('active')
+    // Tabs are role="tab" (see the tablist in App.jsx); a locked tab is
+    // named for what it needs rather than its glyph.
+    const reviewTab = await screen.findByRole('tab', { name: /INTERROGATE/ })
+    expect(reviewTab).toHaveAttribute('aria-selected', 'true')
 
-    const lockedTab = screen.getByRole('button', { name: /LVL 3/ })
+    const lockedTab = screen.getByRole('tab', { name: /locked until level 3/i })
     expect(lockedTab).toBeDisabled()
 
     await user.click(lockedTab)
 
     // Clicking the locked tab must not switch the active tab away from review.
-    expect(reviewTab.className).toContain('active')
+    expect(reviewTab).toHaveAttribute('aria-selected', 'true')
   })
 })

@@ -1036,8 +1036,11 @@ export function ReviewScreen({ deferScenes = false } = {}) {
       )}
 
       <div className="review-stats">
-        <span className="stat-rank">⚑ {rank}</span>
-        <span className={`stat-streak tier-${streakTier(progress.streak)}`}>
+        <span className="stat-rank" aria-label={`Rank: ${rank}`}>⚑ {rank}</span>
+        <span
+          className={`stat-streak tier-${streakTier(progress.streak)}`}
+          aria-label={`Streak: ${progress.streak} day${progress.streak === 1 ? '' : 's'}`}
+        >
           🔥 <span key={progress.streak} className="streak-number">{progress.streak}</span>
         </span>
         {progress.streakShields > 0 && (
@@ -1147,6 +1150,7 @@ export function ReviewScreen({ deferScenes = false } = {}) {
                     })
                   }}
                   title="Listen to pronunciation again"
+                  aria-label="Listen to pronunciation again"
                 >
                   🔊
                 </button>
@@ -1203,8 +1207,15 @@ export function ReviewScreen({ deferScenes = false } = {}) {
           if (isAnswered && !opt.isCorrect && i !== selected) return null
           const cls = `option-btn${isAnswered ? (opt.isCorrect ? ' correct' : ' wrong') : ''}`
           return (
-            <button key={i} className={cls} onClick={() => pick(i)}>
-              <span className="option-num">[{i + 1}]</span>
+            <button
+              key={i}
+              className={cls}
+              onClick={() => pick(i)}
+              disabled={isAnswered}
+              aria-keyshortcuts={String(i + 1)}
+              aria-label={`Answer ${i + 1}: ${opt.label}${isAnswered ? (opt.isCorrect ? ' — correct' : ' — wrong') : ''}`}
+            >
+              <span className="option-num" aria-hidden="true">[{i + 1}]</span>
               <span className="option-label">
                 {opt.label}
                 {reverseMode && opt.translit && <span className="option-translit"> [ {opt.translit} ]</span>}
@@ -1229,7 +1240,7 @@ export function ReviewScreen({ deferScenes = false } = {}) {
       )}
 
       {isAnswered && (
-        <div className={`result-panel ${isCorrect ? 'correct' : 'wrong'}`}>
+        <div className={`result-panel ${isCorrect ? 'correct' : 'wrong'}`} role="status" aria-live="polite">
           <div className={`result-stamp ${isCorrect && combo >= 3 ? 'combo' : ''}`}>
             {isCorrect ? theme.stampSuccessWord : theme.stampFailWord}
           </div>

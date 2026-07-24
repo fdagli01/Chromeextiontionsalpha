@@ -17,7 +17,7 @@ export function EndingOverlay({ themeId, ending, onClose }) {
   }
 
   return createPortal(
-    <div className="ending-overlay">
+    <div className="ending-overlay" role="dialog" aria-modal="true" aria-label={ending.title}>
       <div className="ending-card">
         <div className="ending-label">◆ ◆ ◆ ARCHIVE COMPLETE ◆ ◆ ◆</div>
         <div className="ending-title">{ending.title}</div>
