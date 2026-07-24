@@ -8,6 +8,7 @@ import { translateToEnglish } from './translate.js'
 import { checkForCrisis, CRISIS_ALARM_NAME, scheduleCrisisChecks } from './crisisScheduler.js'
 import { checkStreakGuard, STREAK_GUARD_ALARM_NAME, scheduleStreakGuardChecks } from './streakGuardScheduler.js'
 import { getDailyBounty, recordBountyCapture } from '../progression/bounties.js'
+import { falseFriendIntel } from '../progression/falseFriends.js'
 import { awardBounty } from '../xp/xpService.js'
 import { recordBountyCompletion } from '../progression/artifacts.js'
 
@@ -155,7 +156,9 @@ export async function captureWord(term, themeId, pageUrl) {
   const isNewWord = !existing.some((w) => w.term.trim().toLowerCase() === term.toLowerCase())
 
   const translation = await translateToEnglish(term, theme.sourceLanguageCode)
-  const fact = getFact(themeId, term)
+  // A captured false friend explains its own disguise when no curated
+  // trivia exists, so the trap is never a bare, unexplained card.
+  const fact = getFact(themeId, term) || falseFriendIntel(themeId, term)
   const transliteration = getTransliteration(themeId, term)
   const example = getExample(themeId, term)
   const philosophy = getPhilosophy(themeId, term)

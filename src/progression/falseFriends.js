@@ -97,6 +97,21 @@ export const FALSE_FRIENDS = {
 }
 
 /**
+ * The debrief note for a false friend, phrased as archive intel so it can
+ * stand in as a word's `fact` when no curated trivia exists. A double
+ * agent explaining its own disguise is the most useful thing that card
+ * could possibly say.
+ * @param {string} themeId
+ * @param {string} term
+ * @returns {string} empty when the term is not a false friend
+ */
+export function falseFriendIntel(themeId, term) {
+  const def = findFalseFriend(themeId, term)
+  if (!def) return ''
+  return `Double agent: looks like "${def.trap}", actually means "${def.truth}". ${def.note}`
+}
+
+/**
  * Looks up a term in the theme's double-agent roster.
  * @param {string} themeId
  * @param {string} term
