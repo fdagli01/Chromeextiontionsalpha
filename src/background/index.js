@@ -14,7 +14,7 @@ import { recordBountyCompletion } from '../progression/artifacts.js'
 const MENU_ROOT_ID = 'polyglot-chronicle-root'
 
 /** @param {string} themeId */
-function menuIdForTheme(themeId) {
+export function menuIdForTheme(themeId) {
   return `polyglot-chronicle-add-${themeId}`
 }
 
@@ -70,7 +70,7 @@ chrome.runtime.onStartup.addListener(updateDueBadge)
  * popup ever being opened. Cleared entirely at zero — an empty badge is
  * calmer than a "0".
  */
-async function updateDueBadge() {
+export async function updateDueBadge() {
   try {
     const perTheme = await Promise.all(listThemes().map((theme) => getDueWords(theme.id)))
     const total = perTheme.reduce((sum, words) => sum + words.length, 0)
@@ -106,7 +106,7 @@ const MAX_HIGHLIGHT_TERMS = 300
  * script does nothing at all.
  * @returns {Promise<{enabled: boolean, terms: Array<{term: string, translation: string, color: string}>}>}
  */
-async function collectDueTerms() {
+export async function collectDueTerms() {
   const enabled = await getSetting('domHighlightEnabled', true)
   if (!enabled) return { enabled: false, terms: [] }
 
@@ -145,7 +145,7 @@ chrome.contextMenus.onClicked.addListener((info) => {
  * @param {string} [pageUrl] - the page the selection was captured from, used
  *   only to check today's field bounty (e.g. "capture from a .es site")
  */
-async function captureWord(term, themeId, pageUrl) {
+export async function captureWord(term, themeId, pageUrl) {
   const theme = getTheme(themeId)
 
   // Only a genuinely new word advances the daily bounty — re-capturing an
@@ -198,7 +198,7 @@ const BOUNTY_REWARD_XP = 40
  * @param {string} themeId
  * @param {string} [pageUrl]
  */
-async function checkBounty(term, themeId, pageUrl) {
+export async function checkBounty(term, themeId, pageUrl) {
   const { justCompleted } = await recordBountyCapture({ term, themeId, pageUrl: pageUrl ?? '' })
   if (!justCompleted) return
 
