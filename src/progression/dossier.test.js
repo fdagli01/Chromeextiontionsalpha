@@ -69,3 +69,22 @@ describe('getDossier', () => {
     expect(d.journal[1].label).toContain('black market')
   })
 })
+
+describe('a closed file can be re-read', () => {
+  it('surfaces the full epilogue text of the ending the player earned', async () => {
+    const { getEndingById } = await import('./endings.js')
+    await recordDecision('russian', 'ending', 'russian:archivist')
+
+    const d = await getDossier('russian')
+    expect(d.ending.claimed).toBe(true)
+    expect(d.ending.earned).not.toBeNull()
+    expect(d.ending.earned.id).toBe('russian:archivist')
+    expect(d.ending.earned.body).toBe(getEndingById('russian:archivist').body)
+  })
+
+  it('reports no epilogue while the file is still open', async () => {
+    const d = await getDossier('russian')
+    expect(d.ending.claimed).toBe(false)
+    expect(d.ending.earned).toBeNull()
+  })
+})

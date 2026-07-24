@@ -128,6 +128,63 @@ export const spanishTheme = defineTheme({
     'Coronel',
     'General',
   ],
+  // Same 4/8/14 thresholds as the Spanish act briefings: the sunlit
+  // republic of July 1936, the smoke and ash of the university front, then
+  // the cold blue of the road north in the retirada.
+  stages: [
+    {
+      id: 'republica',
+      name: 'La República',
+      minLevel: 1,
+      colors: {},
+      emblem: '★',
+    },
+    {
+      id: 'frente',
+      name: 'El Frente',
+      minLevel: 4,
+      colors: {
+        background: '#1f1a12',
+        surface: '#302818',
+        surfaceStrong: '#12100a',
+        primary: '#a03a22',
+        accent: '#e0a03a',
+        border: '#57492c',
+      },
+      emblem: '✊',
+    },
+    {
+      id: 'asedio',
+      name: 'El Asedio',
+      minLevel: 8,
+      colors: {
+        background: '#1a1815',
+        surface: '#2a2621',
+        surfaceStrong: '#0f0e0c',
+        primary: '#8f3524',
+        accent: '#c8853a',
+        border: '#4a443a',
+        textMuted: '#9c9078',
+      },
+      emblem: '🔥',
+    },
+    {
+      id: 'retirada',
+      name: 'La Retirada',
+      minLevel: 14,
+      colors: {
+        background: '#15181c',
+        surface: '#222730',
+        surfaceStrong: '#0d0f12',
+        primary: '#4a6070',
+        accent: '#b9c6d2',
+        border: '#39414c',
+        text: '#e4eaf0',
+        textMuted: '#93a0ad',
+      },
+      emblem: '🕊',
+    },
+  ],
   crises: [
     {
       id: 'es-siege',

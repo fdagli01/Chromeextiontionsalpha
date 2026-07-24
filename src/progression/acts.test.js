@@ -87,3 +87,23 @@ describe('masterySummary', () => {
     expect(summary).toEqual({ gold: 1, silver: 1, bronze: 1, total: 5 })
   })
 })
+
+describe('acts and visual stages stay aligned', () => {
+  it('every theme shifts its palette on the same levels its acts open', async () => {
+    const { listThemes, resolveThemeStage } = await import('../themes/index.js')
+    for (const theme of listThemes()) {
+      const acts = ACTS[theme.id]
+      const stageLevels = new Set((theme.stages ?? []).map((s) => s.minLevel))
+      for (const act of acts) {
+        expect(stageLevels.has(act.minLevel), `${theme.id}:${act.id} has no stage at level ${act.minLevel}`).toBe(true)
+      }
+      // And the stage actually changes at each act threshold, so the
+      // briefing never explains a change the player cannot see.
+      for (const act of acts) {
+        const before = resolveThemeStage(theme, act.minLevel - 1)
+        const after = resolveThemeStage(theme, act.minLevel)
+        expect(after?.id, `${theme.id}:${act.id}`).not.toBe(before?.id)
+      }
+    }
+  })
+})

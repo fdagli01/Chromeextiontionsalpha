@@ -3,6 +3,7 @@ import { getProgress } from '../db/progressRepo.js'
 import { getAffinityRecordsForTheme } from '../db/affinityRepo.js'
 import { getWordsByTheme } from '../db/wordsRepo.js'
 import { masterySummary } from '../srs/mastery.js'
+import { getEndingById } from './endings.js'
 import { rankForLevel } from '../xp/xp.js'
 import { tierForTrust } from './affinity.js'
 import { getPersonaById } from './mentors.js'
@@ -37,7 +38,7 @@ import { MEMENTOS } from './mementos.js'
  *   personas: DossierPersona[],
  *   mastery: {gold: number, silver: number, bronze: number, total: number},
  *   journal: {id: string, choiceId: string, at: string, label: string}[],
- *   ending: {claimed: boolean, title: string|null, needsRank: string|null, scenesRemaining: number} }>}
+ *   ending: {claimed: boolean, earned: object|null, needsRank: string|null, scenesRemaining: number} }>}
  */
 export async function getDossier(themeId) {
   const [progress, records, words] = await Promise.all([
@@ -118,7 +119,8 @@ export async function getDossier(themeId) {
     journal,
     ending: {
       claimed: !!endingDecision,
-      title: endingDecision?.choiceId ?? null,
+      // The epilogue itself, so a closed file can be re-read in full.
+      earned: endingDecision ? getEndingById(endingDecision.choiceId) : null,
       needsRank:
         progress.level < topRankLevel && theme ? rankForLevel(theme.rankNames, topRankLevel) : null,
       scenesRemaining,

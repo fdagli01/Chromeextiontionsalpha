@@ -264,3 +264,20 @@
   font-size: var(--type-xs);
   color: var(--color-text-muted);
 }
+
+/* The claimed epilogue, re-readable in full rather than a one-time event. */
+.dossier-ending-title {
+  margin-top: 6px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--type-sm);
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+}
+
+.dossier-ending-body {
+  margin: 6px 0 0;
+  font-size: var(--type-xs);
+  line-height: 1.6;
+  color: var(--color-text);
+}

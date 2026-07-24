@@ -54,6 +54,67 @@ export const russianTheme = defineTheme({
     'Colonel',
     'General Secretary',
   ],
+  // Level-gated era evolution, on the same 4/8/14 thresholds as the act
+  // briefings in progression/acts.js — the palette shifts and the briefing
+  // explains why, in the same breath. Tracks the archive's own decades:
+  // lacquered Brezhnev red, the paler thaw of glasnost, then the
+  // washed-out, half-abandoned building of 1991.
+  stages: [
+    {
+      id: 'stagnation',
+      name: 'Zastoy',
+      minLevel: 1,
+      colors: {},
+      emblem: '☭',
+    },
+    {
+      id: 'glasnost',
+      name: 'Glasnost',
+      minLevel: 4,
+      colors: {
+        background: '#1a1310',
+        surface: '#2a1e18',
+        surfaceStrong: '#120b08',
+        primary: '#a83a1a',
+        accent: '#e8b430',
+        border: '#5a3524',
+        textMuted: '#c3a184',
+      },
+      emblem: '🕊',
+    },
+    {
+      id: 'perestroika',
+      name: 'Perestroika',
+      minLevel: 8,
+      colors: {
+        background: '#1b1a19',
+        surface: '#2b2927',
+        surfaceStrong: '#131211',
+        primary: '#8c5230',
+        accent: '#d8c88a',
+        border: '#4f4a44',
+        text: '#ece5d6',
+        textMuted: '#b0a794',
+      },
+      emblem: '📻',
+    },
+    {
+      id: 'dissolution',
+      name: 'Dissolution',
+      minLevel: 14,
+      colors: {
+        background: '#16171a',
+        surface: '#232529',
+        surfaceStrong: '#0e0f11',
+        primary: '#5f6a78',
+        accent: '#cfd6df',
+        border: '#3b4048',
+        text: '#e6eaf0',
+        textMuted: '#98a1ad',
+      },
+      emblem: '🏳',
+    },
+  ],
   crises: [
     {
       id: 'ru-defector',

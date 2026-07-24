@@ -53,9 +53,16 @@ export function DossierScreen() {
         {ending.claimed ? (
           <>
             <div className="dossier-section-title">⬥ FILE CLOSED</div>
-            <p className="dossier-ending-note">
-              Your story here has an ending, and you earned the one you got.
-            </p>
+            {ending.earned ? (
+              <>
+                <div className="dossier-ending-title">{ending.earned.title}</div>
+                <p className="dossier-ending-body">{ending.earned.body}</p>
+              </>
+            ) : (
+              <p className="dossier-ending-note">
+                Your story here has an ending, and you earned the one you got.
+              </p>
+            )}
           </>
         ) : (
           <>

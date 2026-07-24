@@ -166,6 +166,22 @@ export async function getPendingEnding(themeId) {
 }
 
 /**
+ * Looks up an ending by the id stored in the decision journal, so a
+ * finished file can be re-read rather than being a one-time event the
+ * player half-remembers.
+ * @param {string} endingId - "themeId:variantId"
+ * @returns {EndingDef | null}
+ */
+export function getEndingById(endingId) {
+  for (const set of Object.values(ENDING_SETS)) {
+    for (const variant of [set.high, set.low, set.balanced]) {
+      if (variant.id === endingId) return variant
+    }
+  }
+  return null
+}
+
+/**
  * Marks the ending as claimed — permanent, one per theme, journaled like
  * any other decision so it survives a rebuilt getPendingEnding check.
  * @param {string} themeId
