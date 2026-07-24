@@ -26,7 +26,7 @@ export async function exportBackup() {
     exportedAt: new Date().toISOString(),
     // Drop the auto-incremented id — importing re-inserts as new rows so it
     // never collides with whatever ids already exist in the target database.
-    words: words.map(({ id, ...rest }) => rest),
+    words: words.map(({ id: _id, ...rest }) => rest),
     progress,
     artifacts,
     affinity,
@@ -47,7 +47,7 @@ export async function importBackup(data) {
   }
 
   for (const word of data.words) {
-    const { id, ...rest } = word
+    const { id: _id, ...rest } = word
     await withStore(STORE_WORDS, 'readwrite', (store) => store.add(rest))
   }
 

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { _resetConnectionForTests } from '../db/connection.js'
-import { getProgress } from '../db/progressRepo.js'
+
 import { awardReviewXp, DAILY_QUEST_BONUS_XP, DAILY_QUEST_TARGET } from './xpService.js'
 import { QUALITY } from '../srs/fsrs.js'
 import { xpRequiredForLevel } from './xp.js'
@@ -23,7 +23,6 @@ describe('awardReviewXp', () => {
   it('reports leveledUp when crossing a level threshold', async () => {
     const threshold = xpRequiredForLevel(2)
     await awardReviewXp('russian', QUALITY.AGAIN, { now: new Date('2026-07-09') })
-    const progress = await getProgress('russian')
     // Manually push xp just under the threshold to isolate the crossing review
     const { saveProgress } = await import('../db/progressRepo.js')
     await saveProgress('russian', { xp: threshold - 5 })

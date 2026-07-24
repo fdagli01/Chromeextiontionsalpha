@@ -78,6 +78,9 @@ export function CrisisScreen({ crisis, onResolve }) {
     return () => {
       cancelled = true
     }
+    // Keyed on the word's identity, not the object: re-running on every
+    // `current` reference change would reshuffle the options mid-question.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id, theme.id])
 
   useEffect(() => {

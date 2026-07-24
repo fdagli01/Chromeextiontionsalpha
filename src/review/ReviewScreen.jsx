@@ -272,6 +272,11 @@ export function ReviewScreen({ deferScenes = false } = {}) {
         if (enabled) playPronunciationSting(theme.id)
       })
     }
+    // Deliberately keyed on the word's identity alone. Including `current`,
+    // `falseFriend`, `feedback` or `coldCaseSession` would re-run this
+    // mid-card and re-roll the encounter, reshuffle the options, and clear
+    // the feedback the player is still reading.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id, theme.id])
 
   // A pending scene stays in state while deferred, so it opens the moment
@@ -317,6 +322,10 @@ export function ReviewScreen({ deferScenes = false } = {}) {
     }
     const t = setTimeout(() => setInterceptTimeLeft((s) => s - 1), 1000)
     return () => clearTimeout(t)
+    // `pick` is redefined every render; depending on it would clear and
+    // restart the one-second timer continuously, so the countdown would
+    // never actually advance.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [npcIntercept, interceptTimeLeft, isAnswered, options])
 
   async function pick(index) {
