@@ -281,3 +281,49 @@
   line-height: 1.6;
   color: var(--color-text);
 }
+
+/* ── Distinctions ── the only thing that crosses eras: proof, carried into
+   a new archive, that this clerk finished somewhere else. Deliberately
+   decorative and never mechanical. */
+.dossier-distinction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.dossier-distinction {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #8a6a24;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(160deg, color-mix(in srgb, #d9b45b 14%, transparent), transparent);
+}
+
+.dossier-distinction-emblem {
+  font-size: 20px;
+  line-height: 1;
+  color: #d9b45b;
+}
+
+.dossier-distinction-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dossier-distinction-name {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--type-xs);
+  letter-spacing: 0.06em;
+  color: var(--color-text);
+}
+
+.dossier-distinction-ending {
+  font-size: var(--type-xs);
+  font-style: italic;
+  color: #d9b45b;
+}

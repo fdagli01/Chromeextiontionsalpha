@@ -2053,3 +2053,50 @@
   line-height: 1;
   cursor: default;
 }
+
+/* The nameplate is absolutely positioned, so the card has to make room for
+   it or it lands on top of the transliteration. */
+.review-wrap[data-rank-tier='2'] .term-card,
+.review-wrap[data-rank-tier='3'] .term-card {
+  padding-bottom: 34px;
+}
+
+/* ── Tier 3: the commissioned terminal ──
+   Not earned by levelling but by closing the era's file. Where tier 2 is
+   "pristine", this is "ceremonial": the desk of someone whose work here
+   is finished and on the record. Gilded rather than merely sharp, and
+   deliberately calm — nothing flickers, nothing escalates visually,
+   because there is nothing left to prove in this era. */
+.review-wrap[data-rank-tier='3'] .term-card {
+  filter: saturate(1.08) contrast(1.04);
+  border-color: #d9b45b;
+  box-shadow:
+    0 0 0 1px rgba(217, 180, 91, 0.5),
+    0 0 22px color-mix(in srgb, #d9b45b 22%, transparent),
+    var(--shadow-md);
+}
+
+.review-wrap[data-rank-tier='3'] .term-card::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(217, 180, 91, 0.35);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+
+.review-wrap[data-rank-tier='3'] .result-stamp {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4), inset 0 0 0 2px currentColor;
+  text-shadow: 0 0 10px color-mix(in srgb, #d9b45b 45%, transparent);
+}
+
+/* A closed file is settled: no session escalation repaints the desk. */
+.review-wrap[data-rank-tier='3'] .term-card,
+.review-wrap[data-rank-tier='3'][data-theme] .term-card {
+  animation: card-flip-in 0.35s ease-out;
+}
+
+.rank-plaque-laurel {
+  margin-right: 5px;
+  color: #5c4718;
+}

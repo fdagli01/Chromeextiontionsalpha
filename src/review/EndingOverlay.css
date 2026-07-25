@@ -74,3 +74,49 @@
   letter-spacing: 0.1em;
   cursor: pointer;
 }
+
+/* The invitation out. A finished era is the moment a player is most
+   likely to stop using the app altogether, so the next desk is named
+   here rather than left for them to find. */
+.ending-next-era {
+  margin: 16px 0 12px;
+  padding: 12px;
+  border: 1px dashed #d9b45b;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, #d9b45b 8%, transparent);
+  text-align: left;
+}
+
+.ending-next-label {
+  font-family: var(--font-heading);
+  font-size: var(--type-xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #d9b45b;
+}
+
+.ending-next-copy {
+  margin: 6px 0 10px;
+  font-size: var(--type-sm);
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.ending-next-emblem {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
+.ending-next-btn {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d9b45b;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(160deg, #d9b45b, #8a6a24);
+  color: #241a06;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: var(--type-xs);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}

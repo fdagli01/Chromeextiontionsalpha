@@ -27,7 +27,7 @@ export function DossierScreen() {
 
   if (!data) return <p className="empty-state">Retrieving file...</p>
 
-  const { rank, level, personas, journal, ending, mastery } = data
+  const { rank, level, personas, journal, ending, mastery, distinctions } = data
 
   return (
     <div className="dossier">
@@ -38,6 +38,23 @@ export function DossierScreen() {
           Level {level} · {theme.terminalName}
         </div>
       </div>
+
+      {distinctions.length > 0 && (
+        <div className="dossier-distinctions">
+          <div className="dossier-section-title">⬥ SERVICE ELSEWHERE</div>
+          <div className="dossier-distinction-list">
+            {distinctions.map((d) => (
+              <div key={d.themeId} className="dossier-distinction" title={`${d.themeName} — file closed`}>
+                <span className="dossier-distinction-emblem" aria-hidden="true">{d.emblem}</span>
+                <span className="dossier-distinction-info">
+                  <span className="dossier-distinction-name">{d.themeName}</span>
+                  <span className="dossier-distinction-ending">{d.endingTitle}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="dossier-mastery">
         <div className="dossier-section-title">⬥ ARCHIVE MASTERY</div>

@@ -270,7 +270,12 @@ function AppShell({ activeThemeId, onThemeChange }) {
   // (pause outgoing audio, persist, notify parent), just one click away.
   async function cycleTheme() {
     const ids = listThemes().map((t) => t.id)
-    const nextId = ids[(ids.indexOf(theme.id) + 1) % ids.length]
+    await switchToEra(ids[(ids.indexOf(theme.id) + 1) % ids.length])
+  }
+
+  /** The one place an era change happens: pause outgoing audio, persist, notify. */
+  async function switchToEra(nextId) {
+    if (!nextId || nextId === theme.id) return
     pauseThemeAudio(theme.id)
     await setSetting('activeThemeId', nextId)
     onThemeChange(nextId)
@@ -283,7 +288,7 @@ function AppShell({ activeThemeId, onThemeChange }) {
       label: 'INTERROGATE',
       // Story scenes are modal; they wait their turn behind the day's
       // opening rituals rather than stacking two overlays at once.
-      node: <ReviewScreen deferScenes={showOnboarding || !!dailyBriefing} />,
+      node: <ReviewScreen deferScenes={showOnboarding || !!dailyBriefing} onSwitchEra={switchToEra} />,
     },
     { id: 'archive', icon: '📁', label: 'ARCHIVE', node: <ArchiveScreen /> },
     { id: 'dossier', icon: '🗂', label: 'DOSSIER', node: <DossierScreen /> },

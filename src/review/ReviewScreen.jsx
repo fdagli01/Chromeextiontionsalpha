@@ -57,7 +57,7 @@ import { speakTerm } from '../audio/speak.js'
 import { playPronunciationSting } from '../audio/themeAudioControl.js'
 import { comboMeterFill, comboMultiplier, levelProgress, rankForLevel, streakTier } from '../xp/xp.js'
 import { resolveTensionVisuals, resolveThemeStage } from '../themes/index.js'
-import { terminalTierForLevel } from '../themes/terminalTier.js'
+import { terminalTierForProgress } from '../themes/terminalTier.js'
 import { findFactionsForTerm, rankForReputation } from '../factions/factions.js'
 import { findSecretForTerm } from '../secrets/secrets.js'
 import { SecretRevealOverlay } from '../secrets/SecretRevealOverlay.jsx'
@@ -95,7 +95,7 @@ function shuffle(arr) {
   return a
 }
 
-export function ReviewScreen({ deferScenes = false } = {}) {
+export function ReviewScreen({ deferScenes = false, onSwitchEra } = {}) {
   const theme = useThemeConfig()
   const [queue, setQueue] = useState(null)
   const [options, setOptions] = useState([])
@@ -309,7 +309,16 @@ export function ReviewScreen({ deferScenes = false } = {}) {
         />
       )}
       {visibleEnding && (
-        <EndingOverlay themeId={theme.id} ending={visibleEnding} onClose={narrative.dismissEnding} />
+        <EndingOverlay
+          themeId={theme.id}
+          ending={visibleEnding}
+          onClose={(nextEraId) => {
+            narrative.dismissEnding()
+            // Taking the invitation switches desks immediately; the
+            // distinction just earned is already waiting in the new era.
+            if (nextEraId) onSwitchEra?.(nextEraId)
+          }}
+        />
       )}
     </>
   )
@@ -937,7 +946,7 @@ export function ReviewScreen({ deferScenes = false } = {}) {
 
   const { level, xpIntoLevel, xpToNextLevel } = levelProgress(progress.xp)
   const rank = rankForLevel(theme.rankNames, level)
-  const rankTier = terminalTierForLevel(level)
+  const rankTier = terminalTierForProgress(progress)
   const barPct = xpToNextLevel > 0 ? Math.round((xpIntoLevel / xpToNextLevel) * 100) : 100
   const isCorrect = isAnswered && options[selected]?.isCorrect
   const today = new Date().toISOString().slice(0, 10)
@@ -1106,8 +1115,16 @@ export function ReviewScreen({ deferScenes = false } = {}) {
         }`}
         key={`${current.id}-${flickerKey}`}
       >
-        {rankTier === 2 && (
-          <div className="rank-plaque" title={`${rank} — terminal fully commissioned`}>
+        {rankTier >= 2 && (
+          <div
+            className="rank-plaque"
+            title={
+              rankTier === 3
+                ? `${rank} — this era's file is closed`
+                : `${rank} — terminal fully commissioned`
+            }
+          >
+            {rankTier === 3 && <span className="rank-plaque-laurel" aria-hidden="true">❦</span>}
             {rank}
           </div>
         )}

@@ -4,6 +4,7 @@ import { getAffinityRecordsForTheme } from '../db/affinityRepo.js'
 import { getWordsByTheme } from '../db/wordsRepo.js'
 import { masterySummary } from '../srs/mastery.js'
 import { getEndingById } from './endings.js'
+import { getDistinctionsForOtherThemes } from './distinctions.js'
 import { rankForLevel } from '../xp/xp.js'
 import { tierForTrust } from './affinity.js'
 import { getPersonaById } from './mentors.js'
@@ -37,14 +38,17 @@ import { MEMENTOS } from './mementos.js'
  *   rank: string, level: number, xp: number,
  *   personas: DossierPersona[],
  *   mastery: {gold: number, silver: number, bronze: number, total: number},
+ *   distinctions: import('./distinctions.js').Distinction[],
  *   journal: {id: string, choiceId: string, at: string, label: string}[],
  *   ending: {claimed: boolean, earned: object|null, needsRank: string|null, scenesRemaining: number} }>}
  */
 export async function getDossier(themeId) {
-  const [progress, records, words] = await Promise.all([
+  const [progress, records, words, distinctions] = await Promise.all([
     getProgress(themeId),
     getAffinityRecordsForTheme(themeId),
     getWordsByTheme(themeId),
+    // Earned in other eras — the only thing that crosses between them.
+    getDistinctionsForOtherThemes(themeId),
   ])
   const theme = getTheme(themeId)
   const scenes = STORY_SCENES[themeId] ?? []
@@ -112,6 +116,7 @@ export async function getDossier(themeId) {
 
   return {
     mastery: masterySummary(words),
+    distinctions,
     rank: theme ? rankForLevel(theme.rankNames, progress.level) : `Level ${progress.level}`,
     level: progress.level,
     xp: progress.xp,
