@@ -38,13 +38,13 @@ describe('STORY_SCENES', () => {
         expect(['warm', 'ally']).toContain(scene.tier)
         expect(scene.body.length).toBeGreaterThan(50)
         expect(scene.choices.length).toBeGreaterThanOrEqual(2)
-        expect(scene.choices.length).toBeLessThanOrEqual(3)
+        expect(scene.choices.length).toBeLessThanOrEqual(4)
         for (const choice of scene.choices) {
           expect(choice.label.length).toBeGreaterThan(0)
           expect(choice.response.length).toBeGreaterThan(20)
         }
-        // A third choice is always the word-gated one — the SRS-RPG fusion.
-        if (scene.choices.length === 3) {
+        // Any choice beyond the second pair is a word gate — the SRS-RPG fusion.
+        if (scene.choices.length > 2) {
           expect(scene.choices.some((c) => c.requiresTerm)).toBe(true)
         }
       }
@@ -177,10 +177,15 @@ describe('themes stay at parity with each other', () => {
       expect(ACTS[theme.id], theme.id).toHaveLength(3)
       expect(INTERCEPTS[theme.id], theme.id).toBeDefined()
       expect(Object.keys(MEMENTOS).filter((k) => k.startsWith(`${theme.id}:`)), theme.id).toHaveLength(4)
-      // At least two word-gated choices each, so no theme's story is
-      // meaningfully easier to finish without learning its vocabulary.
-      const gates = scenes.flatMap((s) => s.choices.filter((c) => c.requiresTerm))
-      expect(gates.length, `${theme.id} word gates`).toBeGreaterThanOrEqual(2)
+      // Every persona's FINAL scene is word-gated: the climax of a
+      // relationship is the moment the app asks you to actually know the
+      // language, and it is the same rule in all five eras.
+      for (const scene of scenes.filter((s) => s.tier === 'ally')) {
+        expect(
+          scene.choices.some((c) => c.requiresTerm),
+          `${scene.id} is an ally scene with no word gate`
+        ).toBe(true)
+      }
     }
   })
 })
