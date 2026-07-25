@@ -122,6 +122,61 @@ export const italianTheme = defineTheme({
       emblem: '🦅',
     },
   ],
+  // Session-local escalation: consecutive misses read as the Republic
+  // losing its grip, from the calm of the curia to a city under sack.
+  // Unlike `stages` (level-gated, permanent), this resets every session.
+  tensionLevels: [
+    {
+      name: 'Pax',
+      emblem: '🦅',
+      colors: {},
+    },
+    {
+      name: 'Tumultus',
+      emblem: '🦅',
+      colors: {
+        background: '#e4d0a4',
+        surface: '#efe0bd',
+        surfaceStrong: '#7a5a2a',
+        primary: '#9e3418',
+        accent: '#c2922a',
+        border: '#a17a3c',
+        textMuted: '#6b5330',
+      },
+    },
+    {
+      name: 'Bellum',
+      emblem: '⚔',
+      colors: {
+        background: '#4a3a28',
+        surface: '#5b4833',
+        surfaceStrong: '#241a10',
+        primary: '#a5361c',
+        accent: '#d2a63a',
+        text: '#f0e3c6',
+        textMuted: '#c0a483',
+        border: '#7a6041',
+        danger: '#d8452c',
+        success: '#8aa758',
+      },
+    },
+    {
+      name: 'Excidium',
+      emblem: '🔥',
+      colors: {
+        background: '#1d100a',
+        surface: '#2c1810',
+        surfaceStrong: '#120806',
+        primary: '#b8341a',
+        accent: '#e0a02c',
+        text: '#f6e2c0',
+        textMuted: '#c69a72',
+        border: '#5a3020',
+        danger: '#ff5030',
+        success: '#7f9a4e',
+      },
+    },
+  ],
   crises: [
     {
       id: 'it-barbarians',

@@ -163,3 +163,24 @@ describe('isTermKnown', () => {
     }
   })
 })
+
+describe('themes stay at parity with each other', () => {
+  it('gives every theme the same narrative surface area', async () => {
+    const { listThemes } = await import('../themes/index.js')
+    const { ACTS } = await import('./acts.js')
+    const { INTERCEPTS } = await import('./intercepts.js')
+    const { MEMENTOS } = await import('./mementos.js')
+
+    for (const theme of listThemes()) {
+      const scenes = STORY_SCENES[theme.id]
+      expect(scenes, theme.id).toHaveLength(8)
+      expect(ACTS[theme.id], theme.id).toHaveLength(3)
+      expect(INTERCEPTS[theme.id], theme.id).toBeDefined()
+      expect(Object.keys(MEMENTOS).filter((k) => k.startsWith(`${theme.id}:`)), theme.id).toHaveLength(4)
+      // At least two word-gated choices each, so no theme's story is
+      // meaningfully easier to finish without learning its vocabulary.
+      const gates = scenes.flatMap((s) => s.choices.filter((c) => c.requiresTerm))
+      expect(gates.length, `${theme.id} word gates`).toBeGreaterThanOrEqual(2)
+    }
+  })
+})

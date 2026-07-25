@@ -115,6 +115,60 @@ export const russianTheme = defineTheme({
       emblem: '🏳',
     },
   ],
+  // Session-local escalation: consecutive misses read as the archive coming
+  // under scrutiny — routine filing, then a flagged desk, then an active
+  // investigation, then the purge. Resets every session, unlike `stages`.
+  tensionLevels: [
+    {
+      name: 'Routine',
+      emblem: '☭',
+      colors: {},
+    },
+    {
+      name: 'Flagged',
+      emblem: '⚠',
+      colors: {
+        background: '#1b0a0a',
+        surface: '#2a1414',
+        surfaceStrong: '#100404',
+        primary: '#c21212',
+        accent: '#ffb300',
+        border: '#5e2626',
+        textMuted: '#c09070',
+      },
+    },
+    {
+      name: 'Under Review',
+      emblem: '⚠',
+      colors: {
+        background: '#230a08',
+        surface: '#341412',
+        surfaceStrong: '#150404',
+        primary: '#d41616',
+        accent: '#ff9d00',
+        text: '#ffeccc',
+        textMuted: '#cf9068',
+        border: '#6e2a22',
+        danger: '#ff5a3c',
+      },
+    },
+    {
+      name: 'Purge',
+      emblem: '🩸',
+      colors: {
+        background: '#2b0505',
+        surface: '#3d0a0a',
+        surfaceStrong: '#180202',
+        primary: '#e01010',
+        accent: '#ff7b00',
+        text: '#ffe0d0',
+        textMuted: '#d68a70',
+        border: '#7d1e1e',
+        danger: '#ff3c20',
+        success: '#8fbf5a',
+      },
+    },
+  ],
   crises: [
     {
       id: 'ru-defector',

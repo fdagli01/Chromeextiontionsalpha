@@ -216,6 +216,13 @@ export const STORY_SCENES = {
           effects: { trust: { personaId: 'zealot', delta: 3 }, xp: 25 },
         },
         {
+          id: 'glasnost',
+          label: 'Give the margins their real name: "This is гласность."',
+          requiresTerm: 'гласность',
+          response: '"Гласность." He tests the word against the page, then against the room. "Not dissent. Not treason. OPENNESS — a word the Party itself prints." Something in him settles that four hundred readings never could. "Then I am not writing against the doctrine. I am writing the part it left out." He finishes the book. Your name is in the dedication, spelled correctly.',
+          effects: { trust: { personaId: 'zealot', delta: 3 }, reputation: { factionId: 'reformers', delta: 15 }, xp: 40 },
+        },
+        {
           id: 'warn',
           label: 'Burn the margins. Keep the thoughts. Stay alive.',
           response: '"Spoken like the Handler." It is not entirely an insult. He burns nothing, but he buys a second, cleaner copy for meetings — your caution, his conviction, split across two bindings.',
@@ -304,6 +311,13 @@ export const STORY_SCENES = {
           label: 'Keep it. Corrections are a second Revolution.',
           response: '"A SECOND revolution — oh, that is good, I am stealing that for the preface." He inscribes it to you: "To the keeper of the true edition." It is the only page in the book with no corrections.',
           effects: { trust: { personaId: 'pamphletaire', delta: 3 }, reputation: { factionId: 'girondins', delta: 10 }, xp: 25 },
+        },
+        {
+          id: 'citoyen',
+          label: 'Sign it as what he is: not a journalist, a citoyen.',
+          requiresTerm: 'citoyen',
+          response: '"A CITOYEN." He stops mid-flourish, genuinely struck. "Not a journalist correcting his trade — a citizen correcting the record of his own Republic. That is not an apology, that is a DUTY." He reprints the title page: ERRATA, BY A CITIZEN. It is the only thing he ever published without a joke in it.',
+          effects: { trust: { personaId: 'pamphletaire', delta: 3 }, reputation: { factionId: 'girondins', delta: 15 }, xp: 40 },
         },
         {
           id: 'publish',

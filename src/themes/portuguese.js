@@ -120,6 +120,61 @@ export const portugueseTheme = defineTheme({
       emblem: '👑',
     },
   ],
+  // Session-local escalation: consecutive misses are weather. Calm harbour,
+  // rising swell, storm, then the rocks. Resets every session, unlike the
+  // level-gated `stages`.
+  tensionLevels: [
+    {
+      name: 'Bonança',
+      emblem: '⚓',
+      colors: {},
+    },
+    {
+      name: 'Marulho',
+      emblem: '⚓',
+      colors: {
+        background: '#dcc79a',
+        surface: '#e8d7ae',
+        surfaceStrong: '#4a3a22',
+        primary: '#1d5b52',
+        accent: '#b8862c',
+        border: '#a2854e',
+        textMuted: '#6a5636',
+      },
+    },
+    {
+      name: 'Tempestade',
+      emblem: '🌊',
+      colors: {
+        background: '#2e3a42',
+        surface: '#3c4a53',
+        surfaceStrong: '#182027',
+        primary: '#1f6f63',
+        accent: '#c9a23c',
+        text: '#e8eef2',
+        textMuted: '#a8b6c0',
+        border: '#4f606b',
+        danger: '#d4553a',
+        success: '#6fae86',
+      },
+    },
+    {
+      name: 'Naufrágio',
+      emblem: '🪝',
+      colors: {
+        background: '#0e1519',
+        surface: '#172027',
+        surfaceStrong: '#080c0f',
+        primary: '#14544c',
+        accent: '#d8b44a',
+        text: '#dfe8ee',
+        textMuted: '#8fa0ac',
+        border: '#2c3a44',
+        danger: '#e05a38',
+        success: '#5f9e78',
+      },
+    },
+  ],
   crises: [
     {
       id: 'pt-storm',
