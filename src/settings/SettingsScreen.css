@@ -194,3 +194,23 @@
   text-align: center;
   text-transform: uppercase;
 }
+
+/* Cloud backup sits inside the same Backup block as the file export, so it
+   needs its own heading spacing to read as a second option rather than a
+   continuation of the first. */
+.cloud-title {
+  margin-top: 14px;
+}
+
+.restore-confirm {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px dashed var(--color-danger);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+}
+
+.backup-button.danger {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}

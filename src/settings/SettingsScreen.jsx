@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getSetting, setSetting } from '../db/settingsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { exportBackup, importBackup } from '../db/backup.js'
+import { getAuthToken, restoreBackup, uploadBackup } from '../db/driveSync.js'
 import { refreshCuratedContent } from '../db/contentRefresh.js'
 import { seedSampleWords } from '../db/seedWords.js'
 import { listThemes } from '../themes/index.js'
@@ -16,6 +17,9 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
   const [soundscapeEnabled, setSoundscapeEnabled] = useState(null)
   const [earnedBadges, setEarnedBadges] = useState(null)
   const [backupMessage, setBackupMessage] = useState('')
+  const [driveConnected, setDriveConnected] = useState(false)
+  const [driveBusy, setDriveBusy] = useState('')
+  const [confirmRestore, setConfirmRestore] = useState(false)
   const [contentMessage, setContentMessage] = useState('')
   const [aiEngineEnabled, setAiEngineEnabled] = useState(null)
   const [aiEngineApiKey, setAiEngineApiKey] = useState('')
@@ -41,6 +45,17 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
       cancelled = true
     }
   }, [activeThemeId])
+
+  // Silent check: shows "Connect" vs "Back up now" without ever prompting.
+  useEffect(() => {
+    let cancelled = false
+    getAuthToken({ interactive: false }).then((token) => {
+      if (!cancelled) setDriveConnected(!!token)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   if (
     sfxEnabled === null ||
@@ -93,6 +108,35 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     link.click()
     URL.revokeObjectURL(url)
     setBackupMessage(`${backup.words.length} words saved to file.`)
+  }
+
+  async function handleDriveUpload() {
+    setDriveBusy('upload')
+    setBackupMessage('')
+    try {
+      const { words } = await uploadBackup()
+      setDriveConnected(true)
+      setBackupMessage(`${words} words backed up to your Google Drive.`)
+    } catch (error) {
+      setBackupMessage(error.message)
+    } finally {
+      setDriveBusy('')
+    }
+  }
+
+  async function handleDriveRestore() {
+    setDriveBusy('restore')
+    setConfirmRestore(false)
+    setBackupMessage('')
+    try {
+      const { wordsImported } = await restoreBackup()
+      setDriveConnected(true)
+      setBackupMessage(`${wordsImported} words restored. Close and reopen the popup to see them.`)
+    } catch (error) {
+      setBackupMessage(error.message)
+    } finally {
+      setDriveBusy('')
+    }
   }
 
   function triggerImport() {
@@ -291,6 +335,40 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
             style={{ display: 'none' }}
           />
         </div>
+        <span className="title cloud-title">Cloud backup</span>
+        <span className="hint">
+          Sends the archive to a private folder in your own Google Drive — hidden from your
+          files, readable only by this extension. Both directions are manual: nothing syncs
+          behind your back.
+        </span>
+        <div className="backup-buttons">
+          <button className="backup-button" onClick={handleDriveUpload} disabled={!!driveBusy}>
+            {driveBusy === 'upload' ? '…' : driveConnected ? '☁ Back up now' : '☁ Connect Drive'}
+          </button>
+          <button
+            className="backup-button"
+            onClick={() => setConfirmRestore(true)}
+            disabled={!!driveBusy || confirmRestore}
+          >
+            {driveBusy === 'restore' ? '…' : '⤓ Restore'}
+          </button>
+        </div>
+        {confirmRestore && (
+          <div className="restore-confirm">
+            <p className="hint">
+              Restoring adds the cloud archive to what is already on this device. Nothing is
+              deleted, but words may appear twice if they exist in both.
+            </p>
+            <div className="backup-buttons">
+              <button className="backup-button danger" onClick={handleDriveRestore}>
+                Yes, restore
+              </button>
+              <button className="backup-button" onClick={() => setConfirmRestore(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
         {backupMessage && <p className="hint">{backupMessage}</p>}
       </div>
 
