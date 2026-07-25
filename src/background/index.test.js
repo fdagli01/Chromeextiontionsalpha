@@ -31,6 +31,13 @@ global.chrome = {
   },
 }
 
+// Hoisted: index.js binds lookupWiktionary at import time, so spying on
+// the module namespace afterwards would never be seen by it.
+const { wiktionaryResult } = vi.hoisted(() => ({ wiktionaryResult: { current: null } }))
+vi.mock('../facts/wiktionary.js', () => ({
+  lookupWiktionary: vi.fn(() => Promise.resolve(wiktionaryResult.current)),
+}))
+
 const { captureWord, checkBounty, collectDueTerms, menuIdForTheme, updateDueBadge } = await import('./index.js')
 const { _resetConnectionForTests } = await import('../db/connection.js')
 const { getWordsByTheme, getDueWords } = await import('../db/wordsRepo.js')
@@ -47,6 +54,7 @@ beforeEach(() => {
   global.fetch = vi.fn(() =>
     Promise.resolve({ ok: true, json: () => Promise.resolve({ responseData: { translatedText: 'comrade' } }) })
   )
+  wiktionaryResult.current = null
 })
 
 describe('menuIdForTheme', () => {
@@ -140,5 +148,58 @@ describe('updateDueBadge', () => {
     global.chrome.action.setBadgeText = vi.fn(() => Promise.reject(new Error('no action API')))
     await expect(updateDueBadge()).resolves.not.toThrow()
     global.chrome.action.setBadgeText = saved
+  })
+})
+
+describe('automatic enrichment', () => {
+  const shopEntry = {
+    fact: 'noun · a small shop',
+    exampleSentence: 'Пример предложения.',
+    exampleTranslation: 'An example sentence.',
+    definition: 'a small shop',
+  }
+
+  /** No end user writes their own example sentences, so this must be automatic. */
+  it('fills fact and example from Wiktionary for a word nobody curated', async () => {
+    wiktionaryResult.current = shopEntry
+    await captureWord('лавка', 'russian', 'https://example.com')
+
+    await vi.waitFor(async () => {
+      const [word] = await getWordsByTheme('russian')
+      expect(word.fact).toBe(shopEntry.fact)
+      expect(word.exampleSentence).toBe(shopEntry.exampleSentence)
+      expect(word.exampleTranslation).toBe(shopEntry.exampleTranslation)
+    })
+  })
+
+  it('does not overwrite hand-curated trivia with a dictionary gloss', async () => {
+    wiktionaryResult.current = { ...shopEntry, fact: 'noun · comrade', definition: 'comrade' }
+    // товарищ is curated, so its hand-written note must survive.
+    await captureWord('товарищ', 'russian', 'https://example.com')
+
+    const [word] = await getWordsByTheme('russian')
+    expect(word.fact).not.toBe('noun · comrade')
+    expect(word.fact.length).toBeGreaterThan(20)
+  })
+
+  it('rescues a card whose translation lookup failed, using the definition', async () => {
+    global.fetch = vi.fn(() => Promise.reject(new Error('rate limited')))
+    wiktionaryResult.current = { ...shopEntry, exampleSentence: '', exampleTranslation: '' }
+
+    await captureWord('лавка', 'russian', 'https://example.com')
+    await vi.waitFor(async () => {
+      const [word] = await getWordsByTheme('russian')
+      // Without this the review card would ask "what does лавка mean?" and
+      // offer "(no translation)" as the correct answer.
+      expect(word.translation).toBe('a small shop')
+    })
+  })
+
+  it('still captures the word when every enrichment source fails', async () => {
+    global.fetch = vi.fn(() => Promise.reject(new Error('offline')))
+    wiktionaryResult.current = null
+
+    await expect(captureWord('лавка', 'russian', 'https://example.com')).resolves.not.toThrow()
+    expect(await getWordsByTheme('russian')).toHaveLength(1)
   })
 })

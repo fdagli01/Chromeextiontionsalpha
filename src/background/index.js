@@ -5,6 +5,7 @@ import { getTransliteration } from '../transliteration/index.js'
 import { generateChronicleEntry } from '../facts/aiEngine.js'
 import { generateEtymologyEntry } from '../facts/etymologyEngine.js'
 import { translateToEnglish } from './translate.js'
+import { lookupWiktionary } from '../facts/wiktionary.js'
 import { checkForCrisis, CRISIS_ALARM_NAME, scheduleCrisisChecks } from './crisisScheduler.js'
 import { checkStreakGuard, STREAK_GUARD_ALARM_NAME, scheduleStreakGuardChecks } from './streakGuardScheduler.js'
 import { getDailyBounty, recordBountyCapture } from '../progression/bounties.js'
@@ -136,11 +137,10 @@ chrome.contextMenus.onClicked.addListener((info) => {
  * and confirms with a themed notification right away. Translation failures
  * don't block the capture — the word is still saved so nothing is lost.
  *
- * AI enrichment (when the term has no curated fact/example/etymology, and
- * the AI Chronicle Engine is enabled with an API key) happens afterward, in
- * the background, via enrichWordWithAi — capture never waits on Gemini, so
- * a slow response or a 429 retry never leaves the user staring at a
- * "nothing happened" popup.
+ * Enrichment (Wiktionary first, then the opt-in AI engine) happens
+ * afterward, in the background, via enrichWord — capture never waits on
+ * the network, so a slow lookup or a 429 retry never leaves the user
+ * staring at a "nothing happened" popup.
  * @param {string} term
  * @param {string} themeId
  * @param {string} [pageUrl] - the page the selection was captured from, used
@@ -181,10 +181,14 @@ export async function captureWord(term, themeId, pageUrl) {
     message: translation ? `${word.term} — ${translation}` : word.term,
   })
 
-  // Etymology is always empty on a fresh capture, so this is always worth
-  // attempting when the AI engine is on — enrichWordWithAi no-ops quickly
-  // if it isn't.
-  enrichWordWithAi(word.id, themeId, term, { needsFact: !fact, needsExample: !example })
+  // Fire-and-forget enrichment. Capture never waits on the network: the
+  // word is already saved and reviewable, and anything these sources add
+  // is layered on afterwards.
+  enrichWord(word.id, themeId, term, theme.sourceLanguageCode, {
+    needsFact: !fact,
+    needsExample: !example,
+    needsTranslation: !translation,
+  })
 
   if (isNewWord) checkBounty(term, themeId, pageUrl)
   updateDueBadge() // a fresh capture is due immediately, so the count just changed
@@ -226,6 +230,43 @@ export async function checkBounty(term, themeId, pageUrl) {
  * Chronicle Engine, if enabled, without blocking capture. Silently no-ops
  * if the AI engine is off, unconfigured, or the request ultimately fails —
  * the word already exists with whatever curated content it had.
+ * @param {number} wordId
+ * @param {string} themeId
+ * @param {string} term
+ * @param {{needsFact: boolean, needsExample: boolean}} needs
+ */
+export async function enrichWord(wordId, themeId, term, languageCode, needs) {
+  // Tier 1: Wiktionary. Keyless, quota-free and always on, because the
+  // curated fact files only cover ~114 terms and no end user is ever
+  // going to write an example sentence themselves. This is what keeps the
+  // app's best feature alive for real, self-captured words.
+  const entry = await lookupWiktionary(term, languageCode)
+  if (entry) {
+    const patch = {}
+    if (needs.needsFact && entry.fact) patch.fact = entry.fact
+    if (needs.needsExample && entry.exampleSentence) {
+      patch.exampleSentence = entry.exampleSentence
+      patch.exampleTranslation = entry.exampleTranslation
+    }
+    // A definition is a meaning: this rescues a card whose translation
+    // lookup failed, which would otherwise ask "what does X mean?" with
+    // "(no translation)" as the correct answer.
+    if (needs.needsTranslation && entry.definition) patch.translation = entry.definition
+
+    if (Object.keys(patch).length > 0) {
+      await updateWord(wordId, patch)
+      if (patch.fact) needs.needsFact = false
+      if (patch.exampleSentence) needs.needsExample = false
+    }
+  }
+
+  await enrichWordWithAi(wordId, themeId, term, needs)
+}
+
+/**
+ * Tier 2: the AI Chronicle Engine. Opt-in and key-holding, so it only
+ * fills gaps Wiktionary could not — plus the etymology entry, which has
+ * no free structured source.
  * @param {number} wordId
  * @param {string} themeId
  * @param {string} term
