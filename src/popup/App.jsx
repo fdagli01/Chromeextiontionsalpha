@@ -3,6 +3,7 @@ import { ThemeProvider, useThemeConfig } from '../components/ThemeProvider.jsx'
 import { DEFAULT_THEME_ID, listThemes } from '../themes/index.js'
 import { getSetting, setSetting } from '../db/settingsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
+import { getWordsByTheme } from '../db/wordsRepo.js'
 import { onProgressChanged } from '../xp/progressEvents.js'
 import { isUnlocked, UNLOCK_LEVELS } from '../progression/unlocks.js'
 import { getWeeklySummary } from '../db/activityLog.js'
@@ -13,7 +14,7 @@ import { FactionsScreen } from '../factions/FactionsScreen.jsx'
 import { SettingsScreen } from '../settings/SettingsScreen.jsx'
 import { CrisisScreen } from '../crisis/CrisisScreen.jsx'
 import { WeeklyReportOverlay } from './WeeklyReportOverlay.jsx'
-import { OnboardingOverlay } from './OnboardingOverlay.jsx'
+import { EraPicker } from './EraPicker.jsx'
 import { DailyBriefingOverlay } from './DailyBriefingOverlay.jsx'
 import { BootSequence } from './BootSequence.jsx'
 import { computeDailyObjectives } from '../progression/briefing.js'
@@ -42,7 +43,10 @@ try {
   /* messaging unavailable (tests) */
 }
 const WEEKLY_REPORT_SHOWN_KEY = 'weeklyReportShownWeek'
-const ONBOARDING_SEEN_KEY = 'onboardingSeenV1'
+// v2: the old flag marked a four-step manual as read. The new first run
+// is an era choice that also seeds an archive, so old installs get it
+// once — but only if they have not already started playing (see App).
+const ONBOARDING_SEEN_KEY = 'onboardingSeenV2'
 const BRIEFING_SHOWN_KEY = 'dailyBriefingShownDate'
 
 /** Monday-of-the-current-week as a YYYY-MM-DD key, used to show the intel report once per week. */
@@ -132,11 +136,27 @@ function AppShell({ activeThemeId, onThemeChange }) {
   // re-showing the intro on every machine the user opens the extension on.
   useEffect(() => {
     chrome.storage.sync.get(ONBOARDING_SEEN_KEY).then(({ [ONBOARDING_SEEN_KEY]: seen }) => {
-      if (!seen) setShowOnboarding(true)
+      if (seen) return
+      // An existing player upgrading from the old manual-based onboarding
+      // already has an archive; sending them back to a "choose your era"
+      // screen would be nonsense. Only a genuinely empty install gets it.
+      getWordsByTheme(theme.id).then((words) => {
+        if (words.length === 0) setShowOnboarding(true)
+        else chrome.storage.sync.set({ [ONBOARDING_SEEN_KEY]: true })
+      })
     })
+    // Deliberately first-mount only: this is the first-run check, not a
+    // per-theme one.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function dismissOnboarding() {
+  /**
+   * Finishes the first run: the picked era becomes active (its words were
+   * seeded by the picker), so the review screen opens on a real card.
+   */
+  async function beginWithEra(eraId) {
+    await setSetting('activeThemeId', eraId)
+    onThemeChange(eraId)
     setShowOnboarding(false)
     chrome.storage.sync.set({ [ONBOARDING_SEEN_KEY]: true })
   }
@@ -367,7 +387,7 @@ function AppShell({ activeThemeId, onThemeChange }) {
           onDismiss={() => setWeeklyReport(null)}
         />
       )}
-      {showOnboarding && <OnboardingOverlay onDismiss={dismissOnboarding} />}
+      {showOnboarding && <EraPicker onBegin={beginWithEra} />}
       {!showOnboarding && dailyBriefing && (
         <DailyBriefingOverlay
           terminalName={theme.terminalName}

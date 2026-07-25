@@ -89,6 +89,9 @@ export async function awardReviewXp(themeId, quality, opts = {}) {
     dailyQuestClaimed: alreadyClaimed || questJustCompleted,
     dailyBestCombo,
     dailyXp,
+    // Never resets, unlike dailyReviewCount — the scripted opening needs to
+    // know how many reviews this player has EVER done in this era.
+    lifetimeReviews: (current.lifetimeReviews ?? 0) + 1,
   })
 
   emitProgressChanged(themeId, progress)

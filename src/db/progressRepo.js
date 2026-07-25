@@ -21,6 +21,7 @@ import { STORE_PROGRESS, withStore } from './connection.js'
  * @property {string[]} contrabandSold - lowercased terms already fenced on the Black Market (each sells once)
  * @property {Array<{id: string, choiceId: string, at: string}>} decisions - permanent journal of story choices (see progression/decisions.js)
  * @property {string[]} actsSeen - ids of act briefings already shown (see progression/acts.js)
+ * @property {number} lifetimeReviews - reviews ever graded in this theme; drives the scripted opening (see review/firstSession.js)
  */
 
 /**
@@ -48,6 +49,7 @@ function emptyProgress(themeId) {
     contrabandSold: [],
     decisions: [],
     actsSeen: [],
+    lifetimeReviews: 0,
   }
 }
 
@@ -73,6 +75,7 @@ export async function getProgress(themeId) {
     contrabandSold: [],
     decisions: [],
     actsSeen: [],
+    lifetimeReviews: 0,
     ...existing,
   }
 }

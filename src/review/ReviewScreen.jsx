@@ -27,6 +27,11 @@ import {
   getDailyContraband,
 } from '../progression/contraband.js'
 import { judgeDictation, rollRadioCrisis } from '../progression/radioIntercept.js'
+import {
+  allowsRandomEncounters,
+  forcesMentorLine,
+  orderFirstSessionQueue,
+} from './firstSession.js'
 import { pickDecisionCallout } from '../progression/storyScenes.js'
 import { recordDecision } from '../progression/decisions.js'
 import { masteryForWord } from '../srs/mastery.js'
@@ -167,7 +172,9 @@ export function ReviewScreen({ deferScenes = false } = {}) {
     Promise.all([getDueWords(theme.id), getProgress(theme.id), getColdCaseWords(theme.id)]).then(
       ([words, prog, coldCases]) => {
         if (cancelled) return
-        setQueue(words)
+        // A new player's opening is choreographed, not rolled — see
+        // firstSession.js for why.
+        setQueue(orderFirstSessionQueue(words, theme.id, prog.lifetimeReviews))
         setProgress(prog)
         setColdCaseWords(coldCases)
       }
@@ -219,12 +226,14 @@ export function ReviewScreen({ deferScenes = false } = {}) {
     feedback.reset()
     setSecretReveal(null)
     setDictationInput('')
-    const rolled = coldCaseSession ? null : rollIntercept(theme.id)
+    const scriptedOpening = !allowsRandomEncounters(progress?.lifetimeReviews ?? 0)
+    const rolled = coldCaseSession || scriptedOpening ? null : rollIntercept(theme.id)
     setNpcIntercept(rolled)
     setInterceptTimeLeft(rolled?.timerSec ?? null)
     // A radio crisis never stacks with an NPC intercept or a false-friend
     // trap — one special framing per card keeps each one legible.
-    const isRadioCrisis = !coldCaseSession && !rolled && !falseFriend && rollRadioCrisis()
+    const isRadioCrisis =
+      !coldCaseSession && !scriptedOpening && !rolled && !falseFriend && rollRadioCrisis()
     setRadioCrisis(isRadioCrisis)
     shownAtRef.current = performance.now()
     getRandomWords(theme.id, current.id, 2).then((distractors) => {
@@ -560,6 +569,8 @@ export function ReviewScreen({ deferScenes = false } = {}) {
     setShieldToast(streakShieldUsed)
     // Mentor voice: at most one line per answer, prioritizing the rarest,
     // most significant moment so it never reads as noisy chatter.
+    // On the scripted beat every new player meets the cast, whatever the
+    // answer — otherwise a flawless first session never introduces anyone.
     const mentorMoment = leveledUp
       ? 'levelUp'
       : streakTierUp
@@ -568,7 +579,9 @@ export function ReviewScreen({ deferScenes = false } = {}) {
           ? 'comboMilestone'
           : !correct
             ? 'miss'
-            : null
+            : forcesMentorLine(progressBeforeAward?.lifetimeReviews ?? 0)
+              ? 'comboMilestone'
+              : null
     if (sfxOn) {
       if (newBadges.length > 0) playBadgeUnlock()
       else if (dailyQuest.justCompleted) playQuestComplete()

@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { _resetConnectionForTests } from '../db/connection.js'
+import { getWordsByTheme } from '../db/wordsRepo.js'
+import { seedSampleWords } from '../db/seedWords.js'
 import App from './App.jsx'
 
 /**
@@ -42,28 +44,42 @@ beforeEach(() => {
   _resetConnectionForTests()
 })
 
-describe('onboarding overlay', () => {
-  it('shows on first launch and persists dismissal', async () => {
+describe('first run', () => {
+  it('opens on the era picker and seeds the chosen era, so the desk is never empty', async () => {
     const store = mockChromeStorage()
     const user = userEvent.setup()
     render(<App />)
 
-    expect(await screen.findByText('WELCOME — HOW THIS WORKS')).toBeInTheDocument()
+    expect(await screen.findByRole('dialog', { name: /choose your era/i })).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /GOT IT/ }))
+    const romanCard = screen.getByRole('button', { name: /Rise of Rome/i })
+    await user.click(romanCard)
 
-    expect(screen.queryByText('WELCOME — HOW THIS WORKS')).not.toBeInTheDocument()
-    expect(store.onboardingSeenV1).toBe(true)
+    // The picker closes, the choice is remembered, and — the whole point —
+    // the archive it seeded is not empty, so review opens on a real card.
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: /choose your era/i })).not.toBeInTheDocument())
+    expect(store.onboardingSeenV2).toBe(true)
+    expect((await getWordsByTheme('italian')).length).toBeGreaterThan(0)
   })
 
-  it('stays hidden once the user has already seen it', async () => {
-    mockChromeStorage({ onboardingSeenV1: true })
+  it('stays hidden once the player has begun', async () => {
+    mockChromeStorage({ onboardingSeenV2: true })
     render(<App />)
 
     // Let the popup finish its initial theme/progress loads before asserting
     // an absence — otherwise this would trivially pass before render settles.
     await waitFor(() => expect(screen.getByText('INTERROGATE')).toBeInTheDocument())
-    expect(screen.queryByText('WELCOME — HOW THIS WORKS')).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: /choose your era/i })).not.toBeInTheDocument()
+  })
+
+  it('does not send an existing player back to the picker after the upgrade', async () => {
+    // No v2 flag (they onboarded under v1), but they already have an archive.
+    mockChromeStorage()
+    await seedSampleWords('russian')
+    render(<App />)
+
+    await waitFor(() => expect(screen.getByText('INTERROGATE')).toBeInTheDocument())
+    expect(screen.queryByRole('dialog', { name: /choose your era/i })).not.toBeInTheDocument()
   })
 })
 

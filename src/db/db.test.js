@@ -94,6 +94,7 @@ describe('progressRepo', () => {
       contrabandSold: [],
       decisions: [],
       actsSeen: [],
+      lifetimeReviews: 0,
     })
   })
 
@@ -120,6 +121,7 @@ describe('progressRepo', () => {
       contrabandSold: [],
       decisions: [],
       actsSeen: [],
+      lifetimeReviews: 0,
     })
   })
 })
