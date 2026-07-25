@@ -1,3 +1,26 @@
+/* Shared design tokens: kept theme-neutral so every theme's --color-* palette
+   can vary freely while structure (radius, shadow weight, type scale) stays
+   consistent across the four historical themes. */
+:root {
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --type-xs: 11px;
+  --type-sm: 13px;
+  --type-md: 15px;
+  --type-lg: 20px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .theme-root {
   position: relative;
   min-height: 100%;
@@ -6,6 +29,10 @@
   font-family: var(--font-body);
   overflow: hidden;
   isolation: isolate;
+  /* Smooths a theme's stage-gated palette shift (e.g. Republic -> Empire)
+     into a fade rather than a hard cut; harmless elsewhere since these
+     properties otherwise only change on theme mount. */
+  transition: background-color 1.2s ease, color 1.2s ease;
 }
 
 /* Aged, stained dossier paper — layered stains + fine grain, not just a flat dark box */

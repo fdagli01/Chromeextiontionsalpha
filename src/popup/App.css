@@ -1,9 +1,59 @@
+body {
+  margin: 0;
+  /* Falls back to a near-black page background so a taller detached
+     window never shows blank white below the themed card before/after
+     it — the card's own background still comes from --color-background. */
+  background: #0a0a0a;
+}
+
+/* Popup mode (plain body, no class below) stays exactly as-is: Chrome
+   autosizes the action-popup window to its content, so nothing here should
+   force a height — doing so would fight that autosize and break the popup.
+   Detached-window mode (isDetachedWindow in App.jsx tags <body> with
+   .is-windowed) opens a real, explicitly-sized browser window instead, so
+   it's safe to make every layer in the chain an explicit 100% height —
+   .theme-root's own themed background then genuinely fills the window
+   instead of floating as a small card over the body's dark fallback. */
+body.is-windowed,
+body.is-windowed #root,
+body.is-windowed .theme-root {
+  height: 100%;
+}
+
+body.is-windowed {
+  height: 100vh;
+}
+
+/* Popup mode stays a fixed compact width (Chrome caps action-popup size
+   anyway). Detached-window mode (opened via the pin button) gets a real
+   browser window and should use the extra room instead of floating a
+   380px column in a sea of empty background — and should fill the
+   window's full height instead of leaving a blank strip below the nav. */
 .app {
+  position: relative;
   width: 380px;
   min-height: 560px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 0 2px var(--color-border), 8px 8px 0 rgba(0, 0, 0, 0.75);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 0 0 2px var(--color-border), var(--shadow-md);
+}
+
+body.is-windowed .app {
+  height: 100%;
+}
+
+@media (min-width: 480px) {
+  .app {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .app-content {
+    padding: 4px 24px;
+  }
 }
 
 /* ── Header ── */
@@ -12,18 +62,15 @@
   align-items: center;
   gap: 12px;
   padding: 11px 16px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-surface-strong) 60%, var(--color-background) 100%);
-  border-bottom: 3px solid var(--color-accent);
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.8);
+  background: var(--color-surface-strong);
+  border-bottom: 1px solid var(--color-accent);
+  box-shadow: var(--shadow-sm);
   flex-shrink: 0;
 }
 
 .app-header-emblem {
   font-size: 30px;
   color: var(--color-accent);
-  text-shadow:
-    0 0 12px rgba(255, 204, 0, 0.5),
-    0 0 30px rgba(255, 204, 0, 0.15);
   flex-shrink: 0;
   line-height: 1;
 }
@@ -32,15 +79,74 @@
   flex: 1;
 }
 
+.theme-flag-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  transition: transform 0.12s;
+}
+
+.theme-flag-btn:hover {
+  transform: scale(1.08);
+}
+
+.theme-flag-symbol {
+  font-size: 11px;
+  line-height: 1;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+.pin-window-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
+  padding: 5px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.pin-window-btn:hover {
+  border-color: var(--color-accent);
+}
+
+.crisis-alert-btn {
+  flex-shrink: 0;
+  background: var(--color-danger);
+  color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  animation: crisis-alert-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes crisis-alert-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
 .app-header h1 {
   font-family: var(--font-heading);
   font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
   margin: 0 0 2px;
   color: #fff;
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.7);
 }
 
 .header-ver {
@@ -73,7 +179,7 @@
 .app-tabs {
   display: flex;
   background: var(--color-surface-strong);
-  border-top: 2px solid var(--color-accent);
+  border-top: 1px solid var(--color-accent);
   flex-shrink: 0;
   z-index: 20;
 }
@@ -105,21 +211,32 @@
 
 .app-tabs button .tab-label {
   font-family: var(--font-heading);
-  font-size: 8px;
+  font-size: var(--type-xs);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   color: var(--color-text-muted);
   white-space: nowrap;
 }
 
 .app-tabs button.active {
   border-top-color: var(--color-accent);
-  background: rgba(255, 204, 0, 0.04);
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
 }
 
 .app-tabs button.active .tab-label {
   color: var(--color-accent);
+}
+
+/* Progressive-unlock: a locked tab stays visible (so the player knows a
+   system exists and at what level it opens up) but is dimmed and inert. */
+.app-tabs button.locked {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.app-tabs button.locked:hover {
+  background: none;
 }
 
 /* Radio buttons */
@@ -149,4 +266,22 @@
   margin-top: 40px;
   line-height: 1.6;
   padding: 0 6px;
+}
+
+.empty-state-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-state-icon {
+  font-size: 26px;
+  line-height: 1;
+  margin-top: 40px;
+  opacity: 0.5;
+}
+
+.empty-state-icon + .empty-state,
+.empty-state-wrap .empty-state-icon + .empty-state {
+  margin-top: 10px;
 }

@@ -19,27 +19,27 @@ describe('getFact', () => {
   })
 
   it('returns a curated fact for a known Italian term', () => {
-    expect(getFact('italian', 'legione')).toContain('lejyon')
+    expect(getFact('italian', 'legione')).toContain('legion')
   })
 
   it('is case-insensitive for Italian terms', () => {
-    expect(getFact('italian', '  Aquila  ')).toContain('kartal')
+    expect(getFact('italian', '  Aquila  ')).toContain('eagle')
   })
 
   it('returns a curated fact for a known Portuguese term', () => {
-    expect(getFact('portuguese', 'caravela')).toContain('karavela')
+    expect(getFact('portuguese', 'caravela')).toContain('caravel')
   })
 
   it('returns a curated fact for a known French term', () => {
-    expect(getFact('french', 'guillotine')).toContain('giyotin')
+    expect(getFact('french', 'guillotine')).toContain('Guillotin')
   })
 })
 
 describe('getExample', () => {
-  it('returns an example sentence with a Turkish translation for a known term', () => {
+  it('returns an example sentence with an English translation for a known term', () => {
     const example = getExample('russian', 'товарищ')
     expect(example.sentence).toContain('Товарищ')
-    expect(example.translation).toContain('Yoldaş')
+    expect(example.translation).toContain('Comrade')
   })
 
   it('returns null for an unknown term', () => {

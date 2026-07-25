@@ -1,0 +1,180 @@
+.crisis-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+/* Final five seconds: the whole card gets a pulsing danger-colored inset
+   glow, like an alarm strobe closing in. */
+.crisis-wrap.crisis-final-countdown::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 2px var(--color-danger);
+  animation: crisis-edge-pulse 1s ease-in-out infinite;
+}
+
+@keyframes crisis-edge-pulse {
+  0%, 100% { box-shadow: inset 0 0 8px 0 color-mix(in srgb, var(--color-danger) 20%, transparent); }
+  50% { box-shadow: inset 0 0 22px 4px color-mix(in srgb, var(--color-danger) 70%, transparent); }
+}
+
+.crisis-headline {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--color-danger);
+  letter-spacing: 0.02em;
+}
+
+.crisis-directive {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.crisis-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-surface-strong);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+}
+
+.crisis-timer {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-danger);
+  display: inline-block;
+  animation: crisis-tick 0.3s ease-out;
+}
+
+@keyframes crisis-tick {
+  0% { transform: scale(0.85); opacity: 0.4; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Last 5 seconds: the digits themselves breathe in/out once per second,
+   syncing the read of "time" to a felt pulse. */
+.crisis-timer.urgent {
+  animation: crisis-tick 0.3s ease-out, crisis-timer-breathe 1s ease-in-out infinite;
+}
+
+@keyframes crisis-timer-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+
+.crisis-score {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--color-accent);
+}
+
+.crisis-term-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: center;
+}
+
+.crisis-term-word {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.crisis-term-translit {
+  font-family: 'Courier New', monospace;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--color-accent);
+  margin-top: 4px;
+}
+
+.crisis-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.crisis-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.crisis-option-btn:hover {
+  border-color: var(--color-accent);
+}
+
+.crisis-resolved {
+  align-items: center;
+  text-align: center;
+  padding: 30px 10px;
+}
+
+.crisis-outcome {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.crisis-outcome.won {
+  color: var(--color-success);
+}
+
+.crisis-outcome.lost,
+.crisis-outcome.expired {
+  color: var(--color-danger);
+}
+
+.crisis-outcome-detail {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 8px;
+}
+
+.crisis-ally-note {
+  margin: 10px 12px 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
+  border-left: 2px solid var(--color-success);
+  border-radius: var(--radius-sm, 4px);
+  line-height: 1.4;
+}
+
+.crisis-dismiss-btn {
+  margin-top: 20px;
+  background: var(--color-primary);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 20px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}

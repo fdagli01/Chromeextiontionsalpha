@@ -2,23 +2,38 @@ import { useEffect, useRef, useState } from 'react'
 import { getSetting, setSetting } from '../db/settingsRepo.js'
 import { getProgress } from '../db/progressRepo.js'
 import { exportBackup, importBackup } from '../db/backup.js'
+import { getAuthToken, restoreBackup, uploadBackup } from '../db/driveSync.js'
 import { refreshCuratedContent } from '../db/contentRefresh.js'
+import { seedSampleWords } from '../db/seedWords.js'
 import { listThemes } from '../themes/index.js'
 import { pauseThemeAudio } from '../audio/themeAudioControl.js'
 import { BADGE_DEFS, resolveBadges } from '../badges/badges.js'
+import { VaultSection } from './VaultSection.jsx'
 import './SettingsScreen.css'
 
 export function SettingsScreen({ activeThemeId, onThemeChange }) {
   const [sfxEnabled, setSfxEnabled] = useState(null)
   const [autoSpeakEnabled, setAutoSpeakEnabled] = useState(null)
+  const [soundscapeEnabled, setSoundscapeEnabled] = useState(null)
   const [earnedBadges, setEarnedBadges] = useState(null)
   const [backupMessage, setBackupMessage] = useState('')
+  const [driveConnected, setDriveConnected] = useState(false)
+  const [driveBusy, setDriveBusy] = useState('')
+  const [confirmRestore, setConfirmRestore] = useState(false)
   const [contentMessage, setContentMessage] = useState('')
+  const [aiEngineEnabled, setAiEngineEnabled] = useState(null)
+  const [aiEngineApiKey, setAiEngineApiKey] = useState('')
+  const [seedMessage, setSeedMessage] = useState('')
+  const [domHighlightEnabled, setDomHighlightEnabled] = useState(null)
   const fileInputRef = useRef(null)
 
   useEffect(() => {
     getSetting('sfxEnabled', true).then(setSfxEnabled)
     getSetting('autoSpeakEnabled', true).then(setAutoSpeakEnabled)
+    getSetting('soundscapeEnabled', true).then(setSoundscapeEnabled)
+    getSetting('aiEngineEnabled', false).then(setAiEngineEnabled)
+    getSetting('aiEngineApiKey', '').then(setAiEngineApiKey)
+    getSetting('domHighlightEnabled', true).then(setDomHighlightEnabled)
   }, [])
 
   useEffect(() => {
@@ -31,14 +46,44 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     }
   }, [activeThemeId])
 
-  if (sfxEnabled === null || autoSpeakEnabled === null || earnedBadges === null) {
-    return <p className="empty-state">Yükleniyor...</p>
+  // Silent check: shows "Connect" vs "Back up now" without ever prompting.
+  useEffect(() => {
+    let cancelled = false
+    getAuthToken({ interactive: false }).then((token) => {
+      if (!cancelled) setDriveConnected(!!token)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  if (
+    sfxEnabled === null ||
+    autoSpeakEnabled === null ||
+    soundscapeEnabled === null ||
+    earnedBadges === null ||
+    aiEngineEnabled === null ||
+    domHighlightEnabled === null
+  ) {
+    return <p className="empty-state">Loading...</p>
+  }
+
+  async function toggleSoundscape() {
+    const next = !soundscapeEnabled
+    setSoundscapeEnabled(next)
+    await setSetting('soundscapeEnabled', next)
   }
 
   async function toggleSfx() {
     const next = !sfxEnabled
     setSfxEnabled(next)
     await setSetting('sfxEnabled', next)
+  }
+
+  async function toggleDomHighlight() {
+    const next = !domHighlightEnabled
+    setDomHighlightEnabled(next)
+    await setSetting('domHighlightEnabled', next)
   }
 
   async function toggleAutoSpeak() {
@@ -59,10 +104,39 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `polyglot-chronicle-yedek-${new Date().toISOString().slice(0, 10)}.json`
+    link.download = `polyglot-chronicle-backup-${new Date().toISOString().slice(0, 10)}.json`
     link.click()
     URL.revokeObjectURL(url)
-    setBackupMessage(`${backup.words.length} kelime dosyaya kaydedildi.`)
+    setBackupMessage(`${backup.words.length} words saved to file.`)
+  }
+
+  async function handleDriveUpload() {
+    setDriveBusy('upload')
+    setBackupMessage('')
+    try {
+      const { words } = await uploadBackup()
+      setDriveConnected(true)
+      setBackupMessage(`${words} words backed up to your Google Drive.`)
+    } catch (error) {
+      setBackupMessage(error.message)
+    } finally {
+      setDriveBusy('')
+    }
+  }
+
+  async function handleDriveRestore() {
+    setDriveBusy('restore')
+    setConfirmRestore(false)
+    setBackupMessage('')
+    try {
+      const { wordsImported } = await restoreBackup()
+      setDriveConnected(true)
+      setBackupMessage(`${wordsImported} words restored. Close and reopen the popup to see them.`)
+    } catch (error) {
+      setBackupMessage(error.message)
+    } finally {
+      setDriveBusy('')
+    }
   }
 
   function triggerImport() {
@@ -78,20 +152,42 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
       const data = JSON.parse(await file.text())
       const { wordsImported } = await importBackup(data)
       setBackupMessage(
-        `${wordsImported} kelime içe aktarıldı. Görünmesi için popup'ı kapatıp tekrar aç.`
+        `${wordsImported} words imported. Close and reopen the popup to see them.`
       )
     } catch {
-      setBackupMessage('İçe aktarma başarısız: dosya geçersiz veya bozuk.')
+      setBackupMessage('Import failed: file is invalid or corrupted.')
     }
   }
 
+  async function toggleAiEngine() {
+    const next = !aiEngineEnabled
+    setAiEngineEnabled(next)
+    await setSetting('aiEngineEnabled', next)
+  }
+
+  async function handleApiKeyBlur(e) {
+    const key = e.target.value.trim()
+    setAiEngineApiKey(key)
+    await setSetting('aiEngineApiKey', key)
+  }
+
   async function handleRefreshContent() {
-    setContentMessage('Yenileniyor...')
+    setContentMessage('Refreshing...')
     const { total, updated } = await refreshCuratedContent()
     setContentMessage(
       updated > 0
-        ? `${updated}/${total} kelimeye eksik örnek cümle/felsefe notu/tarihi bilgi eklendi.`
-        : `${total} kelime kontrol edildi, eklenecek yeni içerik yoktu.`
+        ? `Added missing example sentences/philosophy notes/historical facts to ${updated}/${total} words.`
+        : `Checked ${total} words — no new content to add.`
+    )
+  }
+
+  async function handleSeedSampleWords() {
+    setSeedMessage('Loading...')
+    const { total, added } = await seedSampleWords(activeThemeId)
+    setSeedMessage(
+      added > 0
+        ? `Added ${added}/${total} sample words. Close and reopen the popup to see them.`
+        : `All ${total} sample words are already in your archive.`
     )
   }
 
@@ -99,28 +195,48 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
     <div className="settings-list">
       <div className="settings-row">
         <div className="settings-row-label">
-          <span className="title">Ses Efektleri</span>
-          <span className="hint">Doğru/yanlış cevap sesleri (damga/statik)</span>
+          <span className="title">Sound Effects</span>
+          <span className="hint">Correct/wrong answer sounds (stamp/static)</span>
         </div>
         <button className={`toggle-button ${sfxEnabled ? 'on' : ''}`} onClick={toggleSfx}>
-          {sfxEnabled ? 'Açık' : 'Kapalı'}
+          {sfxEnabled ? 'On' : 'Off'}
         </button>
       </div>
 
       <div className="settings-row">
         <div className="settings-row-label">
-          <span className="title">Otomatik Telaffuz</span>
-          <span className="hint">Kelime ekrana gelince otomatik seslendirilsin</span>
+          <span className="title">Auto Pronunciation</span>
+          <span className="hint">Automatically speak the word when it appears</span>
         </div>
         <button className={`toggle-button ${autoSpeakEnabled ? 'on' : ''}`} onClick={toggleAutoSpeak}>
-          {autoSpeakEnabled ? 'Açık' : 'Kapalı'}
+          {autoSpeakEnabled ? 'On' : 'Off'}
         </button>
       </div>
 
       <div className="settings-row">
         <div className="settings-row-label">
-          <span className="title">Tema</span>
-          <span className="hint">Öğrendiğin dil/dönem</span>
+          <span className="title">Audio Immersion</span>
+          <span className="hint">Play a brief era soundscape under each pronunciation</span>
+        </div>
+        <button className={`toggle-button ${soundscapeEnabled ? 'on' : ''}`} onClick={toggleSoundscape}>
+          {soundscapeEnabled ? 'On' : 'Off'}
+        </button>
+      </div>
+
+      <div className="settings-row">
+        <div className="settings-row-label">
+          <span className="title">Page Highlighting</span>
+          <span className="hint">Underline your due words on the web pages you read</span>
+        </div>
+        <button className={`toggle-button ${domHighlightEnabled ? 'on' : ''}`} onClick={toggleDomHighlight}>
+          {domHighlightEnabled ? 'On' : 'Off'}
+        </button>
+      </div>
+
+      <div className="settings-row">
+        <div className="settings-row-label">
+          <span className="title">Theme</span>
+          <span className="hint">The language/era you're learning</span>
         </div>
         <select value={activeThemeId} onChange={(e) => changeTheme(e.target.value)}>
           {listThemes().map((theme) => (
@@ -132,9 +248,9 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
       </div>
 
       <div className="settings-badges">
-        <span className="title">Rozetler ({earnedBadges.length}/{BADGE_DEFS.length})</span>
+        <span className="title">Badges ({earnedBadges.length}/{BADGE_DEFS.length})</span>
         {earnedBadges.length === 0 ? (
-          <p className="hint">Henüz rozet kazanmadın — tekrar yaparak kazan.</p>
+          <p className="hint">No badges earned yet — keep reviewing to unlock them.</p>
         ) : (
           <div className="badges-grid">
             {earnedBadges.map((b) => (
@@ -146,31 +262,70 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
         )}
       </div>
 
+      <VaultSection themeId={activeThemeId} />
+
       <div className="settings-backup">
-        <span className="title">İçerikleri Yenile</span>
+        <span className="title">Sample Words</span>
         <span className="hint">
-          Daha önce eklediğin kelimelere, sonradan eklenen örnek cümle/felsefe notu gibi
-          eksik içerikleri doldurur.
+          Loads 10 curated words for the current theme so you can try reviewing without
+          right-clicking words on the web first.
+        </span>
+        <div className="backup-buttons">
+          <button className="backup-button" onClick={handleSeedSampleWords}>
+            🌱 Load Sample Words
+          </button>
+        </div>
+        {seedMessage && <p className="hint">{seedMessage}</p>}
+      </div>
+
+      <div className="settings-backup">
+        <span className="title">AI Chronicle Engine</span>
+        <span className="hint">
+          Generates a historical sentence, translation, and insight for words missing
+          from the static archive, using your own Google Gemini API key.
+        </span>
+        <div className="ai-engine-toggle-row">
+          <span className="hint">Enabled</span>
+          <button className={`toggle-button ${aiEngineEnabled ? 'on' : ''}`} onClick={toggleAiEngine}>
+            {aiEngineEnabled ? 'On' : 'Off'}
+          </button>
+        </div>
+        {aiEngineEnabled && (
+          <input
+            className="ai-api-key-input"
+            type="password"
+            placeholder="Gemini API Key (AIza...)"
+            defaultValue={aiEngineApiKey}
+            onBlur={handleApiKeyBlur}
+          />
+        )}
+      </div>
+
+      <div className="settings-backup">
+        <span className="title">Refresh Content</span>
+        <span className="hint">
+          Fills in missing content — like example sentences or philosophy notes added
+          later — for words you already captured.
         </span>
         <div className="backup-buttons">
           <button className="backup-button" onClick={handleRefreshContent}>
-            ✨ İçerikleri Yenile
+            ✨ Refresh Content
           </button>
         </div>
         {contentMessage && <p className="hint">{contentMessage}</p>}
       </div>
 
       <div className="settings-backup">
-        <span className="title">Yedekleme</span>
+        <span className="title">Backup</span>
         <span className="hint">
-          Kelimelerin uzantı klasörünün taşınması/yeniden yüklenmesiyle kaybolmasın diye dosyaya kaydet.
+          Save to a file so your words aren't lost if the extension's folder moves or reloads.
         </span>
         <div className="backup-buttons">
           <button className="backup-button" onClick={handleExport}>
-            ⬇ Dışa Aktar
+            ⬇ Export
           </button>
           <button className="backup-button" onClick={triggerImport}>
-            ⬆ İçe Aktar
+            ⬆ Import
           </button>
           <input
             ref={fileInputRef}
@@ -180,11 +335,45 @@ export function SettingsScreen({ activeThemeId, onThemeChange }) {
             style={{ display: 'none' }}
           />
         </div>
+        <span className="title cloud-title">Cloud backup</span>
+        <span className="hint">
+          Sends the archive to a private folder in your own Google Drive — hidden from your
+          files, readable only by this extension. Both directions are manual: nothing syncs
+          behind your back.
+        </span>
+        <div className="backup-buttons">
+          <button className="backup-button" onClick={handleDriveUpload} disabled={!!driveBusy}>
+            {driveBusy === 'upload' ? '…' : driveConnected ? '☁ Back up now' : '☁ Connect Drive'}
+          </button>
+          <button
+            className="backup-button"
+            onClick={() => setConfirmRestore(true)}
+            disabled={!!driveBusy || confirmRestore}
+          >
+            {driveBusy === 'restore' ? '…' : '⤓ Restore'}
+          </button>
+        </div>
+        {confirmRestore && (
+          <div className="restore-confirm">
+            <p className="hint">
+              Restoring adds the cloud archive to what is already on this device. Nothing is
+              deleted, but words may appear twice if they exist in both.
+            </p>
+            <div className="backup-buttons">
+              <button className="backup-button danger" onClick={handleDriveRestore}>
+                Yes, restore
+              </button>
+              <button className="backup-button" onClick={() => setConfirmRestore(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
         {backupMessage && <p className="hint">{backupMessage}</p>}
       </div>
 
-      <p className="settings-hint-block">Atmosfer sesini açmak/kapatmak ve kanal değiştirmek için üstteki 📻 çubuğunu kullan.</p>
-      <p className="settings-version">Sürüm {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '?'}</p>
+      <p className="settings-hint-block">Use the 📻 bar above to toggle ambient sound and switch channels.</p>
+      <p className="settings-version">Version {typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '?'}</p>
     </div>
   )
 }

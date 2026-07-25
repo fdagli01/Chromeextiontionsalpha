@@ -1,28 +1,35 @@
 import { STORE_WORDS, withStore } from './connection.js'
 import { getAllWords } from './wordsRepo.js'
 import { getProgress, saveProgress } from './progressRepo.js'
+import { getAllArtifactRecords, restoreArtifactRecords } from './artifactsRepo.js'
+import { getAllAffinityRecords, restoreAffinityRecords } from './affinityRepo.js'
 import { listThemes } from '../themes/index.js'
 
-const BACKUP_VERSION = 1
+const BACKUP_VERSION = 3
 
 /**
- * Serializes every word and every theme's progress into a single portable
- * JSON object — a safety net independent of the browser's storage (which
- * resets if the unpacked extension's folder path ever changes, since Chrome
- * derives the extension ID, and therefore the IndexedDB partition, from it).
- * @returns {Promise<{version: number, exportedAt: string, words: object[], progress: object[]}>}
+ * Serializes every word, every theme's progress, and every Vault artifact
+ * fragment into a single portable JSON object — a safety net independent of
+ * the browser's storage (which resets if the unpacked extension's folder
+ * path ever changes, since Chrome derives the extension ID, and therefore
+ * the IndexedDB partition, from it).
+ * @returns {Promise<{version: number, exportedAt: string, words: object[], progress: object[], artifacts: object[]}>}
  */
 export async function exportBackup() {
   const words = await getAllWords()
   const progress = await Promise.all(listThemes().map((theme) => getProgress(theme.id)))
+  const artifacts = await getAllArtifactRecords()
+  const affinity = await getAllAffinityRecords()
 
   return {
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     // Drop the auto-incremented id — importing re-inserts as new rows so it
     // never collides with whatever ids already exist in the target database.
-    words: words.map(({ id, ...rest }) => rest),
+    words: words.map(({ id: _id, ...rest }) => rest),
     progress,
+    artifacts,
+    affinity,
   }
 }
 
@@ -36,11 +43,11 @@ export async function exportBackup() {
  */
 export async function importBackup(data) {
   if (!data || typeof data !== 'object' || !Array.isArray(data.words)) {
-    throw new Error('Geçersiz yedek dosyası: kelime listesi bulunamadı.')
+    throw new Error('Invalid backup file: no word list found.')
   }
 
   for (const word of data.words) {
-    const { id, ...rest } = word
+    const { id: _id, ...rest } = word
     await withStore(STORE_WORDS, 'readwrite', (store) => store.add(rest))
   }
 
@@ -49,6 +56,14 @@ export async function importBackup(data) {
     if (!progress?.themeId) continue
     await saveProgress(progress.themeId, progress)
   }
+
+  // Older backups (version 1/2) predate the Vault/Affinity systems — absent
+  // on those, and simply skipped rather than treated as an error.
+  const artifactsList = Array.isArray(data.artifacts) ? data.artifacts : []
+  await restoreArtifactRecords(artifactsList)
+
+  const affinityList = Array.isArray(data.affinity) ? data.affinity : []
+  await restoreAffinityRecords(affinityList)
 
   return { wordsImported: data.words.length, progressImported: progressList.length }
 }

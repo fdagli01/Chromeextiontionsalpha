@@ -1,5 +1,5 @@
 import { STORE_WORDS, withStore } from './connection.js'
-import { gradeReview } from '../sm2/sm2.js'
+import { bootstrapFromSm2, gradeReview, QUALITY } from '../srs/fsrs.js'
 
 /**
  * @typedef {Object} WordEntry
@@ -12,17 +12,26 @@ import { gradeReview } from '../sm2/sm2.js'
  * @property {string} [exampleSentence] - a sentence using the term, in the source language
  * @property {string} [exampleTranslation] - Turkish translation of exampleSentence
  * @property {string} [philosophyNote] - one-line philosophical cross-reference, for conceptually loaded terms
+ * @property {EtymologyEntry} [etymology] - AI-generated etymological/historical-linguistics breakdown
  * @property {string} createdAt - ISO timestamp
- * @property {number} repetition - SM-2: number of consecutive correct reviews
- * @property {number} interval - SM-2: days until next review
- * @property {number} easeFactor - SM-2: ease factor, starts at 2.5
+ * @property {number} [difficulty] - FSRS: 1 (easiest) - 10 (hardest), unset until first reviewed
+ * @property {number} [stability] - FSRS: days until recall probability decays to 90%, unset until first reviewed
+ * @property {number} interval - days until next review
  * @property {string} dueDate - ISO timestamp of next scheduled review
  * @property {string|null} lastReviewedAt - ISO timestamp of last review, or null
  * @property {boolean} struggling - true after a missed recall, cleared on the next correct one
  */
 
 /**
- * @param {{themeId: string, term: string, translation: string, fact?: string, transliteration?: string, exampleSentence?: string, exampleTranslation?: string, philosophyNote?: string}} input
+ * @typedef {Object} EtymologyEntry
+ * @property {string} origin
+ * @property {string} rootLanguage
+ * @property {string} evolution
+ * @property {string} thematicTie
+ */
+
+/**
+ * @param {{themeId: string, term: string, translation: string, fact?: string, transliteration?: string, exampleSentence?: string, exampleTranslation?: string, philosophyNote?: string, etymology?: EtymologyEntry}} input
  * @returns {Promise<WordEntry>}
  */
 export async function addWord({
@@ -34,6 +43,7 @@ export async function addWord({
   exampleSentence = '',
   exampleTranslation = '',
   philosophyNote = '',
+  etymology = undefined,
 }) {
   const now = new Date().toISOString()
   /** @type {WordEntry} */
@@ -46,10 +56,9 @@ export async function addWord({
     exampleSentence,
     exampleTranslation,
     philosophyNote,
+    ...(etymology ? { etymology } : {}),
     createdAt: now,
-    repetition: 0,
     interval: 0,
-    easeFactor: 2.5,
     dueDate: now,
     lastReviewedAt: null,
     struggling: false,
@@ -118,6 +127,29 @@ export function getAllWords() {
   return withStore(STORE_WORDS, 'readonly', (store) => store.getAll())
 }
 
+/** Days since a word's last review (or creation, if never reviewed) before it counts as a "cold case". */
+const COLD_CASE_THRESHOLD_DAYS = 21
+
+/**
+ * Surfaces due words that have gone unreviewed the longest — words on the
+ * edge of being forgotten entirely — for a special "cold case" mini-session
+ * distinct from the routine due queue. Only draws from words already due,
+ * so this never invents extra review pressure; it just re-frames the most
+ * neglected slice of it.
+ * @param {string} themeId
+ * @param {Date} [asOf]
+ * @param {number} [limit]
+ * @returns {Promise<WordEntry[]>}
+ */
+export async function getColdCaseWords(themeId, asOf = new Date(), limit = 5) {
+  const due = await getDueWords(themeId, asOf)
+  const cutoff = new Date(asOf.getTime() - COLD_CASE_THRESHOLD_DAYS * 24 * 60 * 60 * 1000).toISOString()
+  return due
+    .filter((w) => (w.lastReviewedAt ?? w.createdAt) <= cutoff)
+    .sort((a, b) => (a.lastReviewedAt ?? a.createdAt).localeCompare(b.lastReviewedAt ?? b.createdAt))
+    .slice(0, limit)
+}
+
 /**
  * Returns up to `count` random words from a theme, excluding one word.
  * Used to build multiple-choice distractors.
@@ -137,29 +169,52 @@ export async function getRandomWords(themeId, excludeId, count) {
 }
 
 /**
- * Grades a review for a word using SM-2 and persists the resulting
- * scheduling state. A failed recall (quality < 3) makes the word
- * immediately due again, prioritizing it in the current session, and marks
- * it `struggling` until the next correct recall clears the flag.
+ * Returns up to `limit` shuffled words for a theme regardless of dueDate —
+ * for an on-demand practice session the user starts themselves rather than
+ * one driven by the SRS schedule.
+ * @param {string} themeId
+ * @param {number} [limit]
+ * @returns {Promise<WordEntry[]>}
+ */
+export async function getFreePracticeWords(themeId, limit = 15) {
+  const all = await getWordsByTheme(themeId)
+  const pool = [...all]
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[pool[i], pool[j]] = [pool[j], pool[i]]
+  }
+  return pool.slice(0, limit)
+}
+
+/**
+ * Grades a review for a word using FSRS and persists the resulting
+ * scheduling state. A failed recall (AGAIN) makes the word immediately due
+ * again, prioritizing it in the current session, and marks it `struggling`
+ * until the next correct recall clears the flag. Words still carrying only
+ * the old SM-2 fields (from before this app switched schedulers) have their
+ * progress bootstrapped into an equivalent starting difficulty/stability
+ * instead of being reset to a brand-new word.
  * @param {number} id
- * @param {number} quality - 0-5, see sm2.QUALITY for named presets
+ * @param {number} quality - 1-4, see srs/fsrs.js QUALITY for named presets
  * @returns {Promise<WordEntry>}
  */
 export async function reviewWord(id, quality) {
   const word = await getWord(id)
   if (!word) throw new Error(`Word ${id} not found`)
 
-  const { repetition, interval, easeFactor, dueDate, lastReviewedAt } = gradeReview(
-    { repetition: word.repetition, interval: word.interval, easeFactor: word.easeFactor },
-    quality
-  )
+  const srsState =
+    word.stability == null && word.difficulty == null
+      ? bootstrapFromSm2(word)
+      : { difficulty: word.difficulty, stability: word.stability, lastReviewedAt: word.lastReviewedAt }
+
+  const { difficulty, stability, interval, dueDate, lastReviewedAt } = gradeReview(srsState, quality)
 
   return updateWord(id, {
-    repetition,
+    difficulty,
+    stability,
     interval,
-    easeFactor,
     dueDate,
     lastReviewedAt,
-    struggling: quality < 3,
+    struggling: quality === QUALITY.AGAIN,
   })
 }

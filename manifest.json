@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Polyglot Chronicle",
-  "description": "Dil, tarih ve felsefeyi birleştiren tema tabanlı bir kelime öğrenme eklentisi",
-  "version": "0.2.1",
+  "description": "A theme-based vocabulary learning extension that blends language, history, and philosophy",
+  "version": "0.27.0",
   "action": {
     "default_popup": "src/popup/index.html",
     "default_title": "Polyglot Chronicle"
@@ -11,11 +11,41 @@
     "service_worker": "src/background/index.js",
     "type": "module"
   },
-  "permissions": ["contextMenus", "storage", "activeTab", "notifications"],
-  "host_permissions": ["https://api.mymemory.translated.net/*"],
+  "content_scripts": [
+    {
+      "js": [
+        "src/content/highlight.js"
+      ],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "activeTab",
+    "notifications",
+    "alarms",
+    "identity"
+  ],
+  "host_permissions": [
+    "https://api.mymemory.translated.net/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://en.wiktionary.org/*",
+    "https://www.googleapis.com/*"
+  ],
   "icons": {
     "16": "src/assets/images/icon16.png",
     "48": "src/assets/images/icon48.png",
     "128": "src/assets/images/icon128.png"
+  },
+  "oauth2": {
+    "client_id": "REPLACE_WITH_YOUR_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.appdata"
+    ]
   }
 }

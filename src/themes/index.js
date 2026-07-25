@@ -2,6 +2,7 @@ import { russianTheme } from './russian.js'
 import { italianTheme } from './italian.js'
 import { portugueseTheme } from './portuguese.js'
 import { frenchTheme } from './french.js'
+import { spanishTheme } from './spanish.js'
 
 export { resolveThemeStage, resolveThemeVisuals, resolveTensionVisuals } from './base.js'
 
@@ -11,6 +12,7 @@ export const THEMES = {
   [italianTheme.id]: italianTheme,
   [portugueseTheme.id]: portugueseTheme,
   [frenchTheme.id]: frenchTheme,
+  [spanishTheme.id]: spanishTheme,
 }
 
 export const DEFAULT_THEME_ID = russianTheme.id

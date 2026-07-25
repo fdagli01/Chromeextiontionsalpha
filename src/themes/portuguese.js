@@ -1,16 +1,19 @@
 import { defineTheme } from './base.js'
 
 /**
- * "Casa da Índia" — a static, deliberately calm theme (no level-gated
- * stages, unlike Italian). Where Russian is paranoid and Italian is
- * militant, Portuguese is the quiet third register: a candlelit map room
- * logging a ship's route, not an interrogation or a campaign.
+ * "Casa da Índia" — traces the arc of the Portuguese maritime empire as the
+ * player's rank rises: Escola de Sagres (candlelit map room, planning the
+ * first voyages) → Rota do Cabo at level 4 (open-ocean teal, the Cape route
+ * found) → Império das Especiarias at level 8 (the spice trade's richer
+ * gold and cinnabar) → Século de Ouro at level 14 (the empire's opulent
+ * peak). Unlike French's session-local tension dial, this is level-gated
+ * like Italian's — a permanent, one-way evolution of the archive itself.
  */
 export const portugueseTheme = defineTheme({
   id: 'portuguese',
-  name: 'Portekizce',
+  name: 'Portuguese',
   sourceLanguageCode: 'pt',
-  era: 'Keşifler Çağı / Casa da Índia',
+  era: 'Age of Discovery / Casa da Índia',
   fontHeading: '"IM Fell English SC", Georgia, serif',
   fontBody: '"EB Garamond", Georgia, serif',
   colors: {
@@ -33,14 +36,15 @@ export const portugueseTheme = defineTheme({
   terminalVersion: 'Anno MDVI',
   tagline: 'Arquivo Real de Rotas & Palavras — Lisboa',
   stampSuccessWord: 'REGISTADO',
-  stampSuccessFlavor: 'Seyir defterine işlendi, rota açık.',
+  stampSuccessFlavor: 'Logged in the ship\'s journal, course is clear.',
   stampFailWord: 'DESVIO',
-  stampFailFlavor: 'Pusula yeniden ayarlandı, rota düzeltildi.',
+  stampFailFlavor: 'Compass recalibrated, course corrected.',
   strugglingLabel: 'À DERIVA',
   eyebrowLabel: '⚓ AVISTADO',
   nextButtonLabel: 'PRÓXIMO RUMO →',
   intelLabel: '⚓ DIÁRIO DE BORDO',
   archiveStampLabel: 'ARQUIVO REAL',
+  contextMenuTitle: 'Portuguese — Log to the ship\'s journal: "%s"',
   effects: {
     paperTexture: true,
     vignette: true,
@@ -59,5 +63,134 @@ export const portugueseTheme = defineTheme({
     'Piloto',
     'Capitão-mor',
     'Almirante',
+  ],
+  stages: [
+    {
+      id: 'sagres',
+      name: 'Escola de Sagres',
+      minLevel: 1,
+      colors: {},
+      emblem: '❂',
+    },
+    {
+      id: 'rota-do-cabo',
+      name: 'Rota do Cabo',
+      minLevel: 4,
+      colors: {
+        background: '#0a2233',
+        surface: '#123449',
+        surfaceStrong: '#061520',
+        primary: '#2f8f7c',
+        accent: '#d8c27a',
+        border: '#2c5a63',
+        success: '#3fae8a',
+      },
+      emblem: '⚓',
+    },
+    {
+      id: 'imperio-especiarias',
+      name: 'Império das Especiarias',
+      minLevel: 8,
+      colors: {
+        background: '#1c1408',
+        surface: '#2c1f0e',
+        surfaceStrong: '#120c04',
+        primary: '#b5451f',
+        accent: '#e8b23d',
+        text: '#f2e2c3',
+        textMuted: '#b89a6a',
+        border: '#5a3c1a',
+      },
+      emblem: '🌶',
+    },
+    {
+      id: 'seculo-de-ouro',
+      name: 'Século de Ouro',
+      minLevel: 14,
+      colors: {
+        background: '#160f04',
+        surface: '#241a08',
+        surfaceStrong: '#0d0902',
+        primary: '#c9922f',
+        accent: '#f2d27a',
+        text: '#f7ecd0',
+        border: '#6b4e1e',
+        success: '#c9a227',
+      },
+      emblem: '👑',
+    },
+  ],
+  // Session-local escalation: consecutive misses are weather. Calm harbour,
+  // rising swell, storm, then the rocks. Resets every session, unlike the
+  // level-gated `stages`.
+  tensionLevels: [
+    {
+      name: 'Bonança',
+      emblem: '⚓',
+      colors: {},
+    },
+    {
+      name: 'Marulho',
+      emblem: '⚓',
+      colors: {
+        background: '#dcc79a',
+        surface: '#e8d7ae',
+        surfaceStrong: '#4a3a22',
+        primary: '#1d5b52',
+        accent: '#b8862c',
+        border: '#a2854e',
+        textMuted: '#6a5636',
+      },
+    },
+    {
+      name: 'Tempestade',
+      emblem: '🌊',
+      colors: {
+        background: '#2e3a42',
+        surface: '#3c4a53',
+        surfaceStrong: '#182027',
+        primary: '#1f6f63',
+        accent: '#c9a23c',
+        text: '#e8eef2',
+        textMuted: '#a8b6c0',
+        border: '#4f606b',
+        danger: '#d4553a',
+        success: '#6fae86',
+      },
+    },
+    {
+      name: 'Naufrágio',
+      emblem: '🪝',
+      colors: {
+        background: '#0e1519',
+        surface: '#172027',
+        surfaceStrong: '#080c0f',
+        primary: '#14544c',
+        accent: '#d8b44a',
+        text: '#dfe8ee',
+        textMuted: '#8fa0ac',
+        border: '#2c3a44',
+        danger: '#e05a38',
+        success: '#5f9e78',
+      },
+    },
+  ],
+  crises: [
+    {
+      id: 'pt-storm',
+      headline: 'A storm bears down on the fleet!',
+      directive: 'Log 5 terms in 60 seconds before the squall hits.',
+      wordCount: 5,
+      timeLimitSec: 60,
+      rewardXp: 40,
+    },
+    {
+      id: 'pt-sighting',
+      headline: 'Sail sighted on the horizon!',
+      directive: 'Confirm 3 terms in 30 seconds — friend or corsair?',
+      wordCount: 3,
+      timeLimitSec: 30,
+      rewardXp: 25,
+    },
   ],
 })

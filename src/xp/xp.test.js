@@ -1,14 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import {
+  comboMeterFill,
+  comboMultiplier,
   computeStreak,
   levelForXp,
   levelProgress,
   rankForLevel,
+  resolveStreakWithInsurance,
   streakTier,
   xpForQuality,
   xpRequiredForLevel,
 } from './xp.js'
-import { QUALITY } from '../sm2/sm2.js'
+import { QUALITY } from '../srs/fsrs.js'
 
 describe('xpForQuality', () => {
   it('awards no XP for a failed recall', () => {
@@ -61,7 +64,7 @@ describe('rankForLevel', () => {
   })
 
   it('falls back to a generic label when no ranks are defined', () => {
-    expect(rankForLevel([], 4)).toBe('Seviye 4')
+    expect(rankForLevel([], 4)).toBe('Level 4')
   })
 })
 
@@ -93,5 +96,75 @@ describe('streakTier', () => {
     expect(streakTier(13)).toBe(2)
     expect(streakTier(14)).toBe(3)
     expect(streakTier(100)).toBe(3)
+  })
+})
+
+describe('resolveStreakWithInsurance', () => {
+  it('is a no-op on the same day and never spends a shield', () => {
+    expect(resolveStreakWithInsurance('2026-07-09', '2026-07-09', 5, 2)).toEqual({
+      streak: 5,
+      shields: 2,
+      shieldUsed: false,
+    })
+  })
+
+  it('increments on consecutive days without spending a shield', () => {
+    expect(resolveStreakWithInsurance('2026-07-08', '2026-07-09', 5, 2)).toEqual({
+      streak: 6,
+      shields: 2,
+      shieldUsed: false,
+    })
+  })
+
+  it('spends a shield to hold the streak across a single missed day', () => {
+    expect(resolveStreakWithInsurance('2026-07-07', '2026-07-09', 5, 2)).toEqual({
+      streak: 5,
+      shields: 1,
+      shieldUsed: true,
+    })
+  })
+
+  it('resets when a day is missed but no shield is held', () => {
+    expect(resolveStreakWithInsurance('2026-07-07', '2026-07-09', 5, 0)).toEqual({
+      streak: 1,
+      shields: 0,
+      shieldUsed: false,
+    })
+  })
+
+  it('cannot insure a gap longer than one day', () => {
+    expect(resolveStreakWithInsurance('2026-07-05', '2026-07-09', 5, 2)).toEqual({
+      streak: 1,
+      shields: 2,
+      shieldUsed: false,
+    })
+  })
+})
+
+describe('comboMultiplier', () => {
+  it('stays at 1x below the first threshold', () => {
+    expect(comboMultiplier(0)).toBe(1)
+    expect(comboMultiplier(2)).toBe(1)
+  })
+
+  it('steps up through combo tiers', () => {
+    expect(comboMultiplier(3)).toBe(1.5)
+    expect(comboMultiplier(5)).toBe(2)
+    expect(comboMultiplier(8)).toBe(2.5)
+    expect(comboMultiplier(12)).toBe(3)
+    expect(comboMultiplier(50)).toBe(3)
+  })
+})
+
+describe('comboMeterFill', () => {
+  it('fills from 0 toward the next tier', () => {
+    expect(comboMeterFill(0)).toBe(0)
+    expect(comboMeterFill(3)).toBeCloseTo(0)
+    expect(comboMeterFill(4)).toBeCloseTo(0.5)
+  })
+
+  it('reads as full at the top tier', () => {
+    expect(comboMeterFill(12)).toBe(1)
+    expect(comboMeterFill(99)).toBe(1)
   })
 })

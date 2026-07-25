@@ -1,4 +1,4 @@
-import { QUALITY } from '../sm2/sm2.js'
+import { QUALITY } from '../srs/fsrs.js'
 
 /**
  * XP awarded per review outcome. A failed recall (AGAIN) earns no XP —
@@ -74,7 +74,7 @@ export function levelProgress(xp) {
  * @returns {string} the rank name for this level, clamped to the last known rank
  */
 export function rankForLevel(rankNames, level) {
-  if (!rankNames || rankNames.length === 0) return `Seviye ${level}`
+  if (!rankNames || rankNames.length === 0) return `Level ${level}`
   const index = Math.min(level - 1, rankNames.length - 1)
   return rankNames[index]
 }
@@ -102,6 +102,40 @@ export function computeStreak(lastActiveDate, today, previousStreak) {
 }
 
 /**
+ * Resolves a streak update with "streak insurance": if the player skipped
+ * exactly one day (last active the day before yesterday) and holds at least
+ * one shield, a shield is spent to keep the streak alive at its current
+ * length instead of resetting to 1. Larger gaps can't be insured — a shield
+ * forgives a single missed day, not a lapse. Same-day and consecutive-day
+ * cases behave exactly like computeStreak and never spend a shield.
+ * @param {string|null} lastActiveDate
+ * @param {string} today - YYYY-MM-DD
+ * @param {number} previousStreak
+ * @param {number} shields - streak-insurance tokens available
+ * @returns {{streak: number, shields: number, shieldUsed: boolean}}
+ */
+export function resolveStreakWithInsurance(lastActiveDate, today, previousStreak, shields) {
+  if (lastActiveDate === today) {
+    return { streak: previousStreak, shields, shieldUsed: false }
+  }
+
+  if (lastActiveDate) {
+    const dayMs = 24 * 60 * 60 * 1000
+    const gapDays = Math.round((new Date(today) - new Date(lastActiveDate)) / dayMs)
+    if (gapDays === 1) {
+      return { streak: previousStreak + 1, shields, shieldUsed: false }
+    }
+    if (gapDays === 2 && shields > 0 && previousStreak > 0) {
+      // One missed day, and a shield to cover it: hold the streak where it
+      // was (the skipped day earns no increment) and consume the shield.
+      return { streak: previousStreak, shields: shields - 1, shieldUsed: true }
+    }
+  }
+
+  return { streak: 1, shields, shieldUsed: false }
+}
+
+/**
  * Maps a streak count to a visual growth tier (0-3), used to scale the
  * flame indicator so a long streak actually feels bigger, not just numeric.
  * @param {number} streak
@@ -112,4 +146,39 @@ export function streakTier(streak) {
   if (streak >= 7) return 2
   if (streak >= 3) return 1
   return 0
+}
+
+/**
+ * Momentum multiplier tiers for a consecutive-correct combo. Answering
+ * several in a row builds "momentum" that boosts XP, giving the review loop
+ * a risk/reward rhythm — a wrong answer resets the combo (and the bonus) to
+ * zero. Tiers are stepwise (not continuous) so the payoff is legible: the
+ * player can feel each new multiplier land.
+ * @param {number} combo - consecutive-correct count (0 = no combo yet)
+ * @returns {number} XP multiplier (1 when there's no meaningful combo)
+ */
+export function comboMultiplier(combo) {
+  if (combo >= 12) return 3
+  if (combo >= 8) return 2.5
+  if (combo >= 5) return 2
+  if (combo >= 3) return 1.5
+  return 1
+}
+
+/**
+ * Fraction (0-1) of the way from the current combo multiplier tier to the
+ * next, for a filling "momentum meter". Returns 1 at the top tier so the bar
+ * reads as maxed out rather than empty.
+ * @param {number} combo
+ * @returns {number}
+ */
+export function comboMeterFill(combo) {
+  const thresholds = [3, 5, 8, 12]
+  if (combo >= thresholds[thresholds.length - 1]) return 1
+  let lower = 0
+  for (const t of thresholds) {
+    if (combo < t) return (combo - lower) / (t - lower)
+    lower = t
+  }
+  return 1
 }

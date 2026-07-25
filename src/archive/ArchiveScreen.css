@@ -5,14 +5,57 @@
   padding-top: 2px;
 }
 
+.archive-secrets {
+  background: var(--color-surface-strong);
+  border: 1px solid var(--color-accent);
+  padding: 9px 12px;
+  margin-bottom: 2px;
+}
+
+.archive-secrets-head {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.archive-secrets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.archive-secret-item {
+  border-left: 3px solid var(--color-accent);
+  padding: 4px 8px;
+}
+
+.archive-secret-title {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 3px;
+}
+
+.archive-secret-anecdote {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
 /* Dossier card */
 .archive-item {
   position: relative;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-left: 5px solid var(--color-primary);
+  border-radius: var(--radius-md);
   padding: 11px 13px 10px;
-  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Theme-specific dossier stamp (e.g. "TOP SECRET" for Russian) */
@@ -66,9 +109,29 @@
   color: var(--color-text-muted);
 }
 
+/* Redaction: a missed recall censors this word's meaning in the archive
+   until it's answered correctly again — mirrors the review card's redact
+   sweep, but persistent rather than a one-off animation. */
+.archive-redacted-bar {
+  display: inline-block;
+  width: 70px;
+  height: 11px;
+  background: repeating-linear-gradient(90deg, #000 0px, #000 4px, #1a1a1a 4px, #1a1a1a 6px);
+  border-radius: 1px;
+}
+
+.archive-redacted-notice {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--color-danger);
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
 .archive-struggling {
   font-family: var(--font-heading);
-  font-size: 9px;
+  font-size: var(--type-xs);
   font-weight: 700;
   letter-spacing: 0.12em;
   padding: 1px 6px;
@@ -88,8 +151,8 @@
 .archive-fact {
   font-size: 12px;
   font-family: var(--font-body);
-  color: var(--color-success);
-  background: rgba(0, 0, 0, 0.4);
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text) 10%, var(--color-surface));
   border-left: 3px solid var(--color-accent);
   padding: 5px 8px;
   margin-top: 6px;
@@ -113,24 +176,49 @@
 
 .archive-example-translation {
   font-family: var(--font-body);
-  font-size: 10px;
+  font-size: var(--type-xs);
   color: var(--color-text-muted);
 }
 
 .archive-philosophy {
   font-family: var(--font-body);
   font-style: italic;
-  font-size: 10px;
+  font-size: var(--type-xs);
   color: var(--color-accent);
   line-height: 1.5;
   margin-top: 6px;
   padding: 0 8px;
 }
 
+.archive-etymology {
+  font-family: var(--font-body);
+  font-size: var(--type-xs);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  margin-top: 6px;
+  padding: 5px 8px;
+  border-left: 3px solid var(--color-border);
+}
+
+.archive-etymology-head {
+  font-family: var(--font-heading);
+  font-size: var(--type-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 3px;
+}
+
+.archive-etymology-tie {
+  font-style: italic;
+  margin-top: 3px;
+}
+
 .archive-meta {
   display: flex;
   gap: 12px;
-  font-size: 9px;
+  font-size: var(--type-xs);
   color: var(--color-text-muted);
   margin-top: 7px;
   text-transform: uppercase;

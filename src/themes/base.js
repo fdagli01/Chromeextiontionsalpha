@@ -1,10 +1,5 @@
 /**
  * @typedef {Object} ThemeAudio
- * @property {string} [radioTrack] - Path to the looping ambient/radio theme audio
- * @property {string} [stampSound] - Played when a word is filed/archived
- * @property {string} [correctSound] - Played on a correct review answer
- * @property {string} [incorrectSound] - Played on an incorrect review answer
- * @property {string} [startupSound] - Played once when the theme is first activated
  * @property {string} [sfxVariant] - which procedural SFX set audio/sfx.js should use, e.g. "nautical"
  */
 
@@ -35,7 +30,7 @@
 /**
  * @typedef {Object} ThemeStage
  * @property {string} id - unique slug within the theme, e.g. "republic"
- * @property {string} name - display name, e.g. "Cumhuriyet"
+ * @property {string} name - display name, e.g. "Republic"
  * @property {number} minLevel - lowest player level at which this stage applies
  * @property {Partial<ThemeColors>} [colors] - overrides merged onto the theme's base colors
  * @property {string} [emblem] - overrides the theme's base watermark glyph
@@ -50,11 +45,21 @@
  */
 
 /**
+ * @typedef {Object} CrisisTemplate
+ * @property {string} id - unique slug within the theme, e.g. "ru-defector"
+ * @property {string} headline - in-world alarm text, e.g. "A defector is fleeing west!"
+ * @property {string} directive - the challenge instructions, e.g. "Verify 5 files in 60 seconds"
+ * @property {number} wordCount - how many words must be correctly recalled to win
+ * @property {number} timeLimitSec - time budget once the player begins
+ * @property {number} rewardXp - XP awarded on a win
+ */
+
+/**
  * @typedef {Object} ThemeConfig
  * @property {string} id - unique slug, e.g. "russian"
- * @property {string} name - display name, e.g. "Rusça"
+ * @property {string} name - display name, e.g. "Russian"
  * @property {string} sourceLanguageCode - BCP-47 code of the language being learned, e.g. "ru"
- * @property {string} era - historical/thematic framing, e.g. "Soğuk Savaş / KGB Arşivi"
+ * @property {string} era - historical/thematic framing, e.g. "Cold War / K.G.B. Archive"
  * @property {string} fontHeading
  * @property {string} fontBody
  * @property {ThemeColors} colors
@@ -66,9 +71,9 @@
  * @property {string} [terminalVersion] - small version tag next to the header title
  * @property {string} [tagline] - header subtitle line; "{level}" is replaced with the player's level
  * @property {string} [stampSuccessWord] - short (<=12 char) foreign-language stamp word for a correct answer
- * @property {string} [stampSuccessFlavor] - one-line Turkish flavor text shown under the success stamp
+ * @property {string} [stampSuccessFlavor] - one-line flavor text shown under the success stamp
  * @property {string} [stampFailWord] - short (<=12 char) foreign-language stamp word for a missed answer
- * @property {string} [stampFailFlavor] - one-line Turkish flavor text shown under the fail stamp
+ * @property {string} [stampFailFlavor] - one-line flavor text shown under the fail stamp
  * @property {string} [strugglingLabel] - tag shown on words currently missed/re-drilled, e.g. "DESERTOR"
  * @property {string} [eyebrowLabel] - small label above the term on the review card, e.g. "★ ЦЕЛЬ"
  * @property {string} [nextButtonLabel] - label for the "next word" button
@@ -78,6 +83,10 @@
  * @property {ThemeTensionLevel[]} [tensionLevels] - ephemeral, session-local visual escalation
  *   indexed by tier (0 = calmest); unlike `stages`, this is driven by in-session performance
  *   (e.g. consecutive misses), not player level, and is applied only within the review screen
+ * @property {string} [contextMenuTitle] - the right-click menu label for this theme, "%s" is
+ *   replaced by Chrome with the selected text, e.g. 'Decrypt intercept: "%s"'
+ * @property {CrisisTemplate[]} [crises] - timed in-world emergency drills, triggered
+ *   opportunistically by the background scheduler instead of a generic "words due" reminder
  */
 
 /** @type {ThemeColors} */
@@ -128,8 +137,10 @@ export function defineTheme(partial) {
     nextButtonLabel: 'NEXT →',
     intelLabel: 'INTEL',
     archiveStampLabel: 'FILED',
+    contextMenuTitle: 'Add to Polyglot Chronicle: "%s"',
     stages: [],
     tensionLevels: [],
+    crises: [],
     ...partial,
     colors: { ...DEFAULT_COLORS, ...partial.colors },
     effects: { ...DEFAULT_EFFECTS, ...partial.effects },

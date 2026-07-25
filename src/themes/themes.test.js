@@ -69,16 +69,42 @@ describe('theme registry', () => {
     expect(italian.stages.map((s) => s.minLevel)).toEqual([1, 4, 8, 14])
   })
 
-  it('keeps the Portuguese theme static (no stages, no tension levels)', () => {
-    const portuguese = getTheme('portuguese')
-    expect(portuguese.stages).toEqual([])
-    expect(portuguese.tensionLevels).toEqual([])
+  // Both escalation systems are now universal: a directive that suppresses
+  // or doubles tension must do something in every theme, not just the two
+  // that happened to define tension levels first.
+  it('gives every theme four tension tiers and four level-gated stages', () => {
+    for (const theme of listThemes()) {
+      expect(theme.tensionLevels, theme.id).toHaveLength(4)
+      expect(theme.stages, theme.id).toHaveLength(4)
+      expect(theme.stages.map((s) => s.minLevel), theme.id).toEqual([1, 4, 8, 14])
+    }
   })
 
-  it('gives the French theme four tension tiers and no level-gated stages', () => {
+  it('escalates each theme away from its calm baseline as tension rises', () => {
+    for (const theme of listThemes()) {
+      // Tier 0 is the theme's own palette; every higher tier must differ.
+      const calm = resolveTensionVisuals(theme, 0)
+      expect(calm.colors.background, theme.id).toBe(theme.colors.background)
+      for (const tier of [1, 2, 3]) {
+        const escalated = resolveTensionVisuals(theme, tier)
+        expect(escalated.colors.background, `${theme.id} tier ${tier}`).not.toBe(calm.colors.background)
+      }
+    }
+  })
+
+  it('evolves the French palette through the Revolution as the level rises', () => {
     const french = getTheme('french')
-    expect(french.tensionLevels).toHaveLength(4)
-    expect(french.stages).toEqual([])
+    // Ancien Régime: the royal base palette, untouched.
+    expect(resolveThemeVisuals(french, 1).colors.primary).toBe(french.colors.primary)
+    expect(resolveThemeVisuals(french, 1).stageName).toBe('Ancien Régime')
+    // La République: tricolor blue with a red accent.
+    expect(resolveThemeVisuals(french, 5).colors.primary).toBe('#1f4f9e')
+    expect(resolveThemeVisuals(french, 5).stageName).toBe('La République')
+    // L'Empire: Napoleonic green and gold, bee emblem.
+    const empire = resolveThemeVisuals(french, 20)
+    expect(empire.colors.primary).toBe('#2f5d3a')
+    expect(empire.emblem).toBe('🐝')
+    expect(empire.stageName).toBe("L'Empire")
   })
 })
 

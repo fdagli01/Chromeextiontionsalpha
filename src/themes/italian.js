@@ -7,39 +7,48 @@ import { defineTheme } from './base.js'
  * Russian theme. Captured vocabulary is modern Italian; the curated trivia
  * ties each word back to its Roman-history root, mirroring how the Russian
  * theme pairs modern words with Cold War facts.
+ *
+ * Palette: a sunlit fresco/marble villa rather than a dim night camp —
+ * warm travertine background, Pompeian-red chrome, bronze borders, laurel
+ * green for success. The stages still darken toward "Late Period" at
+ * level 14+ as a deliberate narrative turn (decline), not the baseline.
  */
 export const italianTheme = defineTheme({
   id: 'italian',
-  name: 'İtalyanca',
+  name: 'Italian',
   sourceLanguageCode: 'it',
-  era: "Roma İmparatorluğu'nun Yükselişi — Lejyon Seferi",
+  era: 'The Rise of Rome — Legion Campaign',
   fontHeading: '"Cinzel", "Georgia", serif',
   fontBody: '"Alegreya Sans SC", "Georgia", serif',
   colors: {
-    background: '#151210',
-    surface: '#241d16',
-    surfaceStrong: '#0f0b08',
-    primary: '#8a1c1c',
-    accent: '#8a6a3a',
-    text: '#e8dcc8',
-    textMuted: '#a68a6d',
-    border: '#3a2c1e',
+    background: '#e6d2a0',
+    surface: '#f2e6c4',
+    surfaceStrong: '#6b1512',
+    primary: '#a8341f',
+    accent: '#d4a72c',
+    text: '#2a1810',
+    textMuted: '#6b4a30',
+    border: '#b8905a',
     danger: '#c23a2a',
-    success: '#8a7230',
+    success: '#3d6b2f',
+  },
+  audio: {
+    sfxVariant: 'legion',
   },
   emblem: '🗡',
   terminalName: 'PRAETORIVM',
   terminalVersion: 'LEG. XIV',
   tagline: 'CASTRA VERBORVM — LEGIO {level}',
   stampSuccessWord: 'VICTORIA',
-  stampSuccessFlavor: 'Lejyon senin için tezahürat yapıyor.',
+  stampSuccessFlavor: 'The legion cheers for you.',
   stampFailWord: 'PERIIT',
-  stampFailFlavor: 'Keşif düştü — yeniden tatbikat emredildi.',
+  stampFailFlavor: 'The scout has fallen — drill ordered again.',
   strugglingLabel: 'DESERTOR',
   eyebrowLabel: '⚔ HOSTIS CAPTUS',
   nextButtonLabel: 'PERGE [ENTER] →',
   intelLabel: '⚔ COMMENTARII',
   archiveStampLabel: 'SIGNATVM',
+  contextMenuTitle: 'Italian/Latin — Inscribe in the commentarii: "%s"',
   effects: {
     paperTexture: false,
     vignette: true,
@@ -62,40 +71,44 @@ export const italianTheme = defineTheme({
   stages: [
     {
       id: 'kingdom',
-      name: 'Krallık',
+      name: 'Kingdom',
       minLevel: 1,
       colors: {},
       emblem: '🗡',
     },
     {
       id: 'republic',
-      name: 'Cumhuriyet',
+      name: 'Republic',
       minLevel: 4,
       colors: {
-        primary: '#9e1b1b',
-        accent: '#c9922f',
-        surface: '#2a2118',
-        border: '#4a3a28',
+        primary: '#9e2418',
+        accent: '#d4a72c',
+        background: '#ecdaad',
+        surface: '#f5ecd2',
+        border: '#a67c3d',
       },
       emblem: '⚔',
     },
     {
       id: 'empire',
-      name: 'İmparatorluk',
+      name: 'Empire',
       minLevel: 8,
       colors: {
+        // Peak of the arc: whiter marble, imperial Tyrian purple alongside
+        // gold — emperors alone wore purple, so it reads as a status jump.
         primary: '#9e1b1b',
-        accent: '#d4af37',
-        background: '#1c1108',
-        surface: '#2e2013',
-        border: '#5a4520',
-        success: '#c9a227',
+        accent: '#7a3d8c',
+        background: '#f0e6cc',
+        surface: '#f7f0dc',
+        surfaceStrong: '#3a1530',
+        border: '#c9a227',
+        success: '#3d6b2f',
       },
       emblem: '🦅',
     },
     {
       id: 'decline',
-      name: 'Geç Dönem',
+      name: 'Late Period',
       minLevel: 14,
       colors: {
         primary: '#7a2e28',
@@ -107,6 +120,79 @@ export const italianTheme = defineTheme({
         danger: '#d43a2f',
       },
       emblem: '🦅',
+    },
+  ],
+  // Session-local escalation: consecutive misses read as the Republic
+  // losing its grip, from the calm of the curia to a city under sack.
+  // Unlike `stages` (level-gated, permanent), this resets every session.
+  tensionLevels: [
+    {
+      name: 'Pax',
+      emblem: '🦅',
+      colors: {},
+    },
+    {
+      name: 'Tumultus',
+      emblem: '🦅',
+      colors: {
+        background: '#e4d0a4',
+        surface: '#efe0bd',
+        surfaceStrong: '#7a5a2a',
+        primary: '#9e3418',
+        accent: '#c2922a',
+        border: '#a17a3c',
+        textMuted: '#6b5330',
+      },
+    },
+    {
+      name: 'Bellum',
+      emblem: '⚔',
+      colors: {
+        background: '#4a3a28',
+        surface: '#5b4833',
+        surfaceStrong: '#241a10',
+        primary: '#a5361c',
+        accent: '#d2a63a',
+        text: '#f0e3c6',
+        textMuted: '#c0a483',
+        border: '#7a6041',
+        danger: '#d8452c',
+        success: '#8aa758',
+      },
+    },
+    {
+      name: 'Excidium',
+      emblem: '🔥',
+      colors: {
+        background: '#1d100a',
+        surface: '#2c1810',
+        surfaceStrong: '#120806',
+        primary: '#b8341a',
+        accent: '#e0a02c',
+        text: '#f6e2c0',
+        textMuted: '#c69a72',
+        border: '#5a3020',
+        danger: '#ff5030',
+        success: '#7f9a4e',
+      },
+    },
+  ],
+  crises: [
+    {
+      id: 'it-barbarians',
+      headline: 'Barbarians at the gates!',
+      directive: 'Name 5 words in 60 seconds before the wall is breached.',
+      wordCount: 5,
+      timeLimitSec: 60,
+      rewardXp: 40,
+    },
+    {
+      id: 'it-ambush',
+      headline: 'Ambush on the Via Appia!',
+      directive: 'Recall 3 words in 30 seconds to rally the cohort.',
+      wordCount: 3,
+      timeLimitSec: 30,
+      rewardXp: 25,
     },
   ],
 })
